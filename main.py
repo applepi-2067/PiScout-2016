@@ -43,17 +43,20 @@ dst = cv2.warpPerspective(img,M,(500,700))
 #plt.subplot(122),plt.imshow(dst),plt.title('Output')
 #plt.show()
 
+# Apply a binary threshold
 img = dst
-'''
-for col in range(25):
-	x = col*20 + 10
-	img = cv2.line(img, (x,0), (x,700), (255,0,0), 1)
-for row in range(35):
-	y = row*20 + 10
-	img = cv2.line(img, (0,y), (500,y), (255,0,0), 1)
-'''
 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 ret, img = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+
+# Detect filled boxes
+# This iterates through each grid location and picks the ones that are most dark
+data = [[None]*25]*35
+for row in range(34):
+	for col in range(24):
+		# I have no idea how the next line works, but it sums the pixels in the grid unit
+		a = [item[col*20+10:col*20+30] for item in img[row*20+10:row*20+30]]
+		if sum(map(sum, a)) < 25000:
+			img = cv2.circle(img, (col*20+20, row*20+20), 4, 127, -1)
 
 cv2.imshow("Image", img)
 cv2.waitKey(0)
