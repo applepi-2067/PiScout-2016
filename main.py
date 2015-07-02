@@ -2,13 +2,13 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-img = cv2.imread('sheet.png')
+img = cv2.imread('sheetrotated.jpg')
 imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # The first step is to figure out the four markers on the corners of the page
 # The next two lines will blur the image and extract the edges from the shapes
 blur = cv2.GaussianBlur(imgray,(5,5),0)
-edges = cv2.Canny(imgray,100,200)
+edges = cv2.Canny(blur,150,300)
 
 # Next, we use the edges to find the contours of the shapes
 # Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
