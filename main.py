@@ -2,13 +2,18 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-imgcolor = cv2.imread('sheet.png')
-img = cv2.cvtColor(imgcolor, cv2.COLOR_BGR2GRAY)
-blur = cv2.GaussianBlur(img,(5,5),0)
-edges = cv2.Canny(img,100,200)
+img = cv2.imread('sheet.png')
+imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-ret,thresh = cv2.threshold(edges,127,255,0)
-image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+# The first step is to figure out the four markers on the corners of the page
+# The next two lines will blur the image and extract the edges from the shapes
+blur = cv2.GaussianBlur(imgray,(5,5),0)
+edges = cv2.Canny(imgray,100,200)
+
+# Next, we use the edges to find the contours of the shapes
+# Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
+# If the polygons have 4 sides and are relatively large, save the center coordinates in sq[]
+image, contours, hierarchy = cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 sq = []
 for cont in contours:
 		poly = cv2.approxPolyDP(np.array(cont), 3, True)
@@ -19,35 +24,37 @@ for cont in contours:
 				ypos += a[0][1]
 			sq.append((int(xpos/4), int(ypos/4)))
 
+# Here, we determine which four elements of sq[] are the marks
+# To do this, we iterate through each corner of the sheet
+# On each iteration, we find the element of sq[] with the shortest distance to the corner being examined
 marks = []
-h, w  = img.shape
-corners = [(0, 0), (0, w), (h, 0), (h,w)]
+h, w, c  = img.shape
+corners = [(0, 0), (0, h), (w, 0), (w,h)]
 for corner in corners:
-	mark = sq[np.argmin(list(map(lambda a : (corner[0] - a[0])**2 + (corner[1] - a[1])**2, sq)))]
-	imgcolor = cv2.circle(imgcolor, mark, 32, (0, 255, 0), -1)
-	marks.append(mark)
+	marks.append(sq[np.argmin(list(map(lambda a : (corner[0] - a[0])**2 + (corner[1] - a[1])**2, sq)))])
 
-'''mark1 = sq[np.argmin(list(map(lambda a : a[0]**2 + a[1]**2, sq)))]
-dist2 = list(map(lambda a : a[0]**2 + a[1]**2, sq))
-dist3 = list(map(lambda a : a[0]**2 + a[1]**2, sq))
-dist4 = list(map(lambda a : a[0]**2 + a[1]**2, sq))'''
+# Now, we fit apply a perspective transform
+# The centers of the 4 marks become the 4 corners of the image
+pts1 = np.float32(marks)
+pts2 = np.float32([[0,0],[0,700],[500,0],[500,700]])
+M = cv2.getPerspectiveTransform(pts1,pts2)
+dst = cv2.warpPerspective(img,M,(500,700))
+#plt.subplot(121),plt.imshow(img),plt.title('Input')
+#plt.subplot(122),plt.imshow(dst),plt.title('Output')
+#plt.show()
 
-'''params = cv2.SimpleBlobDetector_Params()
-params.minThreshold = 0
-params.maxThreshold = 250
-params.filterByCircularity = True
-params.minCircularity = 0.7
-params.maxCircularity = 0.83
-detector = cv2.SimpleBlobDetector_create(params)
-keypoints = detector.detect(img)
-print(len(keypoints))
-im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv2.namedWindow("Keypoints", cv2.WINDOW_NORMAL)
-cv2.imshow("Keypoints", im_with_keypoints)
-cv2.waitKey(0)'''
+img = dst
+'''
+for col in range(25):
+	x = col*20 + 10
+	img = cv2.line(img, (x,0), (x,700), (255,0,0), 1)
+for row in range(35):
+	y = row*20 + 10
+	img = cv2.line(img, (0,y), (500,y), (255,0,0), 1)
+'''
+img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+ret, img = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
 
-
-cv2.namedWindow("Scanned Sheet", cv2.WINDOW_KEEPRATIO)
-cv2.imshow('Scanned Sheet', imgcolor)
-cv2.waitKey(0) #wait for keystroke (no timeout)
+cv2.imshow("Image", img)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
