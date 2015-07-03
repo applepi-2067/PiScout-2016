@@ -7,6 +7,8 @@ class PiScout:
 		self.sheet = None;
 		self.output = ''
 
+	# Loads a new scout sheet from an image
+	# Processes the image and stores the result in self.sheet
 	def loadsheet(self, imgpath):
 		print('Loading a new sheet: ' + imgpath)
 		img = cv2.imread(imgpath)
@@ -51,26 +53,34 @@ class PiScout:
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		ret, self.sheet = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
 
-
+	# Opens the sheet in a new window
 	def viewsheet(self):
 		cv2.imshow("Loaded Sheet", self.sheet)
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 
+	# Gets the shading value of a grid unit
+	# 0 is completely shaded, 102000 is completely unshaded
 	def getvalue(self, loc):
 		col,row = loc
 		box = [item[col*20+10:col*20+30] for item in self.sheet[row*20+10:row*20+30]]
 		return sum(map(sum, box))
 
+	# Parses a location in Letter+Number form and returns a tuple of the numeric grid coordinates
 	def parse(self, loc):
 		col = loc[0]
 		row = loc[1:]
 		return (ord(col)-67, int(row)-3)
 
+	# Define a new boolean field at a given location
+	# Returns whether or not the grid unit is shaded
 	def boolfield(self, location):
 		loc = self.parse(location)
 		return self.getvalue(loc) < 25000
 
+	# Define a new range field at a given location
+	# This field spans across grid units
+	# Returns the shaded value, or 0 if none is shaded
 	def rangefield(self, startlocation, startval, endval):
 		loc = self.parse(startlocation)
 		values = [self.getvalue((val, loc[1])) for val in range(loc[0], loc[0]+endval-startval+1)]
@@ -79,12 +89,11 @@ class PiScout:
 			return startval + min
 		return 0
 
-	def getsheet(self):
-		return self.sheet
-
+	# Prepares a string to be displayed on the GUI
 	def disp(self, text):
 		self.output += str(text) + '\n'
 
+	# Opens the GUI, including the sheet and the output text
 	def finish(self):
 		img = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 		fig = plt.figure('PiScout')
