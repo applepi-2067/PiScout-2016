@@ -5,8 +5,10 @@ from matplotlib import pyplot as plt
 class PiScout:
 	def __init__(self):
 		self.sheet = None;
+		self.output = ''
 
 	def loadsheet(self, imgpath):
+		print('Loading a new sheet: ' + imgpath)
 		img = cv2.imread(imgpath)
 		imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -44,20 +46,11 @@ class PiScout:
 		pts2 = np.float32([[0,0],[0,700],[500,0],[500,700]])
 		M = cv2.getPerspectiveTransform(pts1,pts2)
 		img = cv2.warpPerspective(img,M,(500,700))
-		#plt.subplot(121),plt.imshow(img),plt.title('Input')
-		#plt.subplot(122),plt.imshow(dst),plt.title('Output')
-		#plt.show()
-
-		#GUI testing
-		#fig = plt.figure()
-		#aa = fig.add_subplot(111)
-		#aa.imshow(img)
-		#aa.text(0,0,'memes!')
-		#plt.show()
 
 		# Apply a binary threshold
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		ret, self.sheet = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+
 
 	def viewsheet(self):
 		cv2.imshow("Loaded Sheet", self.sheet)
@@ -85,17 +78,19 @@ class PiScout:
 		if values[min] < 30000:
 			return startval + min
 		return 0
-'''
-# Detect filled boxes
-# This iterates through each grid location and picks the ones that are most dark
-data = [[None]*25]*35
-for row in range(34):
-	for col in range(24):
-		# I have no idea how the next line works, but it sums the pixels in the grid unit
-		a = [item[col*20+10:col*20+30] for item in img[row*20+10:row*20+30]]
-		if sum(map(sum, a)) < 25000:
-			img = cv2.circle(img, (col*20+20, row*20+20), 4, 127, -1)
 
-cv2.imshow("Image", img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()'''
+	def getsheet(self):
+		return self.sheet
+
+	def print(self, text):
+		self.output += str(text) + '\n'
+
+	def finish(self):
+		img = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
+		fig = plt.figure('PiScout')
+		fig.subplots_adjust(left=0, right=0.6)
+		plt.subplot(111)
+		plt.imshow(img)
+		plt.title('Scanned Sheet')
+		plt.text(540,700,self.output,fontsize=14)
+		plt.show()

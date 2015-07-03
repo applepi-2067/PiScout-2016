@@ -59,24 +59,23 @@ stacks[5] = {
 	'noodled': scout.boolfield('Y30')
 }
 
-print("Team Number:")
-print(1000*num1 + 100*num2 + 10*num3 + num4)
+scout.print("Team Number: " + str(1000*num1 + 100*num2 + 10*num3 + num4))
+scout.print("Match Number: " + str(100*match1 + 10*match2 + match3))
 
-print("Match Number")
-print(100*match1 + 10*match2 + match3)
-
-print("Totes in auto zone: " + str(totes))
-print("Containers in auto zone: " + str(zonecont))
-print("Containers from step: " + str(stepcont))
-print("Stacked set? " + str(stacked))
-print("Moved into auto zone? " + str(inzone))
+scout.print("Totes in auto zone: " + str(totes))
+scout.print("Containers in auto zone: " + str(zonecont))
+scout.print("Containers from step: " + str(stepcont))
+scout.print("Stacked set? " + str(stacked))
+scout.print("Moved into auto zone? " + str(inzone))
 
 for s in stacks:
 	if s['height'] == 0:
 		continue
 	if s['capping']:
-		print('Capped a stack of ' + str(s['height']))
+		scout.print('Capped a stack of ' + str(s['height']))
 	else:
-		print('Built a stack of ' + str(s['height']))
-		print('Capped: ' + str(s['capped']))
-	print('Noodled: ' + str(s['noodled']))
+		scout.print('Built a stack of ' + str(s['height']))
+		scout.print('Capped: ' + str(s['capped']))
+	scout.print('Noodled: ' + str(s['noodled']))
+
+scout.finish()
