@@ -1,7 +1,7 @@
 from piscout import *
 
 scout = PiScout()
-scout.loadsheet('sheet.png')
+scout.loadsheet('558.jpg')
 
 num1 = scout.rangefield('O5', 0, 9)
 num2 = scout.rangefield('O6', 0, 9)
@@ -59,6 +59,11 @@ stacks[5] = {
 	'noodled': scout.boolfield('Y30')
 }
 
+telecont = scout.rangefield('J32', 1, 4)
+coop = scout.rangefield('V32', 1, 4)
+coopstack = scout.boolfield('V33')
+toteloc = scout.rangefield('F36', 1, 18)
+
 scout.disp("Team Number: " + str(1000*num1 + 100*num2 + 10*num3 + num4))
 scout.disp("Match Number: " + str(100*match1 + 10*match2 + match3))
 
@@ -77,5 +82,22 @@ for s in stacks:
 		scout.disp('Built a stack of ' + str(s['height']))
 		scout.disp('Capped: ' + str(s['capped']))
 	scout.disp('Noodled: ' + str(s['noodled']))
+
+scout.disp('Teleop containers from step: ' + str(telecont))
+scout.disp('Coop totes placed: ' + str(coop))
+scout.disp('Got coop stack? ' + str(coopstack))
+
+if toteloc == 1:
+	scout.disp('Gets all totes from HP')
+elif toteloc == 18:
+	scout.disp('Gets all totes from landfill')
+elif 2 <= toteloc <= 7:
+	scout.disp('Gets most totes from HP')
+elif 17 >= toteloc >= 12:
+	scout.disp('Gets most totes from landfill')
+elif toteloc == 0:
+	scout.disp("Doesn't pick up gray totes")
+else:
+	scout.disp("Gets totes equally from landfill/HP")
 
 scout.finish()
