@@ -82,7 +82,7 @@ class PiScout:
 	def getsheet(self):
 		return self.sheet
 
-	def print(self, text):
+	def disp(self, text):
 		self.output += str(text) + '\n'
 
 	def finish(self):
