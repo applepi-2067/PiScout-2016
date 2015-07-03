@@ -49,9 +49,7 @@ class PiScout:
 		M = cv2.getPerspectiveTransform(pts1,pts2)
 		img = cv2.warpPerspective(img,M,(500,700))
 
-		# Apply a binary threshold
-		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-		ret, self.sheet = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+		self.sheet = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 	# Opens the sheet in a new window
 	def viewsheet(self):
@@ -64,6 +62,7 @@ class PiScout:
 	def getvalue(self, loc):
 		col,row = loc
 		box = [item[col*20+10:col*20+30] for item in self.sheet[row*20+10:row*20+30]]
+		print(str(loc) + ": " + str(sum(map(sum, box))))
 		return sum(map(sum, box))
 
 	# Parses a location in Letter+Number form and returns a tuple of the numeric grid coordinates
@@ -76,7 +75,7 @@ class PiScout:
 	# Returns whether or not the grid unit is shaded
 	def boolfield(self, location):
 		loc = self.parse(location)
-		return self.getvalue(loc) < 25000
+		return self.getvalue(loc) < 75000
 
 	# Define a new range field at a given location
 	# This field spans across grid units
@@ -85,7 +84,7 @@ class PiScout:
 		loc = self.parse(startlocation)
 		values = [self.getvalue((val, loc[1])) for val in range(loc[0], loc[0]+endval-startval+1)]
 		min = np.argmin(values)
-		if values[min] < 30000:
+		if values[min] < 75000:
 			return startval + min
 		return 0
 

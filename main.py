@@ -1,7 +1,7 @@
 from piscout import *
 
 scout = PiScout()
-scout.loadsheet('558.jpg')
+scout.loadsheet('195.jpg')
 
 num1 = scout.rangefield('O5', 0, 9)
 num2 = scout.rangefield('O6', 0, 9)
