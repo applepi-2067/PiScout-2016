@@ -40,7 +40,7 @@ class PiScout:
 		h, w, c  = img.shape
 		corners = [(0, 0), (0, h), (w, 0), (w,h)]
 		for corner in corners:
-			marks.append(sq[np.argmin(list(map(lambda a : (corner[0] - a[0])**2 + (corner[1] - a[1])**2, sq)))])
+			marks.append(sq[np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])])
 
 		# Now, we fit apply a perspective transform
 		# The centers of the 4 marks become the 4 corners of the image
@@ -50,6 +50,8 @@ class PiScout:
 		img = cv2.warpPerspective(img,M,(500,700))
 
 		self.sheet = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+		self.output = ''
+		print("Loading complete")
 
 	# Opens the sheet in a new window
 	def viewsheet(self):
@@ -62,7 +64,6 @@ class PiScout:
 	def getvalue(self, loc):
 		col,row = loc
 		box = [item[col*20+10:col*20+30] for item in self.sheet[row*20+10:row*20+30]]
-		print(str(loc) + ": " + str(sum(map(sum, box))))
 		return sum(map(sum, box))
 
 	# Parses a location in Letter+Number form and returns a tuple of the numeric grid coordinates
@@ -94,6 +95,8 @@ class PiScout:
 
 	# Opens the GUI, including the sheet and the output text
 	def finish(self):
+		print("Opening GUI")
+		plt.close()
 		img = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 		fig = plt.figure('PiScout')
 		fig.subplots_adjust(left=0, right=0.6)
