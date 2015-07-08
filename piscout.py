@@ -103,10 +103,6 @@ class PiScout:
 
 	def set(self, name, contents):
 		self.data[name] = contents
-		self.output[name] = contents
-
-	def customdisp(self, datakey, value):
-		self.output[datakey] = value
 
 	# Opens the GUI, including the sheet and the output text
 	def submit(self):

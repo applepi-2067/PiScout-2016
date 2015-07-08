@@ -79,32 +79,6 @@ for s in (0,23):
 	scout.set("coop stack?", coopstack)
 	scout.set("tote location", toteloc)
 
-	stackmsg = ''
-	for s in stacks:
-		if s['height'] == 0:
-			continue
-		if s['capping']:
-			stackmsg += '\nCapped a stack of ' + str(s['height'])
-		else:
-			stackmsg += '\nBuilt a stack of ' + str(s['height'])
-			stackmsg += '\nCapped: ' + str(s['capped'])
-		stackmsg += '\nNoodled: ' + str(s['noodled'])
-	scout.customdisp("stacks", stackmsg)
-
-	locmsg = ''
-	if toteloc == 1:
-		locmsg = 'All from HP'
-	elif toteloc == 18:
-		locmsg = 'All from landfill'
-	elif 2 <= toteloc <= 7:
-		slocmsg = 'Most from HP'
-	elif 17 >= toteloc >= 12:
-		locmsg = 'Most from landfill'
-	elif toteloc == 0:
-		locmsg = "N\A"
-	else:
-		locmsg = "Equal from HP/landfill"
-	scout.customdisp("tote location", locmsg)
 	scout.submit()
 
 
