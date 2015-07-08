@@ -1,8 +1,17 @@
 from piscout import *
 
 scout = PiScout()
-scout.loadsheet('2067nexus.jpg')
+scout.loadsheet('double.jpg')
+num1 = scout.rangefield('O-6', 0, 9)
+num2 = scout.rangefield('O-7', 0, 9)
+num3 = scout.rangefield('O-8', 0, 9)
+num4 = scout.rangefield('O-9', 0, 9)
+scout.disp("Team Number: " + str(1000*num1 + 100*num2 + 10*num3 + num4))
+inzone = scout.boolfield('ag-12')
+scout.disp("Moved into auto zone: " + str(inzone))
+#scout.viewsheet()
 
+'''
 num1 = scout.rangefield('O5', 0, 9)
 num2 = scout.rangefield('O6', 0, 9)
 num3 = scout.rangefield('O7', 0, 9)
@@ -99,5 +108,5 @@ elif toteloc == 0:
 	scout.disp("Doesn't pick up gray totes")
 else:
 	scout.disp("Gets totes equally from landfill/HP")
-
+'''
 scout.finish()

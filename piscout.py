@@ -45,9 +45,9 @@ class PiScout:
 		# Now, we fit apply a perspective transform
 		# The centers of the 4 marks become the 4 corners of the image
 		pts1 = np.float32(marks)
-		pts2 = np.float32([[0,0],[0,700],[500,0],[500,700]])
+		pts2 = np.float32([[0,0],[0,784],[560,0],[560,784]])
 		M = cv2.getPerspectiveTransform(pts1,pts2)
-		img = cv2.warpPerspective(img,M,(500,700))
+		img = cv2.warpPerspective(img,M,(560,784))
 
 		self.sheet = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		self.output = ''
@@ -59,24 +59,24 @@ class PiScout:
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 
+
 	# Gets the shading value of a grid unit
 	# 0 is completely shaded, 102000 is completely unshaded
 	def getvalue(self, loc):
 		col,row = loc
-		box = [item[col*20+10:col*20+30] for item in self.sheet[row*20+10:row*20+30]]
+		box = [item[col*16:(col+1)*16] for item in self.sheet[row*16:(row+1)*16]]
 		return sum(map(sum, box))
 
-	# Parses a location in Letter+Number form and returns a tuple of the numeric grid coordinates
+	# Parses a location in Letter-Number form and returns a tuple of the pixel coordinates
 	def parse(self, loc):
-		col = loc[0]
-		row = loc[1:]
-		return (ord(col)-67, int(row)-3)
+		col,row = loc.upper().split('-')
+		return (ord(col)-66 if len(col)==1 else ord(col[1])-41, int(row)-3)
 
 	# Define a new boolean field at a given location
 	# Returns whether or not the grid unit is shaded
 	def boolfield(self, location):
 		loc = self.parse(location)
-		return self.getvalue(loc) < 75000
+		return self.getvalue(loc) < 45000
 
 	# Define a new range field at a given location
 	# This field spans across grid units
@@ -85,7 +85,7 @@ class PiScout:
 		loc = self.parse(startlocation)
 		values = [self.getvalue((val, loc[1])) for val in range(loc[0], loc[0]+endval-startval+1)]
 		min = np.argmin(values)
-		if values[min] < 75000:
+		if values[min] < 45000:
 			return startval + min
 		return 0
 
@@ -103,5 +103,5 @@ class PiScout:
 		plt.subplot(111)
 		plt.imshow(img)
 		plt.title('Scanned Sheet')
-		plt.text(540,700,self.output,fontsize=14)
+		plt.text(600,784,self.output,fontsize=14)
 		plt.show()
