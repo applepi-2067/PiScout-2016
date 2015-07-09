@@ -4,15 +4,33 @@ import numpy as np
 from ast import literal_eval
 from matplotlib import pyplot as plt
 from matplotlib.widgets import Button
+from time import sleep
 from tkinter import messagebox
 
 class PiScout:
-	def __init__(self):
+	# Firstly, initializes the fields of a PiScout object
+	# Then it starts the main loop of PiScout
+	# Requires a function "main" which contains the sheet configuration
+	# Loops indefinitely and triggers a response whenever a new sheet is added
+	def __init__(self, main):
 		self.sheet = None;
 		self.display = None;
-		self.output = {}
 		self.data = {}
 		self.shift = 0
+
+		# I have a vague feeling that putting the main loop in init is bad practice
+		# But whatever
+		f = set()
+		while True:
+			sleep(0.25)
+			files = set(os.listdir()) #grabs all file names as a set
+			added = files - f #check if any files were added (if first iteration, added = files)
+			f = files #will hold onto this value for the next iteration
+			for file in added:
+				if ('.jpg' or 'png') in file:
+					self.loadsheet(file)
+					main(self) #call the main loop with this PiScout object as an argument
+
 
 	# Loads a new scout sheet from an image
 	# Processes the image and stores the result in self.sheet
@@ -59,21 +77,18 @@ class PiScout:
 		self.sheet = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		print("Loading complete")
 
+	# Shifts all fields down by amount
+	# Useful for when there are two matches on one sheet of paper
+	# After reading the first match, shift down and read again
 	def shiftDown (self, amount):
 		self.shift = amount
-
-	# Opens the sheet in a new window
-	def viewsheet(self):
-		#img = self.sheet[48:384, 32:544]
-		cv2.imshow("Loaded Sheet", self.display)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
 
 	# Gets the shading value of a grid unit
 	# 0 is completely shaded, 102000 is completely unshaded
 	def getvalue(self, loc):
 		col,row = loc
-		box = [item[col*16:(col+1)*16] for item in self.sheet[row*16:(row+1)*16]]
+		box = self.sheet[row*16:(row+1)*16, col*16:(col+1)*16]
+		#box = [item[col*16:(col+1)*16] for item in self.sheet[row*16:(row+1)*16]]
 		return sum(map(sum, box))
 
 	# Parses a location in Letter-Number form and returns a tuple of the pixel coordinates
@@ -101,39 +116,68 @@ class PiScout:
 			return startval + min
 		return 0
 
+	# Adds a data entry into the data dictionary
 	def set(self, name, contents):
 		self.data[name] = contents
 
-	# Opens the GUI, including the sheet and the output text
+	# Opens the GUI, preparing the data for submission
 	def submit(self):
-		print("Opening GUI")
+		if self.data['team'] == 0:
+			print("Found an empty match, skipping")
+			return
+		with open("history.txt", "a+") as file:
+			d = str(self.data['team']) + ' ' + str(self.data['match'])
+			file.seek(0)
+			if d in file.read():
+				print("Already processed this match, skipping")
+				return
+			file.write(d + '\n')
+
+		print("Found a new match, opening")
 		output = ''
 		for key,val in self.data.items():
 			output += "'" + key + "'" + ": " + str(val) + '\n'
 		output = output.replace(', ', '\n    ')
 		fig = plt.figure('PiScout')
 		fig.subplots_adjust(left=0, right=0.6)
-		plt.subplot(111)
+		ax = plt.subplot(111)
 		plt.imshow(self.display)
 		plt.title('Scanned Sheet')
 		plt.text(600,784,output,fontsize=14)
-		approve = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), 'Submit Data')
-		approve.on_clicked(self.upload)
-		reject = Button(plt.axes([0.68, 0.17, 0.15, 0.07]), 'Edit Data')
-		reject.on_clicked(self.edit)
-		reject = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
-		reject.on_clicked(self.cancel)
+		upload = Button(plt.axes([0.68, 0.31, 0.15, 0.07]), 'Upload Data')
+		upload.on_clicked(self.upload)
+		save = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), 'Save Data Offline')
+		save.on_clicked(self.save)
+		edit = Button(plt.axes([0.68, 0.17, 0.15, 0.07]), 'Edit Data')
+		edit.on_clicked(self.edit)
+		cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
+		cancel.on_clicked(self.cancel)
 		mng = plt.get_current_fig_manager()
 		mng.window.state('zoomed')
 		plt.show()
-
-		self.output = {}
 		self.data = {}
 		self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
-	def upload(self, event):
+	# Invoked by the "Save Data Offline" button
+	# Adds data to a queue to be uploaded online at a later time
+	# Eventually will also store the data locally in an elegant format
+	def save(self, event):
+		print("Queueing match for upload later")
+		with open("queue.txt", "a") as file:
+			file.write(str(self.data) + '\n')
 		plt.close()
+		#SAVE LOCAL VERSION
 
+	# Invoked by the "Upload Data" button
+	# Eventually, this will upload to an AWS server
+	def upload(self, event):
+		print("Attempting upload to server")
+		plt.close()
+		#UPLOAD
+
+	# Invoked by the "Edit Data" button
+	# Opens up the data in notepad, and lets the user make modifications
+	# Afterward, it re-opens the GUI with the updated data
 	def edit(self, event):
 		datastr = ''
 		for key,val in self.data.items():
@@ -150,9 +194,14 @@ class PiScout:
 			self.data = literal_eval(datastr)
 		except:
 			messagebox.showerror("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
-		self.output = self.data
 		plt.close()
 		self.submit()
 
+	# Invoked by the "Cancel" button
+	# Closes the GUI and erases the entry from the history file
 	def cancel(self, event):
 		plt.close()
+		with open('history.txt', 'w+') as file:
+			lines = file.readlines()
+			lines = lines[:-1]
+			file.writelines(lines)
