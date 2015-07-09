@@ -6,13 +6,19 @@ from matplotlib import pyplot as plt
 from matplotlib.widgets import Button
 from time import sleep
 from tkinter import messagebox
+import requests
 
+# PiScout is a means of collecting match data in a scantron-like format
+# This program was designed to be easily configurable, and new sheets can be made rapidly
+# The configuration for the sheets is done in a separate file (main.py)
+# Cory Lynch 2015
 class PiScout:
 	# Firstly, initializes the fields of a PiScout object
 	# Then it starts the main loop of PiScout
 	# Requires a function "main" which contains the sheet configuration
 	# Loops indefinitely and triggers a response whenever a new sheet is added
 	def __init__(self, main):
+		print('PiScout Started')
 		self.sheet = None;
 		self.display = None;
 		self.data = {}
@@ -20,16 +26,15 @@ class PiScout:
 
 		# I have a vague feeling that putting the main loop in init is bad practice
 		# But whatever
-		f = set()
+		f = set(os.listdir("Sheets"))
 		while True:
 			sleep(0.25)
-			files = set(os.listdir()) #grabs all file names as a set
+			files = set(os.listdir("Sheets")) #grabs all file names as a set
 			added = files - f #check if any files were added (if first iteration, added = files)
 			f = files #will hold onto this value for the next iteration
 			for file in added:
-				if ('.jpg' or 'png') in file:
-					self.loadsheet(file)
-					main(self) #call the main loop with this PiScout object as an argument
+				self.loadsheet("Sheets/" + file)
+				main(self) #call the main loop with this PiScout object as an argument
 
 
 	# Loads a new scout sheet from an image
@@ -88,7 +93,6 @@ class PiScout:
 	def getvalue(self, loc):
 		col,row = loc
 		box = self.sheet[row*16:(row+1)*16, col*16:(col+1)*16]
-		#box = [item[col*16:(col+1)*16] for item in self.sheet[row*16:(row+1)*16]]
 		return sum(map(sum, box))
 
 	# Parses a location in Letter-Number form and returns a tuple of the pixel coordinates
@@ -140,7 +144,7 @@ class PiScout:
 		output = output.replace(', ', '\n    ')
 		fig = plt.figure('PiScout')
 		fig.subplots_adjust(left=0, right=0.6)
-		ax = plt.subplot(111)
+		plt.subplot(111)
 		plt.imshow(self.display)
 		plt.title('Scanned Sheet')
 		plt.text(600,784,output,fontsize=14)
@@ -166,6 +170,7 @@ class PiScout:
 		with open("queue.txt", "a") as file:
 			file.write(str(self.data) + '\n')
 		plt.close()
+		requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
 		#SAVE LOCAL VERSION
 
 	# Invoked by the "Upload Data" button

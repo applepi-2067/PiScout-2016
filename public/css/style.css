@@ -1,0 +1,47 @@
+body {
+    background-color: #f5f5dc;
+    font-family: 'Chau Philomene One';
+    font-size: 100%;
+}
+h1 {
+    font-weight: normal;
+    text-align: center;
+    color: #B20000;
+    font-size: 6em;
+    line-height: 0.85em;
+    margin: 0px;
+}
+h2 {
+    font-weight: normal;
+    text-align: center;
+    color: #8E0000;
+    font-size: 1.5em;
+    line-height: 0.9em;
+    margin: 0px;
+}
+form {
+    width: 300px;
+    margin: 0 auto;
+    text-align: center;
+}
+.main {
+    text-align: center;
+    font-size: 36px;
+    line-height: 0em;
+    margin: 0.65em
+}
+#submit {
+    width: 250px;
+    height: 50px;
+    margin: 0.25em;
+    font-size: 32px;
+    font-family: 'Chau Philomene One';
+}
+
+#team {
+    font-size: 72px;
+    text-align: center;
+    width: 250px;
+    background-color: #F9F9EC;
+    font-family: 'Chau Philomene One';
+}

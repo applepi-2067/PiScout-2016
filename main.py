@@ -60,6 +60,9 @@ def main(scout):
 			'capped': scout.boolfield('AE-21'),
 			'noodled': scout.boolfield('AJ-21')
 		}
+		for i,stack in enumerate(stacks):
+			if not stack['height']:
+				stacks[i] = None
 
 		telecont = scout.rangefield('K-23', 1, 4)
 		coop = scout.rangefield('T-23', 1, 4)
@@ -68,16 +71,16 @@ def main(scout):
 
 		scout.set("team", 1000*num1 + 100*num2 + 10*num3 + num4)
 		scout.set("match", 100*match1 + 10*match2 + match3)
-		scout.set("auto totes", totes)
-		scout.set("RC in zone", zonecont)
-		scout.set("RC from step", stepcont)
-		scout.set("stacked set", stacked)
-		scout.set("moved to zone", inzone)
-		scout.set("stacks", [stack for stack in stacks if stack['height']])
+		scout.set("auto_tote", totes)
+		scout.set("auto_RC_zone", zonecont)
+		scout.set("auto_RC_step", stepcont)
+		scout.set("auto_stack", stacked)
+		scout.set("in_auto_zone", inzone)
+		scout.set("stacks", stacks)
 		scout.set("coop", coop)
-		scout.set("teleop step RC", telecont)
-		scout.set("coop stack?", coopstack)
-		scout.set("tote location", toteloc)
+		scout.set("tele_RC_step", telecont)
+		scout.set("coop_stack", coopstack)
+		scout.set("tote_loc", toteloc)
 
 		scout.submit()
 
