@@ -68,4 +68,7 @@ conf = {
 		'server.socket_port': 8000
 	}
 }
-cherrypy.quickstart(ScoutServer(), '/', conf)
+
+#start method only to be used on the local version
+def start():
+	cherrypy.quickstart(ScoutServer(), '/', conf)

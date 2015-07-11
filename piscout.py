@@ -5,8 +5,12 @@ from ast import literal_eval
 from matplotlib import pyplot as plt
 from matplotlib.widgets import Button
 from time import sleep
-from tkinter import messagebox
+import ctypes
 import requests
+import server
+from threading import Thread
+import tkinter as tk
+import webbrowser
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -18,14 +22,13 @@ class PiScout:
 	# Requires a function "main" which contains the sheet configuration
 	# Loops indefinitely and triggers a response whenever a new sheet is added
 	def __init__(self, main):
-		print('PiScout Started')
+		print('PiScout Starting')
 		self.sheet = None;
 		self.display = None;
 		self.data = {}
 		self.shift = 0
 
-		# I have a vague feeling that putting the main loop in init is bad practice
-		# But whatever
+		Thread(target=server.start).start()
 		f = set(os.listdir("Sheets"))
 		while True:
 			sleep(0.25)
@@ -164,21 +167,36 @@ class PiScout:
 
 	# Invoked by the "Save Data Offline" button
 	# Adds data to a queue to be uploaded online at a later time
-	# Eventually will also store the data locally in an elegant format
+	# Also stores in the local database
 	def save(self, event):
 		print("Queueing match for upload later")
-		with open("queue.txt", "a") as file:
+		with open("queue.txt", "a+") as file:
 			file.write(str(self.data) + '\n')
 		plt.close()
 		requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
-		#SAVE LOCAL VERSION
 
 	# Invoked by the "Upload Data" button
-	# Eventually, this will upload to an AWS server
+	# Uploads all data (including queue) to the online database
+	# Uploads a copy to the local database as backup
 	def upload(self, event):
-		print("Attempting upload to server")
 		plt.close()
-		#UPLOAD
+		print("Attempting upload to server")
+		try:
+			requests.post("http://52.2.17.191/submit", data={'data': str(self.data)})
+			print("Uploading this match was successful")
+			with open("queue.txt", "r") as file:
+				for line in file:
+					requests.post("http://52.2.17.191/submit", data={'data': line})
+					print("Uploaded an entry from the queue")
+			os.remove('queue.txt')
+			requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
+		except:
+			print("Failed miserably")
+			r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)
+			if r == 4:
+				self.upload(event)
+			else:
+				self.save(event)
 
 	# Invoked by the "Edit Data" button
 	# Opens up the data in notepad, and lets the user make modifications
@@ -198,7 +216,7 @@ class PiScout:
 		try:
 			self.data = literal_eval(datastr)
 		except:
-			messagebox.showerror("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
+			self.message("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
 		plt.close()
 		self.submit()
 
@@ -210,3 +228,6 @@ class PiScout:
 			lines = file.readlines()
 			lines = lines[:-1]
 			file.writelines(lines)
+
+	def message(self, title, message, type=0):
+		return ctypes.windll.user32.MessageBoxW(0, message, title, type)
