@@ -6,9 +6,6 @@ from ast import literal_eval
 class ScoutServer(object):
 	@cherrypy.expose
 	def index(self):
-		conn = sql.connect('data.db')
-		things = conn.cursor().execute('SELECT * FROM scout').fetchall()
-		conn.close()
 		return '''
 		<html>
 			<head>
@@ -32,7 +29,7 @@ class ScoutServer(object):
 	@cherrypy.expose()
 	def team(self, n=2067):
 		conn = sql.connect('data.db')
-		entries = conn.cursor().execute('SELECT * FROM scout WHERE team=?', (n,)).fetchall()
+		entries = conn.cursor().execute('SELECT * FROM scout WHERE team=? ORDER BY MATCH DESC', (n,)).fetchall()
 		conn.close()
 		output = ''
 		sum = {'auto': 0, 'step': 0, 'tote': 0, 'rc': 0, 'coop': 0}
