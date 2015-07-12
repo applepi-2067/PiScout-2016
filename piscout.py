@@ -9,8 +9,6 @@ import ctypes
 import requests
 import server
 from threading import Thread
-import tkinter as tk
-import webbrowser
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -28,7 +26,7 @@ class PiScout:
 		self.data = {}
 		self.shift = 0
 
-		Thread(target=server.start).start()
+		Thread(target=server.start).start() # local database server
 		f = set(os.listdir("Sheets"))
 		while True:
 			sleep(0.25)
@@ -181,14 +179,16 @@ class PiScout:
 	def upload(self, event):
 		plt.close()
 		print("Attempting upload to server")
+
 		try:
 			requests.post("http://52.2.17.191/submit", data={'data': str(self.data)})
 			print("Uploading this match was successful")
-			with open("queue.txt", "r") as file:
-				for line in file:
-					requests.post("http://52.2.17.191/submit", data={'data': line})
-					print("Uploaded an entry from the queue")
-			os.remove('queue.txt')
+			if(os.path.isfile('queue.txt')):
+				with open("queue.txt", "r") as file:
+					for line in file:
+						requests.post("http://52.2.17.191/submit", data={'data': line})
+						print("Uploaded an entry from the queue")
+				os.remove('queue.txt')
 			requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
 		except:
 			print("Failed miserably")
@@ -229,5 +229,6 @@ class PiScout:
 			lines = lines[:-1]
 			file.writelines(lines)
 
+	# Displays a message box
 	def message(self, title, message, type=0):
 		return ctypes.windll.user32.MessageBoxW(0, message, title, type)

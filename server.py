@@ -32,10 +32,117 @@ class ScoutServer(object):
 	@cherrypy.expose()
 	def team(self, n=2067):
 		conn = sql.connect('data.db')
-		things = conn.cursor().execute('SELECT * FROM scout WHERE team=?', (n,)).fetchall()
+		entries = conn.cursor().execute('SELECT * FROM scout WHERE team=?', (n,)).fetchall()
 		conn.close()
+		output = ''
+		sum = {'auto': 0, 'step': 0, 'tote': 0, 'rc': 0, 'coop': 0}
+		for e in entries:
+			a = ''
+			if e[5]: #stacked?
+				a += "3 tote; "
+				sum['auto'] += 20
+			elif e[2] == 3: #number of totes
+				a += "3 tote, not stacked; "
+				sum['auto'] += 6
+			elif e[2]:
+				a += str(e[2]) + ' totes; '
+				sum['auto'] += 2*e[2]
+			if e[3]:
+				a += str(e[3]) +  ' RC(s) in zone; '
+				sum['auto'] += 8/3 * e[3]
+			if e[4]:
+				a += str(e[4]) + ' RC(s) from step; '
+				sum['step'] += e[4]
+			if e[6]:
+				a += 'moved into auto zone; '
+				sum['auto'] += 4/3
+			s = ''
+			for stack in range(7, 13):
+				if e[stack] == 'None':
+					continue
+				st = literal_eval(e[stack])
+				if st['capping']:
+					s += 'capped '
+				else:
+					sum['tote'] += st['height'] * 2
+				s += str(st['height']) + ' stack'
+				if st['capped']:
+					s += ', capped'
+					sum['rc'] += st['height'] * 4
+				if st['noodled']:
+					s += '/noodled'
+					sum['rc'] += 6
+				s += '; '
 
-		return "check out these neato memes:\n" + str(things)
+			o = ''
+			if e[13]:
+				o += str(e[13]) + ' coop totes; '
+				sum['coop'] += 10*e[13]
+			if e[14]:
+				o += str(e[14]) + ' RCs from step; '
+			if e[16] == 1:
+				o += 'all totes from HP; '
+			elif e[16] == 18:
+				o += 'all totes from landfill; '
+			elif 2 <= e[16] <= 7:
+				o += 'most totes from HP; '
+			elif 17 >= e[16] >= 12:
+				o += 'most totes from landfill; '
+			elif e[16] == 0:
+				o += "doesn't pick up gray totes; "
+			else:
+				o += "totes equally from landfill/HP; "
+			output += '''
+			<tr>
+				<td>{0}</td>
+				<td>{1}</td>
+				<td>{2}</td>
+				<td>{3}</td>
+			</tr>'''.format(e[1], a[:-2], s[:-2], o[:-2])
+
+		try:
+			for key,val in sum.items():
+				sum[key] = round(val/len(entries), 2)
+			apr = int(sum['auto']*1.2 + sum['step']*5 + sum['tote'] + sum['rc'] + sum['coop']*0.2)
+		except:
+			apr = 'N/A' #sometimes the above calculation is borked when there's no data
+
+		return '''
+		<html>
+			<head>
+				<title>PiScout</title>
+				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+         		<link href="/static/css/style.css" rel="stylesheet">
+			</head>
+			<body>
+				<h1>Team {0}</h1>
+				<h2>PiScout Database</h2>
+				<br><br>
+				<div style="text-align:center;">
+					<div id="apr">
+						<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+						<p style="font-size: 400%; line-height: 0em">{7}</p>
+					</div>
+					<div id="stats">
+						<p class="statbox" style="font-weight:bold">Average match:</p>
+						<p class="statbox">Auto points: {2}</p>
+						<p class="statbox">Step RCs: {3}</p>
+						<p class="statbox">Tote points: {4}</p>
+						<p class="statbox">RC/noodle points: {5}</p>
+						<p class="statbox">Coop points: {6}</p>
+					</div>
+				</div>
+				<br>
+				<table>
+					<tr>
+						<td>Match</td>
+						<td>Auto</td>
+						<td>Stacks</td>
+						<td>Other Teleop</td>
+					</tr>{1}
+				</table>
+			</body>
+		</html>'''.format(n, output, sum['auto'], sum['step'], sum['tote'], sum['rc'], sum['coop'], apr)
 
 	@cherrypy.expose
 	def submit(self, data=''):

@@ -1,6 +1,6 @@
 body {
     background-color: #f5f5dc;
-    font-family: 'Chau Philomene One';
+    font-family: 'Chau Philomene One', sans-serif;
     font-size: 100%;
 }
 h1 {
@@ -35,13 +35,40 @@ form {
     height: 50px;
     margin: 0.25em;
     font-size: 32px;
-    font-family: 'Chau Philomene One';
+    font-family: 'Chau Philomene One', sans-serif;
 }
-
 #team {
     font-size: 72px;
     text-align: center;
     width: 250px;
     background-color: #F9F9EC;
-    font-family: 'Chau Philomene One';
+    font-family: 'Chau Philomene One', sans-serif;
+}
+table {
+    width: auto;
+    margin: 0 auto;
+    text-align: center;
+}
+td {
+    border: 1px solid black
+}
+#apr {
+    display: inline-block;
+    border: 2px solid black;
+    width: 125px;
+    height: 125px;
+    text-align: center;
+    vertical-align: top;
+}
+#stats {
+    display: inline-block;
+    border: 2px solid black;
+    width: 250px;
+    height: 125px;
+    text-align: center;
+    vertical-align: top;
+}
+.statbox {
+    line-height: 0.5em;
+    margin: 0.68em;
 }
