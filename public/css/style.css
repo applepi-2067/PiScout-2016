@@ -52,6 +52,25 @@ table {
 td {
     border: 1px solid black
 }
+th {
+    border: 1px solid black
+}
+a:link {
+    color: #0000B8;
+    text-decoration: none;
+}
+a:visited {
+    color: #0000B8;
+    text-decoration: none;
+}
+a:hover {
+    color: #0000B8;
+    text-decoration: underline;
+}
+a:active {
+    color: #0000B8;
+    text-decoration: underline;
+}
 #apr {
     display: inline-block;
     border: 2px solid black;
