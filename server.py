@@ -8,7 +8,7 @@ class ScoutServer(object):
 	def index(self):
 		table = ''
 		conn = sql.connect('data.db')
-		averages = conn.cursor().execute('SELECT * FROM averages').fetchall()
+		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
 		conn.close()
 		for team in averages:
 			table += '''
@@ -28,6 +28,16 @@ class ScoutServer(object):
 				<title>PiScout</title>
 				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
          		<link href="/static/css/style.css" rel="stylesheet">
+         		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+         		<script>if (typeof jQuery === 'undefined')
+				  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+				</script>
+				<script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+				<script>
+				$(document).ready(function() {{
+					$("table").tablesorter();
+				}});
+				</script>
 			</head>
 			<body>
 				<h1>PiScout</h1>
@@ -41,7 +51,7 @@ class ScoutServer(object):
 				</form>
 				<br><br>
 				<p class="main">Team Averages</p>
-				<table style="font-size: 140%;">
+				<table style="font-size: 140%;" class="tablesorter">
 					<thead><tr>
 						<th>Team</th>
 						<th>APR</th>
@@ -150,12 +160,12 @@ class ScoutServer(object):
 				</div>
 				<br>
 				<table>
-					<tr>
-						<td>Match</td>
-						<td>Auto</td>
-						<td>Stacks</td>
-						<td>Other Teleop</td>
-					</tr>{1}
+					<thead><tr>
+						<th>Match</th>
+						<th>Auto</th>
+						<th>Stacks</th>
+						<th>Other Teleop</th>
+					</tr></thead>{1}
 				</table>
 			</body>
 		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6])

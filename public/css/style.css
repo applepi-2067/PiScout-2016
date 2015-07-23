@@ -48,12 +48,16 @@ table {
     width: auto;
     margin: 0 auto;
     text-align: center;
+    border-collapse: collapse;
 }
 td {
-    border: 1px solid black
+    border: 1px solid black;
+    padding: 2px;
 }
 th {
-    border: 1px solid black
+    border: 1px solid black;
+    padding: 4px;
+    background-color: #e6EEEE;
 }
 a:link {
     color: #0000B8;
@@ -90,4 +94,31 @@ a:active {
 .statbox {
     line-height: 0.5em;
     margin: 0.68em;
+}
+
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+	padding-right: 20px;
+	padding-left: 6px;
+}
+table.tablesorter thead tr .header {
+	background-image: url(bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+}
+table tbody td {
+	padding: 2px;
+	background-color: #FFF;
+}
+table.tablesorter tbody tr.odd td {
+	background-color:#F0F0F6;
+}
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(asc.gif);
+}
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(desc.gif);
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+    background-color: #8dbdd8;
 }
