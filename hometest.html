@@ -1,0 +1,310 @@
+<html>
+    <head>
+        <title>PiScout</title>
+        <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+        <link href="./public/css/style2.css" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <script>
+        if (typeof jQuery === 'undefined')
+          document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+        </script>
+        <script type="text/javascript" src="./public/js/jquery.tablesorter.js"></script>
+        <script>
+        $(document).ready(function() {{
+            $("table").tablesorter();
+        }});
+        </script>
+    </head>
+    <body>
+	<div style="max-width: 1000px; margin: 0 auto;">
+		<br>
+        <div style="vertical-align:top; float:left; width: 300px;">
+            <h1>PiScout</h1>
+            <h2>FRC Team 2067</h2>
+            <br><br>
+            <p class="main">Search Team</p>
+            <form method="get" action="team">
+				<div>
+                <input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+                
+                <button class="submit" type="submit">Submit</button>
+				</div>
+            </form>
+            <br><br>
+			 <p class="main">Change Event</p>
+			<form method="get" action="">
+				<select class="fieldsm" name="e">
+				  <option value="cmp">World Championship</option>
+				  <option value="dcmp">District Championship</option>
+				  <option value="hart">Hartford</option>
+				  <option value="ride">Rhode Island</option>
+				  <option value="water">Waterbury</option>
+				</select>
+                <button class="submit" type="submit">Submit</button>
+            </form>
+			<br><br>
+            <p class="main">Compare</p>
+            <form method="get" action="compare">
+				<select class="fieldsm" name="t">
+				  <option value="team">Teams</option>
+				  <option value="alliance">Two alliances</option>
+				  <option value="event">Events</option>
+				</select>
+                <button class="submit" type="submit">Submit</button>
+            </form>
+			<br><br>
+            <p class="main">Admin Login</p>
+            <form method="post" action="login">
+                <input class="fieldsm" type="text" name="n" autocomplete="off"/>
+				<br>
+				<input class="fieldsm" type="password" name="n" autocomplete="off"/>
+                <br>
+                <button class="submit" type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div style="vertical-align:top; border 1px solid black; overflow: hidden">
+		 <table style="font-size: 140%;" class="tablesorter">
+            <thead><tr>
+                <th>Team</th>
+                <th>APR</th>
+                <th>Auto</th>
+                <th>Step</th>
+                <th>Tote</th>
+                <th>RC/Noodle</th>
+                <th>Coop</th>
+            </tr></thead>
+            <tbody>
+            <tr>
+				<td><a href="http://piscout.me/team?n=254">11</a></td>
+				<td>203</td>
+				<td>22.67</td>
+				<td>0.0</td>
+				<td>48.0</td>
+				<td>120.0</td>
+				<td>40.0</td>
+			</tr>
+
+			<tr>
+				<td><a href="http://piscout.me/team?n=2826">16</a></td>
+				<td>161</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>
+						<tr>
+				<td><a href="http://piscout.me/team?n=2826">25</a></td>
+				<td>43</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">48</a></td>
+				<td>32</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">58</a></td>
+				<td>88</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">67</a></td>
+				<td>43</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr><tr>
+				<td><a href="http://piscout.me/team?n=2826">95</a></td>
+				<td>23</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">111</a></td>
+				<td>81</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">118</a></td>
+				<td>102</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr><tr>
+				<td><a href="http://piscout.me/team?n=254">125</a></td>
+				<td>122</td>
+				<td>22.67</td>
+				<td>0.0</td>
+				<td>48.0</td>
+				<td>120.0</td>
+				<td>40.0</td>
+			</tr>
+
+			<tr>
+				<td><a href="http://piscout.me/team?n=2826">138</a></td>
+				<td>43</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>
+						<tr>
+				<td><a href="http://piscout.me/team?n=2826">148</a></td>
+				<td>138</td>
+				<td>29.5</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">173</a></td>
+				<td>102</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">175</a></td>
+				<td>65</td>
+				<td>24.5</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">177</a></td>
+				<td>45</td>
+				<td>29.75</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr><tr>
+				<td><a href="http://piscout.me/team?n=2826">228</a></td>
+				<td>22</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">230</a></td>
+				<td>61</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">330</a></td>
+				<td>42</td>
+				<td>20</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr><tr>
+				<td><a href="http://piscout.me/team?n=254">558</a></td>
+				<td>86</td>
+				<td>22.67</td>
+				<td>0.0</td>
+				<td>48.0</td>
+				<td>120.0</td>
+				<td>40.0</td>
+			</tr>
+
+			<tr>
+				<td><a href="http://piscout.me/team?n=2826">571</a></td>
+				<td>120</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>
+						<tr>
+				<td><a href="http://piscout.me/team?n=2826">610</a></td>
+				<td>181</td>
+				<td>0</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">865</a></td>
+				<td>61</td>
+				<td>1.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">971</a></td>
+				<td>102</td>
+				<td>0</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">1023</a></td>
+				<td>143</td>
+				<td>20</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr><tr>
+				<td><a href="http://piscout.me/team?n=2826">1114</a></td>
+				<td>111</td>
+				<td>2</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">1986</a></td>
+				<td>132</td>
+				<td>9.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>			<tr>
+				<td><a href="http://piscout.me/team?n=2826">2067</a></td>
+				<td>161</td>
+				<td>29.33</td>
+				<td>0.0</td>
+				<td>36.0</td>
+				<td>90.0</td>
+				<td>0.0</td>
+			</tr>
+            </tbody>
+        </table>
+        </div>
+		</div>
+  
+    </body>
+</html>                                                                                            

@@ -3,9 +3,24 @@ import sqlite3 as sql
 import os
 from ast import literal_eval
 
+CURRENT_EVENT = 'cmp'
+
 class ScoutServer(object):
 	@cherrypy.expose
-	def index(self):
+	def index(self, e='', n='', p='logout'):
+		print(str(n) + ' ' + str(p))
+		if n:
+			users = {'Jay':'elmodobouton'}
+			if n in users and users[n] == p:
+				cherrypy.session['auth'] = n
+			elif p=='logout' and 'auth' in cherrypy.session:
+				del cherrypy.session['auth']
+
+		if e != '':
+			cherrypy.session['event'] = e
+		elif 'event' not in cherrypy.session:
+			cherrypy.session['event'] = CURRENT_EVENT
+
 		table = ''
 		conn = sql.connect('data.db')
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
@@ -27,32 +42,63 @@ class ScoutServer(object):
 			<head>
 				<title>PiScout</title>
 				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
-         		<link href="/static/css/style.css" rel="stylesheet">
-         		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-         		<script>
-         		if (typeof jQuery === 'undefined')
+				<link href="./static/css/style.css" rel="stylesheet">
+				<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+				<script>
+				if (typeof jQuery === 'undefined')
 				  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
-         		</script>
-				<script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+				</script>
+				<script type="text/javascript" src="./static/js/jquery.tablesorter.js"></script>
 				<script>
 				$(document).ready(function() {{
 					$("table").tablesorter();
+					$("#{1}").attr("selected", "selected");
+					console.log($("#{1}").selected);
 				}});
 				</script>
 			</head>
 			<body>
-				<h1>PiScout</h1>
-				<h2>FRC Team 2067</h2>
-				<br><br>
-				<p class="main">Choose a Team</p>
-				<form method="get" action="team">
-					<input id="team" type="text" maxlength="4" name="n" autocomplete="off"/>
-					<br>
-					<button id="submit" type="submit">Submit</button>
-				</form>
-				<br><br>
-				<p class="main">Team Averages</p>
-				<table style="font-size: 140%;" class="tablesorter">
+			<div style="max-width: 1000px; margin: 0 auto;">
+				<br>
+				<div style="vertical-align:top; float:left; width: 300px;">
+					<h1>PiScout</h1>
+					<h2>FRC Team 2067</h2>
+					<br><br>
+					<p class="main">Search Team</p>
+					<form method="get" action="team">
+						<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+						<button class="submit" type="submit">Submit</button>
+					</form>
+					<br><br>
+					 <p class="main">Change Event</p>
+					<form method="post" action="">
+						<select class="fieldsm" name="e">
+						  <option id="cmp" value="cmp">World Championship</option>
+						  <option id="dcmp" value="dcmp">District Championship</option>
+						  <option id="hart" value="hart">Hartford</option>
+						  <option id="ride" value="ride">Rhode Island</option>
+						  <option id="water" value="water">Waterbury</option>
+						</select>
+						<button class="submit" type="submit">Submit</button>
+					</form>
+					<br><br>
+					<p class="main">Compare</p>
+					<form method="get" action="compare">
+						<select class="fieldsm" name="t">
+						  <option value="team">Teams</option>
+						  <option value="alliance">Alliances</option>
+						</select>
+						<button class="submit" type="submit">Submit</button>
+					</form>
+					<br><br>
+					<p class="main">Admin Login</p>
+					<form method="post" action="">
+					{2}
+					</form>
+				</div>
+
+				<div style="vertical-align:top; border 1px solid black; overflow: hidden">
+				 <table style="font-size: 140%;" class="tablesorter">
 					<thead><tr>
 						<th>Team</th>
 						<th>APR</th>
@@ -64,8 +110,19 @@ class ScoutServer(object):
 					</tr></thead>
 					<tbody>{0}</tbody>
 				</table>
+				</div>
+			</div>
 			</body>
-		</html>'''.format(table)
+		</html>'''.format(table, e, '''
+						<input class="fieldsm" type="text" name="n" autocomplete="off"/>
+						<br>
+						<input class="fieldsm" type="password" name="p" autocomplete="off"/>
+						<br>
+						<button class="submit" type="submit">Submit</button>
+						''' if 'auth' not in cherrypy.session else '''
+						<input class="fieldsm" type="text" name="n" value="{0}" readonly>
+						<button class="submit" type="submit">Logout</button>
+						'''.format(cherrypy.session['auth']))
 
 	@cherrypy.expose()
 	def team(self, n=2067):
@@ -273,8 +330,8 @@ class ScoutServer(object):
 				</script>
 			</head>
 			<body>
-				<h1>Team {0}</h1>
-				<h2>PiScout Database</h2>
+				<h1 class="big">Team {0}</h1>
+				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
 				<br><br>
 				<div style="text-align:center;">
 					<div id="apr">
@@ -304,8 +361,34 @@ class ScoutServer(object):
 			</body>
 		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'))
 
-	@cherrypy.expose
+	@cherrypy.expose()
+	def compare(self, t='team'):
+		return 		'''
+		<html>
+			<head>
+				<title>PiScout</title>
+				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+         		<link href="/static/css/style.css" rel="stylesheet">
+			</head>
+			<body>
+				<h1 class="big">Compare {0}s</h1>
+				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
+				<br><br>
+				<h2>things</h2>
+		</html>'''.format(t.capitalize())
+
+	@cherrypy.expose()
+	def teams(self, n1='', n2='', n3='', n4=''):
+		return 'nope'
+
+	@cherrypy.expose()
+	def alliances(self, a1='', a2='', a3='', b1='', b2='', b3=''):
+		return 'nope'
+
+	@cherrypy.expose()
 	def submit(self, data=''):
+		if data == '':
+			return "You shouldn't be here."
 		d = literal_eval(data)
 		conn = sql.connect('data.db')
 		cursor = conn.cursor()
@@ -352,7 +435,7 @@ class ScoutServer(object):
 																sum['tote'], sum['rc'], sum['coop'], apr))
 		conn.commit()
 		conn.close()
-		return data
+		return ""
 
 if not os.path.isfile('data.db'):
 	conn = sql.connect('data.db')

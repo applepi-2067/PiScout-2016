@@ -7,9 +7,12 @@ h1 {
     font-weight: normal;
     text-align: center;
     color: #B20000;
-    font-size: 6em;
+    font-size: 4em;
     line-height: 0.85em;
     margin: 0px;
+}
+.big {
+    font-size: 6em;
 }
 h2 {
     font-weight: normal;
@@ -26,19 +29,27 @@ form {
 }
 .main {
     text-align: center;
-    font-size: 36px;
+    font-size: 24px;
     line-height: 0em;
     margin: 0.65em
 }
-#submit {
+.submit {
     width: 250px;
-    height: 50px;
+    height: 35px;
     margin: 0.25em;
-    font-size: 32px;
+    font-size: 18px;
     font-family: 'Chau Philomene One', sans-serif;
 }
-#team {
-    font-size: 72px;
+.field {
+	vertical-align: top;
+    font-size: 36px;
+    text-align: center;
+    width: 250px;
+    background-color: #F9F9EC;
+    font-family: 'Chau Philomene One', sans-serif;
+}
+.fieldsm {
+    font-size: 18px;
     text-align: center;
     width: 250px;
     background-color: #F9F9EC;
