@@ -194,15 +194,17 @@ class ScoutServer(object):
 			else:
 				o += "totes equally from landfill/HP"
 			output += '''
-			<tr>
+			<tr {4}>
 				<td>{0}</td>
 				<td>{1}</td>
 				<td>{2}</td>
 				<td>{3}</td>
-			</tr>'''.format(e[1], a[:-2], s[:-2], o)
+				<td><a class="flag" href="javascript:flag({5}, {6});">X</a></td>
+			</tr>'''.format(e[1], a[:-2], s[:-2], o, 'style="color: #B20000"' if e[17] else '', e[1], e[17])
 			for key,val in dp.items():
 				dp[key] = round(val, 2)
-			dataset.append(dp)
+			if not e[17]:
+				dataset.append(dp)
 
 		dataset.reverse()
 		return '''
@@ -213,6 +215,11 @@ class ScoutServer(object):
          		<link href="/static/css/style.css" rel="stylesheet">
          		<script type="text/javascript" src="/static/js/amcharts.js"></script>
 				<script type="text/javascript" src="/static/js/serial.js"></script>
+				<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+				<script>
+				if (typeof jQuery === 'undefined')
+				  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+				</script>
 				<script>
 					var chart;
 					var graph;
@@ -325,6 +332,15 @@ class ScoutServer(object):
 						// WRITE
 						chart.write("chartdiv");
 					}});
+
+					function flag(m, f)
+					{{
+						$.post(
+							"flag",
+							{{num: {0}, match: m, flagval: f}}
+						);
+						window.location.reload();
+					}}
 				</script>
 			</head>
 			<body>
@@ -354,10 +370,22 @@ class ScoutServer(object):
 						<th>Auto</th>
 						<th>Stacks</th>
 						<th>Other Teleop</th>
+						<th>Flag</th>
 					</tr></thead>{1}
 				</table>
 			</body>
 		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'))
+
+	@cherrypy.expose()
+	def flag(self, num='', match='', flagval=0):
+		if not (num.isdigit() and match.isdigit()):
+			return '<img src="http://goo.gl/eAs7JZ" style="width: 1200px"></img>'
+		conn = sql.connect(self.datapath())
+		cursor = conn.cursor()
+		cursor.execute('UPDATE scout SET flag=? WHERE team=? AND match=?', (int(not int(flagval)),num,match))
+		conn.commit()
+		self.calcavg(num)
+		return ''
 
 	@cherrypy.expose()
 	def compare(self, t='team'):
@@ -390,55 +418,66 @@ class ScoutServer(object):
 	@cherrypy.expose()
 	def submit(self, data=''):
 		if data == '':
-			return "You shouldn't be here."
+			return '''
+				<h1>FATAL ERROR</h1>
+				<h3>DATA CORRUPTION</h3>
+				<p>Erasing database to prevent further damage to the system.</p>'''
+
 		d = literal_eval(data)
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
-		cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
+		cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
 			,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
-			+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'])))
+			+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'], 0)))
 		conn.commit()
+		conn.close()
 
-		entries = cursor.execute('SELECT * FROM scout WHERE team=? ORDER BY MATCH DESC', (d['team'],)).fetchall()
+		self.calcavg(d['team'])
+		return ''
 
+	def calcavg(self, n):
+		conn = sql.connect(self.datapath())
+		cursor = conn.cursor()
+		entries = cursor.execute('SELECT * FROM scout WHERE team=? AND flag=0 ORDER BY MATCH DESC', (n,)).fetchall()
 		sum = {'auto': 0, 'step': 0, 'tote': 0, 'rc': 0, 'coop': 0}
-		for e in entries:
-			if e[5]: #stacked?
-				sum['auto'] += 20
-			elif e[2] == 3: #number of totes
-				sum['auto'] += 6
-			elif e[2]:
-				sum['auto'] += 2*e[2]
-			if e[3]:
-				sum['auto'] += 8/3 * e[3]
-			if e[4]:
-				sum['step'] += e[4]
-			if e[6]:
-				sum['auto'] += 4/3
-			for stack in range(7, 13):
-				if e[stack] == 'None':
-					continue
-				st = literal_eval(e[stack])
-				if not st['capping']:
-					sum['tote'] += st['height'] * 2
-				if st['capped'] or st['capping']:
-					sum['rc'] += st['height'] * 4
-				if st['noodled']:
-					sum['rc'] += 6
-			if e[13]:
-				sum['coop'] += 10*e[13]
+		apr = 0
+		if entries:
+			for e in entries:
+				if e[5]: #stacked?
+					sum['auto'] += 20
+				elif e[2] == 3: #number of totes
+					sum['auto'] += 6
+				elif e[2]:
+					sum['auto'] += 2*e[2]
+				if e[3]:
+					sum['auto'] += 8/3 * e[3]
+				if e[4]:
+					sum['step'] += e[4]
+				if e[6]:
+					sum['auto'] += 4/3
+				for stack in range(7, 13):
+					if e[stack] == 'None':
+						continue
+					st = literal_eval(e[stack])
+					if not st['capping']:
+						sum['tote'] += st['height'] * 2
+					if st['capped'] or st['capping']:
+						sum['rc'] += st['height'] * 4
+					if st['noodled']:
+						sum['rc'] += 6
+				if e[13]:
+					sum['coop'] += 10*e[13]
 
-		for key,val in sum.items():
-			sum[key] = round(val/len(entries), 2)
-		apr = int(sum['auto']*1.2 + sum['step']*5 + sum['tote'] + sum['rc'] + sum['coop']*0.2)
+			for key,val in sum.items():
+				sum[key] = round(val/len(entries), 2)
+			apr = int(sum['auto']*1.2 + sum['step']*5 + sum['tote'] + sum['rc'] + sum['coop']*0.2)
 
-		cursor.execute('DELETE FROM averages WHERE team=?',(d['team'],))
-		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(d['team'], sum['auto'], sum['step'],
+		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
+		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(n, sum['auto'], sum['step'],
 																sum['tote'], sum['rc'], sum['coop'], apr))
 		conn.commit()
 		conn.close()
-		return ""
-	
+
 	def datapath(self):
 		if 'event' in cherrypy.session:
 			return 'data_' + cherrypy.session['event'] + '.db'
@@ -449,7 +488,7 @@ if not os.path.isfile(datapath):
 	conn = sql.connect(datapath)
 	conn.cursor().execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
 		,auto_RC_step integer,auto_stack integer,in_auto_zone integer,stack1 text,stack2 text,stack3 text,stack4 text
-		,stack5 text,stack6 text,coop integer,tele_RC_step integer,coop_stack integer,tote_loc integer)''')
+		,stack5 text,stack6 text,coop integer,tele_RC_step integer,coop_stack integer,tote_loc integer, flag integer)''')
 	conn.cursor().execute('''CREATE TABLE averages (team integer,auto real,step real,tote real,rc real
 													,coop real,apr integer)''')
 	conn.close()

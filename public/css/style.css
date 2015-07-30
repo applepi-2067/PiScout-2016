@@ -71,6 +71,11 @@ th {
     padding: 4px;
     background-color: #e6EEEE;
 }
+.flag {
+    font-weight:bold;
+    color:#B20000 !important;
+    font-size:16px;
+}
 a:link {
     color: #0000B8;
     text-decoration: none;
