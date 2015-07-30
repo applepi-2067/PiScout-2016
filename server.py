@@ -7,22 +7,19 @@ CURRENT_EVENT = 'cmp'
 
 class ScoutServer(object):
 	@cherrypy.expose
-	def index(self, e='', n='', p='logout'):
-		print(str(n) + ' ' + str(p))
-		if n:
-			users = {'Jay':'elmodobouton'}
-			if n in users and users[n] == p:
-				cherrypy.session['auth'] = n
-			elif p=='logout' and 'auth' in cherrypy.session:
-				del cherrypy.session['auth']
-
+	def index(self, e=''):
+		illegal = False
 		if e != '':
-			cherrypy.session['event'] = e
+			if os.path.isfile('data_' + e + '.db'):
+				cherrypy.session['event'] = e
+			else:
+				illegal = True
 		elif 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
 
+
 		table = ''
-		conn = sql.connect('data.db')
+		conn = sql.connect(self.datapath())
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
 		conn.close()
 		for team in averages:
@@ -54,6 +51,7 @@ class ScoutServer(object):
 					$("table").tablesorter();
 					$("#{1}").attr("selected", "selected");
 					console.log($("#{1}").selected);
+					{2}
 				}});
 				</script>
 			</head>
@@ -91,9 +89,13 @@ class ScoutServer(object):
 						<button class="submit" type="submit">Submit</button>
 					</form>
 					<br><br>
-					<p class="main">Admin Login</p>
-					<form method="post" action="">
-					{2}
+					<p class="main">View Matches</p>
+					<form method="get" action="match">
+						<select class="fieldsm" name="n">
+						  <option value="2067">Our matches</option>
+						  <option value="0">All matches</option>
+						</select>
+						<button class="submit" type="submit">Submit</button>
 					</form>
 				</div>
 
@@ -113,20 +115,16 @@ class ScoutServer(object):
 				</div>
 			</div>
 			</body>
-		</html>'''.format(table, e, '''
-						<input class="fieldsm" type="text" name="n" autocomplete="off"/>
-						<br>
-						<input class="fieldsm" type="password" name="p" autocomplete="off"/>
-						<br>
-						<button class="submit" type="submit">Submit</button>
-						''' if 'auth' not in cherrypy.session else '''
-						<input class="fieldsm" type="text" name="n" value="{0}" readonly>
-						<button class="submit" type="submit">Logout</button>
-						'''.format(cherrypy.session['auth']))
+		</html>'''.format(table, cherrypy.session['event'],
+						  '''alert("There is no data for that event.")''' if illegal else '')
 
 	@cherrypy.expose()
 	def team(self, n=2067):
-		conn = sql.connect('data.db')
+		if not n.isdigit():
+			raise cherrypy.HTTPRedirect('/')
+		if int(n)==666:
+			raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
+		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
 		entries = cursor.execute('SELECT * FROM scout WHERE team=? ORDER BY MATCH DESC', (n,)).fetchall()
 		averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
@@ -386,11 +384,15 @@ class ScoutServer(object):
 		return 'nope'
 
 	@cherrypy.expose()
+	def match(self, n='0'):
+		return 'nope'
+
+	@cherrypy.expose()
 	def submit(self, data=''):
 		if data == '':
 			return "You shouldn't be here."
 		d = literal_eval(data)
-		conn = sql.connect('data.db')
+		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
 		cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
 			,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
@@ -436,9 +438,15 @@ class ScoutServer(object):
 		conn.commit()
 		conn.close()
 		return ""
+	
+	def datapath(self):
+		if 'event' in cherrypy.session:
+			return 'data_' + cherrypy.session['event'] + '.db'
+		return 'data_' + CURRENT_EVENT + '.db'
 
-if not os.path.isfile('data.db'):
-	conn = sql.connect('data.db')
+datapath = 'data_' + CURRENT_EVENT + '.db'
+if not os.path.isfile(datapath):
+	conn = sql.connect(datapath)
 	conn.cursor().execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
 		,auto_RC_step integer,auto_stack integer,in_auto_zone integer,stack1 text,stack2 text,stack3 text,stack4 text
 		,stack5 text,stack6 text,coop integer,tele_RC_step integer,coop_stack integer,tote_loc integer)''')
