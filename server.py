@@ -2,19 +2,20 @@ import cherrypy
 import sqlite3 as sql
 import os
 from ast import literal_eval
+import requests
 
-CURRENT_EVENT = 'cmp'
+CURRENT_EVENT = '2015gal'
 
 class ScoutServer(object):
 	@cherrypy.expose
 	def index(self, e=''):
-		illegal = False
+		illegal = ''
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
 				cherrypy.session['event'] = e
 			else:
-				illegal = True
-		elif 'event' not in cherrypy.session:
+				illegal = e
+		if 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
 
 
@@ -71,11 +72,11 @@ class ScoutServer(object):
 					 <p class="main">Change Event</p>
 					<form method="post" action="">
 						<select class="fieldsm" name="e">
-						  <option id="cmp" value="cmp">World Championship</option>
-						  <option id="dcmp" value="dcmp">District Championship</option>
-						  <option id="hart" value="hart">Hartford</option>
-						  <option id="ride" value="ride">Rhode Island</option>
-						  <option id="water" value="water">Waterbury</option>
+						  <option id="2015gal" value="2015gal">Galileo Division</option>
+						  <option id="2015necmp" value="2015necmp">District Championship</option>
+						  <option id="2015cthar" value="2015cthar">Hartford</option>
+						  <option id="2015rismi" value="2015rismi">Rhode Island</option>
+						  <option id="2015ctwat" value="2015ctwat">Waterbury</option>
 						</select>
 						<button class="submit" type="submit">Submit</button>
 					</form>
@@ -90,7 +91,7 @@ class ScoutServer(object):
 					</form>
 					<br><br>
 					<p class="main">View Matches</p>
-					<form method="get" action="match">
+					<form method="get" action="matches">
 						<select class="fieldsm" name="n">
 						  <option value="2067">Our matches</option>
 						  <option value="0">All matches</option>
@@ -116,7 +117,7 @@ class ScoutServer(object):
 			</div>
 			</body>
 		</html>'''.format(table, cherrypy.session['event'],
-						  '''alert("There is no data for that event.")''' if illegal else '')
+						  '''alert('There is no data for the event "{}"')'''.format(illegal) if illegal else '')
 
 	@cherrypy.expose()
 	def team(self, n=2067):
@@ -400,20 +401,134 @@ class ScoutServer(object):
 				<h1 class="big">Compare {0}s</h1>
 				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
 				<br><br>
-				<h2>things</h2>
-		</html>'''.format(t.capitalize())
+				{1}
+		</html>'''.format(t.capitalize(), '''
+				<p class="main">Enter up to 4 teams</p>
+				<form method="get" action="team">
+					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+					<button class="submit" type="submit">Submit</button>
+				</form>
+		''' if t=='team' else '''
+				<p class="main">Enter two alliances</p>
+				<form method="get" action="team" style="text-align: center; width: 800px; margin: 0 auto;">
+					<div style="display: table;">
+						<div style="display:table-cell;">
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+						</div>
+						<div style="display:table-cell;">
+							<p style="font-size: 64px; line-height: 2.4em;">vs</p>
+						</div>
+						<div style="display:table-cell;">
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+						</div>
+					</div>
+					<button class="submit" type="submit">Submit</button>
+				</form>''')
 
 	@cherrypy.expose()
 	def teams(self, n1='', n2='', n3='', n4=''):
+		raise cherrypy.HTTPError(501, "Comparison isn't done yet.")
 		return 'nope'
 
 	@cherrypy.expose()
-	def alliances(self, a1='', a2='', a3='', b1='', b2='', b3=''):
+	def alliances(self, b1='', b2='', b3='', r1='', r2='', r3=''):
+		raise cherrypy.HTTPError(501, "Comparison isn't done yet.")
 		return 'nope'
 
 	@cherrypy.expose()
-	def match(self, n='0'):
-		return 'nope'
+	def matches(self, n=0):
+		n = int(n)
+		if 'event' in cherrypy.session:
+			event = cherrypy.session['event']
+		else:
+			event = CURRENT_EVENT
+		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
+		if n:
+			m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
+		else:
+			m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+		if m.status_code == 400:
+			return "You botched it."
+		output = ''
+		m = m.json()
+		for match in m:
+			match['value'] = match['match_number']
+			type = match['comp_level']
+			if type == 'qf':
+				match['value'] += 1000
+			elif type == 'sf':
+				match['value'] += 2000
+			elif type == 'f':
+				match['value'] += 3000
+
+		m = sorted(m, key=lambda k: k['value'])
+		for match in m:
+			if match['comp_level'] != 'qm':
+				match['num'] = match['comp_level'].upper() + ' ' + str(match['match_number'])
+			else:
+				match['num'] = match['match_number']
+			output += '''
+			<tr>
+				<td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
+				<td><a href="team?n={1}">{1}</a></td>
+				<td><a href="team?n={2}">{2}</a></td>
+				<td><a href="team?n={3}">{3}</a></td>
+				<td><a href="team?n={4}">{4}</a></td>
+				<td><a href="team?n={5}">{5}</a></td>
+				<td><a href="team?n={6}">{6}</a></td>
+				<td>{7}</td>
+				<td>{8}</td>
+			</tr>
+			'''.format(match['num'], match['alliances']['blue']['teams'][0][3:],
+						match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:],
+						match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:],
+						match['alliances']['red']['teams'][2][3:], match['alliances']['blue']['score'],
+						match['alliances']['red']['score'])
+
+		return '''
+			<html>
+			<head>
+				<title>PiScout</title>
+				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+         		<link href="/static/css/style.css" rel="stylesheet">
+         		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+				<script>
+				if (typeof jQuery === 'undefined')
+				  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+
+				</script>
+			</head>
+			<body>
+				<h1>Matches{0}</h1>
+				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
+				<br><br>
+				<table>
+				<thead><tr>
+					<th>Match</th>
+					<th>Blue 1</th>
+					<th>Blue 2</th>
+					<th>Blue 3</th>
+					<th>Red 1</th>
+					<th>Red 2</th>
+					<th>Red 3</th>
+					<th>Blue Score</th>
+					<th>Red Score</th>
+				</tr></thead>
+				<tbody>
+				{1}
+				</tbody>
+				</table>
+			</body>
+			</html>
+		'''.format(": {}".format(n) if n else "", output)
+
 
 	@cherrypy.expose()
 	def submit(self, data=''):
