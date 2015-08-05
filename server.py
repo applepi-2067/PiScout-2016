@@ -12,12 +12,12 @@ class ScoutServer(object):
 		illegal = ''
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
+				self.getalbum(refresh=True)
 				cherrypy.session['event'] = e
 			else:
 				illegal = e
 		if 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
-
 
 		table = ''
 		conn = sql.connect(self.datapath())
@@ -208,6 +208,15 @@ class ScoutServer(object):
 				dataset.append(dp)
 
 		dataset.reverse()
+
+		img = self.getimage(n)
+		imcode = ''
+		if img:
+			imcode = '''<br>
+			<div style="text-align: center">
+			<p style="font-size: 32px; line-height: 0em;">Image</p>
+			<img src={}></img>
+			</div>'''.format(img)
 		return '''
 		<html>
 			<head>
@@ -374,8 +383,11 @@ class ScoutServer(object):
 						<th>Flag</th>
 					</tr></thead>{1}
 				</table>
+				{9}
+				<br>
+				<p style="text-align: center; font-size: 24px"><a href="/matches?n={0}">View this team's match schedule</a></p>
 			</body>
-		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'))
+		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'),imcode)
 
 	@cherrypy.expose()
 	def flag(self, num='', match='', flagval=0):
@@ -404,29 +416,29 @@ class ScoutServer(object):
 				{1}
 		</html>'''.format(t.capitalize(), '''
 				<p class="main">Enter up to 4 teams</p>
-				<form method="get" action="team">
-					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-					<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+				<form method="get" action="teams">
+					<input class="field" type="text" maxlength="4" name="n1" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n2" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n3" autocomplete="off"/>
+					<input class="field" type="text" maxlength="4" name="n4" autocomplete="off"/>
 					<button class="submit" type="submit">Submit</button>
 				</form>
 		''' if t=='team' else '''
 				<p class="main">Enter two alliances</p>
-				<form method="get" action="team" style="text-align: center; width: 800px; margin: 0 auto;">
+				<form method="get" action="alliances" style="text-align: center; width: 800px; margin: 0 auto;">
 					<div style="display: table;">
 						<div style="display:table-cell;">
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="b1" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="b2" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="b3" autocomplete="off"/>
 						</div>
 						<div style="display:table-cell;">
 							<p style="font-size: 64px; line-height: 2.4em;">vs</p>
 						</div>
 						<div style="display:table-cell;">
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
-							<input class="field" type="text" maxlength="4" name="n" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="r1" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="r2" autocomplete="off"/>
+							<input class="field" type="text" maxlength="4" name="r3" autocomplete="off"/>
 						</div>
 					</div>
 					<button class="submit" type="submit">Submit</button>
@@ -445,10 +457,7 @@ class ScoutServer(object):
 	@cherrypy.expose()
 	def matches(self, n=0):
 		n = int(n)
-		if 'event' in cherrypy.session:
-			event = cherrypy.session['event']
-		else:
-			event = CURRENT_EVENT
+		event = self.getevent()
 		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
 		if n:
 			m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
@@ -498,12 +507,6 @@ class ScoutServer(object):
 				<title>PiScout</title>
 				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
          		<link href="/static/css/style.css" rel="stylesheet">
-         		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-				<script>
-				if (typeof jQuery === 'undefined')
-				  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
-
-				</script>
 			</head>
 			<body>
 				<h1>Matches{0}</h1>
@@ -594,11 +597,34 @@ class ScoutServer(object):
 		conn.close()
 
 	def datapath(self):
-		if 'event' in cherrypy.session:
-			return 'data_' + cherrypy.session['event'] + '.db'
-		return 'data_' + CURRENT_EVENT + '.db'
+		return 'data_' + self.getevent() + '.db'
+
+	def getevent(self):
+		if 'event' not in cherrypy.session:
+			cherrypy.session['event'] = CURRENT_EVENT
+		return cherrypy.session['event']
+
+	def getalbum(self, refresh=False):
+		if refresh or ('album' not in cherrypy.session):
+			headers = {"GData-Version": "2"}
+			usr = requests.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
+			for album in usr['feed']['entry']:
+				if album['title']['$t'] == self.getevent():
+					cherrypy.session['album'] = album['id']['$t'].replace('entry', 'feed')
+		return cherrypy.session['album']
+
+	def getimage(self, team):
+		headers = {"GData-Version": "2"}
+		images = requests.get(self.getalbum(), params=headers).json()
+		if 'entry' in images['feed']:
+			for img in images['feed']['entry']:
+				if img['title']['$t'].split('.')[0] == str(team):
+					return img['content']['src']
+		return None
+	#END OF CLASS
 
 datapath = 'data_' + CURRENT_EVENT + '.db'
+
 if not os.path.isfile(datapath):
 	conn = sql.connect(datapath)
 	conn.cursor().execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
@@ -624,4 +650,6 @@ conf = {
 
 #start method only to be used on the local version
 def start():
+
 	cherrypy.quickstart(ScoutServer(), '/', conf)
+
