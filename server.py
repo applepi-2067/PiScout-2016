@@ -209,14 +209,17 @@ class ScoutServer(object):
 
 		dataset.reverse()
 
-		img = self.getimage(n)
 		imcode = ''
-		if img:
-			imcode = '''<br>
-			<div style="text-align: center">
-			<p style="font-size: 32px; line-height: 0em;">Image</p>
-			<img src={}></img>
-			</div>'''.format(img)
+		headers = {"GData-Version": "2"}
+		images = requests.get(self.getalbum(), params=headers).json()
+		if 'entry' in images['feed']:
+			for img in images['feed']['entry']:
+				if img['title']['$t'].split('.')[0] == str(n):
+					imcode = '''<br>
+						<div style="text-align: center">
+						<p style="font-size: 32px; line-height: 0em;">Image</p>
+						<img src={}></img>
+						</div>'''.format(img['content']['src'])
 		return '''
 		<html>
 			<head>
@@ -446,13 +449,156 @@ class ScoutServer(object):
 
 	@cherrypy.expose()
 	def teams(self, n1='', n2='', n3='', n4=''):
-		raise cherrypy.HTTPError(501, "Comparison isn't done yet.")
-		return 'nope'
+		nums = [n1, n2, n3, n4]
+		averages = []
+		conn = sql.connect(self.datapath())
+		cursor = conn.cursor()
+		output = ''
+		for n in nums:
+			if not n:
+				continue
+			if not n.isdigit():
+				raise cherrypy.HTTPError(400, "You fool! Enter NUMBERS, not letters.")
+			average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+			assert len(average) < 2
+			if len(average):
+				entry = average[0]
+			else:
+				entry = [0]*7
+			output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
+							<p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
+							<div id="apr">
+								<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+								<p style="font-size: 400%; line-height: 0em">{6}</p>
+							</div>
+							<div id="stats">
+								<p class="statbox" style="font-weight:bold">Match Averages:</p>
+								<p class="statbox">Auto points: {1}</p>
+								<p class="statbox">Step RCs: {2}</p>
+								<p class="statbox">Tote points: {3}</p>
+								<p class="statbox">RC/noodle points: {4}</p>
+								<p class="statbox">Coop points: {5}</p>
+							</div>
+						</div>'''.format(n, *entry[1:]) #unpack the elements
+		conn.close()
+
+		imcode = ''
+		headers = {"GData-Version": "2"}
+		images = requests.get(self.getalbum(), params=headers).json()
+		if 'entry' in images['feed']:
+			for img in images['feed']['entry']:
+				team = img['title']['$t'].split('.')[0]
+				if team in nums:
+					imcode += '''
+						<div style="text-align: center; display: inline-block;">
+						<p style="font-size: 32px; line-height: 0em;">Team {0}</p>
+						<img src={1}></img>
+						</div>'''.format(team, img['content']['src'])
+
+		return '''
+		<html>
+			<head>
+				<title>PiScout</title>
+				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+         		<link href="/static/css/style.css" rel="stylesheet">
+			</head>
+			<body>
+				<h1 class="big">Compare Teams</h1>
+				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
+				<br><br>
+				<div style="margin: 0 auto; text-align: center; max-width: 900px;">
+				{0}
+				<br><br><br>
+				{1}
+				</div>
+			</body>
+		</html>'''.format(output, imcode)
 
 	@cherrypy.expose()
 	def alliances(self, b1='', b2='', b3='', r1='', r2='', r3=''):
-		raise cherrypy.HTTPError(501, "Comparison isn't done yet.")
-		return 'nope'
+		nums = [b1, b2, b3, r1, r2, r3]
+		averages = []
+		conn = sql.connect(self.datapath())
+		cursor = conn.cursor()
+		output = '''<div style="display: table">
+				        <div style="display: table-cell;">
+				        <p style="font-size: 36px; color: #0000B8; line-height: 0;">Blue Alliance</p>
+				        <div id="apr">
+							<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+							<p style="font-size: 400%; line-height: 0em">{0}</p>
+							<br>
+						</div>'''
+		apr = []
+		for i,n in enumerate(nums):
+			if i == 3:
+				output+='''</div>
+						<div style="display: table-cell;">
+						<p style="font-size: 36px; color: #B20000; line-height: 0;">Red Alliance</p>
+						<div id="apr">
+							<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+							<p style="font-size: 400%; line-height: 0em">{1}</p>
+							<br>
+						</div>'''
+			if not n.isdigit():
+				raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
+			average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+			assert len(average) < 2
+			if len(average):
+				entry = average[0]
+			else:
+				entry = [0]*7
+			apr.append(entry[6])
+			output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
+							<p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
+							<div id="apr">
+								<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+								<p style="font-size: 400%; line-height: 0em">{6}</p>
+							</div>
+							<div id="stats">
+								<p class="statbox" style="font-weight:bold">Match Averages:</p>
+								<p class="statbox">Auto points: {1}</p>
+								<p class="statbox">Step RCs: {2}</p>
+								<p class="statbox">Tote points: {3}</p>
+								<p class="statbox">RC/noodle points: {4}</p>
+								<p class="statbox">Coop points: {5}</p>
+							</div>
+						</div>'''.format(n, *entry[1:]) #unpack the elements
+		output += "</div></div>"
+		output = output.format(sum(apr[0:3]), sum(apr[3:6]))
+		conn.close()
+
+		imcode = ''
+		headers = {"GData-Version": "2"}
+		images = requests.get(self.getalbum(), params=headers).json()
+		if 'entry' in images['feed']:
+			for a in [0, 3]:
+				for img in images['feed']['entry']:
+					team = img['title']['$t'].split('.')[0]
+					if team in nums[a:a+3]:
+						imcode += '''
+							<div style="text-align: center; display: inline-block;">
+							<p style="font-size: 32px; line-height: 0em; color: {2}">Team {0}</p>
+							<img src={1}></img>
+							</div>'''.format(team, img['content']['src'], "#0000B8" if a==0 else "#B20000")
+
+		return '''
+		<html>
+			<head>
+				<title>PiScout</title>
+				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+         		<link href="/static/css/style.css" rel="stylesheet">
+			</head>
+			<body>
+				<h1 class="big">Compare Teams</h1>
+				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
+				<br><br>
+				<div style="margin: 0 auto; text-align: center; max-width: 1000px;">
+				{0}
+				<br><br><br>
+				{1}
+				</div>
+			</body>
+		</html>'''.format(output, imcode)
 
 	@cherrypy.expose()
 	def matches(self, n=0):
@@ -612,15 +758,6 @@ class ScoutServer(object):
 				if album['title']['$t'] == self.getevent():
 					cherrypy.session['album'] = album['id']['$t'].replace('entry', 'feed')
 		return cherrypy.session['album']
-
-	def getimage(self, team):
-		headers = {"GData-Version": "2"}
-		images = requests.get(self.getalbum(), params=headers).json()
-		if 'entry' in images['feed']:
-			for img in images['feed']['entry']:
-				if img['title']['$t'].split('.')[0] == str(team):
-					return img['content']['src']
-		return None
 	#END OF CLASS
 
 datapath = 'data_' + CURRENT_EVENT + '.db'
