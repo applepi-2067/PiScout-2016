@@ -625,7 +625,7 @@ class ScoutServer(object):
          		<link href="/static/css/style.css" rel="stylesheet">
 			</head>
 			<body>
-				<h1 class="big">Compare Teams</h1>
+				<h1 class="big">Compare Alliances</h1>
 				<h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
 				<br><br>
 				<div style="margin: 0 auto; text-align: center; max-width: 1000px;">
