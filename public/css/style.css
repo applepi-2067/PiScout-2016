@@ -110,6 +110,16 @@ a:active {
     vertical-align: top;
     background-color:#F4F4F9
 }
+.commentbox {
+    border: 2px solid black;
+    text-align: center;
+    background-color:#F4F4F9;
+    margin: 4px;
+}
+.commentbox p {
+    margin: 2px;
+    text-align: left;
+}
 .statbox {
     line-height: 0.5em;
     margin: 0.68em;
@@ -137,4 +147,11 @@ table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSo
 img {
     max-width: 400px;
     max-height: 500px;
+}
+textarea {
+    resize: vertical;
+    margin: 0 auto;
+    width: 600px;
+    font-family: 'Chau Philomene One', sans-serif;
+    font-size: 16px;
 }

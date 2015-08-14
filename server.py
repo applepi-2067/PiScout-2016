@@ -134,7 +134,15 @@ class ScoutServer(object):
 			sum = averages[0]
 		else:
 			sum = [0]*7
+
+		comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
 		conn.close()
+
+		commentstr = ''
+		for comment in comments:
+			commentstr += '<div class="commentbox"><p>{}</p></div>'.format(comment[1])
+
+
 		output = ''
 		dataset = []
 		for e in entries:
@@ -388,9 +396,19 @@ class ScoutServer(object):
 				</table>
 				{9}
 				<br>
+				<div style="text-align: center; max-width: 700px; margin: 0 auto;">
+					<p style="font-size: 32px; line-height: 0em;">Comments</p>
+					{10}
+					<form style="width: 100%; max-width: 700px;" method="post" action="submit">
+						<input name="team" value="{0}" hidden/>
+						<textarea name="comment" rows="3"></textarea>
+						<button class="submit" type="submit">Submit</button>
+					</form>
+				</div>
+				<br>
 				<p style="text-align: center; font-size: 24px"><a href="/matches?n={0}">View this team's match schedule</a></p>
 			</body>
-		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'),imcode)
+		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'),imcode, commentstr)
 
 	@cherrypy.expose()
 	def flag(self, num='', match='', flagval=0):
@@ -680,16 +698,26 @@ class ScoutServer(object):
 
 
 	@cherrypy.expose()
-	def submit(self, data=''):
-		if data == '':
+	def submit(self, data='', team='', comment=''):
+		if not (data or team):
 			return '''
 				<h1>FATAL ERROR</h1>
 				<h3>DATA CORRUPTION</h3>
 				<p>Erasing database to prevent further damage to the system.</p>'''
 
-		d = literal_eval(data)
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
+
+		if team:
+			if not comment:
+				conn.close()
+				raise cherrypy.HTTPRedirect('/team?n=' + str(team))
+			cursor.execute('INSERT INTO comments VALUES (?, ?)', (team, comment))
+			conn.commit()
+			conn.close()
+			raise cherrypy.HTTPRedirect('/team?n=' + str(team))
+
+		d = literal_eval(data)
 		cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
 			,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
 			+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'], 0)))
@@ -764,11 +792,13 @@ datapath = 'data_' + CURRENT_EVENT + '.db'
 
 if not os.path.isfile(datapath):
 	conn = sql.connect(datapath)
-	conn.cursor().execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
+	cursor = conn.cursor()
+	cursor.execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
 		,auto_RC_step integer,auto_stack integer,in_auto_zone integer,stack1 text,stack2 text,stack3 text,stack4 text
 		,stack5 text,stack6 text,coop integer,tele_RC_step integer,coop_stack integer,tote_loc integer, flag integer)''')
-	conn.cursor().execute('''CREATE TABLE averages (team integer,auto real,step real,tote real,rc real
+	cursor.execute('''CREATE TABLE averages (team integer,auto real,step real,tote real,rc real
 													,coop real,apr integer)''')
+	cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
 	conn.close()
 
 conf = {
@@ -787,6 +817,5 @@ conf = {
 
 #start method only to be used on the local version
 def start():
-
 	cherrypy.quickstart(ScoutServer(), '/', conf)
 
