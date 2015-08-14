@@ -16,3 +16,5 @@ To run the program, make sure you have these modules:
 - Requests
 
 For Windows users, you can use the .whl files provided in the zip to install these libraries. (using `pip install`)
+
+To start the program/local server, run main.py
