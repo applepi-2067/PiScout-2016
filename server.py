@@ -4,11 +4,14 @@ import os
 from ast import literal_eval
 import requests
 
+# Update this value before every event
 CURRENT_EVENT = '2015gal'
 
 class ScoutServer(object):
+
 	@cherrypy.expose
 	def index(self, e=''):
+		#First part is to handle event selection. When the event is changed, a POST request is sent here.
 		illegal = ''
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
@@ -19,6 +22,7 @@ class ScoutServer(object):
 		if 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
 
+		#This secction generates the table of averages
 		table = ''
 		conn = sql.connect(self.datapath())
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
@@ -35,6 +39,7 @@ class ScoutServer(object):
 				<td>{6}</td>
 			</tr>
 			'''.format(team[0], team[6], team[1], team[2], team[3], team[4], team[5])
+
 		return '''
 		<html>
 			<head>
@@ -119,6 +124,7 @@ class ScoutServer(object):
 		</html>'''.format(table, cherrypy.session['event'],
 						  '''alert('There is no data for the event "{}"')'''.format(illegal) if illegal else '')
 
+	# Show a detailed summary for a given team
 	@cherrypy.expose()
 	def team(self, n=2067):
 		if not n.isdigit():
@@ -129,20 +135,21 @@ class ScoutServer(object):
 		cursor = conn.cursor()
 		entries = cursor.execute('SELECT * FROM scout WHERE team=? ORDER BY MATCH DESC', (n,)).fetchall()
 		averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
-		assert len(averages) < 2
+		assert len(averages) < 2 #ensure there aren't two entries for one team
 		if len(averages):
 			sum = averages[0]
 		else:
-			sum = [0]*7
+			sum = [0]*7 #generate zeros if no data exists for the team yet
 
 		comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
 		conn.close()
 
+		# Generate html for comments section
 		commentstr = ''
 		for comment in comments:
 			commentstr += '<div class="commentbox"><p>{}</p></div>'.format(comment[1])
 
-
+		#Iterate through all the data entries and generate some text to go in the main table
 		output = ''
 		dataset = []
 		for e in entries:
@@ -185,6 +192,7 @@ class ScoutServer(object):
 					s += '/noodled'
 				s += '; '
 
+			#tote location
 			o = ''
 			if e[13]:
 				o += str(e[13]) + ' coop totes; '
@@ -215,8 +223,7 @@ class ScoutServer(object):
 			if not e[17]:
 				dataset.append(dp)
 
-		dataset.reverse()
-
+		#Grab the image from picasa
 		imcode = ''
 		headers = {"GData-Version": "2"}
 		images = requests.get(self.getalbum(), params=headers).json()
@@ -410,6 +417,7 @@ class ScoutServer(object):
 			</body>
 		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'),imcode, commentstr)
 
+	# Called to flag a data entry
 	@cherrypy.expose()
 	def flag(self, num='', match='', flagval=0):
 		if not (num.isdigit() and match.isdigit()):
@@ -421,6 +429,7 @@ class ScoutServer(object):
 		self.calcavg(num)
 		return ''
 
+	# Input interface to compare teams or alliances
 	@cherrypy.expose()
 	def compare(self, t='team'):
 		return 		'''
@@ -465,6 +474,7 @@ class ScoutServer(object):
 					<button class="submit" type="submit">Submit</button>
 				</form>''')
 
+	# Output for team comparison
 	@cherrypy.expose()
 	def teams(self, n1='', n2='', n3='', n4=''):
 		nums = [n1, n2, n3, n4]
@@ -483,6 +493,7 @@ class ScoutServer(object):
 				entry = average[0]
 			else:
 				entry = [0]*7
+			# Add a data entry for each team
 			output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
 							<p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
 							<div id="apr">
@@ -500,6 +511,7 @@ class ScoutServer(object):
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		conn.close()
 
+		# Get all the images
 		imcode = ''
 		headers = {"GData-Version": "2"}
 		images = requests.get(self.getalbum(), params=headers).json()
@@ -532,12 +544,15 @@ class ScoutServer(object):
 			</body>
 		</html>'''.format(output, imcode)
 
+	# Output for alliance comparison
 	@cherrypy.expose()
 	def alliances(self, b1='', b2='', b3='', r1='', r2='', r3=''):
 		nums = [b1, b2, b3, r1, r2, r3]
 		averages = []
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
+		#start a div table for the comparison
+		#to later be formatted with sum APR
 		output = '''<div style="display: table">
 				        <div style="display: table-cell;">
 				        <p style="font-size: 36px; color: #0000B8; line-height: 0;">Blue Alliance</p>
@@ -547,7 +562,9 @@ class ScoutServer(object):
 							<br>
 						</div>'''
 		apr = []
+		#iterate through all six teams
 		for i,n in enumerate(nums):
+			#at halfway pointm switch to the second row
 			if i == 3:
 				output+='''</div>
 						<div style="display: table-cell;">
@@ -585,10 +602,12 @@ class ScoutServer(object):
 		output = output.format(sum(apr[0:3]), sum(apr[3:6]))
 		conn.close()
 
+		#get all six images
 		imcode = ''
 		headers = {"GData-Version": "2"}
 		images = requests.get(self.getalbum(), params=headers).json()
 		if 'entry' in images['feed']:
+			#outer loop to process the two alliances separately
 			for a in [0, 3]:
 				for img in images['feed']['entry']:
 					team = img['title']['$t'].split('.')[0]
@@ -618,19 +637,23 @@ class ScoutServer(object):
 			</body>
 		</html>'''.format(output, imcode)
 
+	# Lists schedule data from TBA
 	@cherrypy.expose()
 	def matches(self, n=0):
 		n = int(n)
 		event = self.getevent()
 		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
 		if n:
+			#request a specific team
 			m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
 		else:
+			#get all the matches from this event
 			m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
 		if m.status_code == 400:
 			return "You botched it."
 		output = ''
 		m = m.json()
+		#assign weights, so we can sort the matches
 		for match in m:
 			match['value'] = match['match_number']
 			type = match['comp_level']
@@ -696,7 +719,7 @@ class ScoutServer(object):
 			</html>
 		'''.format(": {}".format(n) if n else "", output)
 
-
+	# Used by the scanning program to submit data, and used by comment system to submit data
 	@cherrypy.expose()
 	def submit(self, data='', team='', comment=''):
 		if not (data or team):
@@ -727,12 +750,14 @@ class ScoutServer(object):
 		self.calcavg(d['team'])
 		return ''
 
+	# Calculates average scores for a team
 	def calcavg(self, n):
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
 		entries = cursor.execute('SELECT * FROM scout WHERE team=? AND flag=0 ORDER BY MATCH DESC', (n,)).fetchall()
 		sum = {'auto': 0, 'step': 0, 'tote': 0, 'rc': 0, 'coop': 0}
 		apr = 0
+		# Iterate through all entries (if any exist) and sum all categories
 		if entries:
 			for e in entries:
 				if e[5]: #stacked?
@@ -760,24 +785,32 @@ class ScoutServer(object):
 				if e[13]:
 					sum['coop'] += 10*e[13]
 
+			# take the average (divide by number of entries)
 			for key,val in sum.items():
 				sum[key] = round(val/len(entries), 2)
+
+			# formula for calculating APR
 			apr = int(sum['auto']*1.2 + sum['step']*5 + sum['tote'] + sum['rc'] + sum['coop']*0.2)
 
+		#replace the data entry with a new one
 		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
 		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(n, sum['auto'], sum['step'],
 																sum['tote'], sum['rc'], sum['coop'], apr))
 		conn.commit()
 		conn.close()
 
+	# Return the path to the database for this event
 	def datapath(self):
 		return 'data_' + self.getevent() + '.db'
 
+	# Return the selected event
 	def getevent(self):
 		if 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
 		return cherrypy.session['event']
 
+	# Return the URL for a picasa web album
+	# Refreshing this will request a new album (if event is changed, for example)
 	def getalbum(self, refresh=False):
 		if refresh or ('album' not in cherrypy.session):
 			headers = {"GData-Version": "2"}
@@ -788,9 +821,11 @@ class ScoutServer(object):
 		return cherrypy.session['album']
 	#END OF CLASS
 
+# Execution starts here
 datapath = 'data_' + CURRENT_EVENT + '.db'
 
 if not os.path.isfile(datapath):
+	# Generate a new database with the three tables
 	conn = sql.connect(datapath)
 	cursor = conn.cursor()
 	cursor.execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
