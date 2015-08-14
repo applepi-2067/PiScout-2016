@@ -837,7 +837,6 @@ class ScoutServer(object):
 			#stupid lazy solution for local mode
 			a = requests.get('http://127.0.0.1:8000/submit?data=json')
 			cherrypy.session['album'] = 'http://127.0.0.1:8000/submit?data=json'
-		print(a.content)
 		return a
 	#END OF CLASS
 
