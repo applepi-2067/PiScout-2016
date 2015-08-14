@@ -8,7 +8,6 @@ import requests
 CURRENT_EVENT = '2015gal'
 
 class ScoutServer(object):
-
 	@cherrypy.expose
 	def index(self, e=''):
 		#First part is to handle event selection. When the event is changed, a POST request is sent here.
@@ -226,7 +225,7 @@ class ScoutServer(object):
 		#Grab the image from picasa
 		imcode = ''
 		headers = {"GData-Version": "2"}
-		images = requests.get(self.getalbum(), params=headers).json()
+		images = self.get(self.getalbum(), params=headers).json()
 		if 'entry' in images['feed']:
 			for img in images['feed']['entry']:
 				if img['title']['$t'].split('.')[0] == str(n):
@@ -514,7 +513,7 @@ class ScoutServer(object):
 		# Get all the images
 		imcode = ''
 		headers = {"GData-Version": "2"}
-		images = requests.get(self.getalbum(), params=headers).json()
+		images = self.get(self.getalbum(), params=headers).json()
 		if 'entry' in images['feed']:
 			for img in images['feed']['entry']:
 				team = img['title']['$t'].split('.')[0]
@@ -605,7 +604,7 @@ class ScoutServer(object):
 		#get all six images
 		imcode = ''
 		headers = {"GData-Version": "2"}
-		images = requests.get(self.getalbum(), params=headers).json()
+		images = self.get(self.getalbum(), params=headers).json()
 		if 'entry' in images['feed']:
 			#outer loop to process the two alliances separately
 			for a in [0, 3]:
@@ -645,14 +644,17 @@ class ScoutServer(object):
 		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
 		if n:
 			#request a specific team
-			m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
+			m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
 		else:
 			#get all the matches from this event
-			m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+			m = self.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
 		if m.status_code == 400:
 			return "You botched it."
 		output = ''
 		m = m.json()
+		if 'feed' in m:
+			raise cherrypy.HTTPError(400, "You can't view matches in offline mode.")
+
 		#assign weights, so we can sort the matches
 		for match in m:
 			match['value'] = match['match_number']
@@ -727,6 +729,9 @@ class ScoutServer(object):
 				<h1>FATAL ERROR</h1>
 				<h3>DATA CORRUPTION</h3>
 				<p>Erasing database to prevent further damage to the system.</p>'''
+
+		if data == 'json':
+			return '{"feed": {"entry": []}}' #bogus json for local version
 
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
@@ -814,11 +819,26 @@ class ScoutServer(object):
 	def getalbum(self, refresh=False):
 		if refresh or ('album' not in cherrypy.session):
 			headers = {"GData-Version": "2"}
-			usr = requests.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
+			usr = self.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
 			for album in usr['feed']['entry']:
 				if album['title']['$t'] == self.getevent():
 					cherrypy.session['album'] = album['id']['$t'].replace('entry', 'feed')
 		return cherrypy.session['album']
+	
+	# Wrapper for requests, ensuring nothing goes terribly wrong
+	# This code is trash; it just works to avoid errors when running without internet
+	def get(self, req, params=""):
+		a = None
+		try:
+			a = requests.get(req, params=params)
+			if a.status_code == 404:
+				raise Exception
+		except:
+			#stupid lazy solution for local mode
+			a = requests.get('http://127.0.0.1:8000/submit?data=json')
+			cherrypy.session['album'] = 'http://127.0.0.1:8000/submit?data=json'
+		print(a.content)
+		return a
 	#END OF CLASS
 
 # Execution starts here
