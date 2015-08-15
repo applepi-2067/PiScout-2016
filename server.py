@@ -366,7 +366,7 @@ class ScoutServer(object):
 							"flag",
 							{{num: {0}, match: m, flagval: f}}
 						);
-						window.location.reload();
+						window.location.reload(true);
 					}}
 				</script>
 			</head>
@@ -425,6 +425,7 @@ class ScoutServer(object):
 		cursor = conn.cursor()
 		cursor.execute('UPDATE scout SET flag=? WHERE team=? AND match=?', (int(not int(flagval)),num,match))
 		conn.commit()
+		conn.close()
 		self.calcavg(num)
 		return ''
 
