@@ -125,7 +125,7 @@ class ScoutServer(object):
 
 	# Show a detailed summary for a given team
 	@cherrypy.expose()
-	def team(self, n=2067):
+	def team(self, n="2067"):
 		if not n.isdigit():
 			raise cherrypy.HTTPRedirect('/')
 		if int(n)==666:
