@@ -221,6 +221,7 @@ class ScoutServer(object):
 				dp[key] = round(val, 2)
 			if not e[17]:
 				dataset.append(dp)
+		dataset.reverse() #reverse so that graph is in the correct order
 
 		#Grab the image from picasa
 		imcode = ''
