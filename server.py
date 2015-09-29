@@ -5,7 +5,7 @@ from ast import literal_eval
 import requests
 
 # Update this value before every event
-CURRENT_EVENT = '2015gal'
+CURRENT_EVENT = '2015ctbb'
 
 class ScoutServer(object):
 	@cherrypy.expose
@@ -14,8 +14,8 @@ class ScoutServer(object):
 		illegal = ''
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
-				self.getalbum(refresh=True)
 				cherrypy.session['event'] = e
+				self.getalbum(refresh=True)
 			else:
 				illegal = e
 		if 'event' not in cherrypy.session:
@@ -76,11 +76,8 @@ class ScoutServer(object):
 					 <p class="main">Change Event</p>
 					<form method="post" action="">
 						<select class="fieldsm" name="e">
-						  <option id="2015gal" value="2015gal">Galileo Division</option>
-						  <option id="2015necmp" value="2015necmp">District Championship</option>
-						  <option id="2015cthar" value="2015cthar">Hartford</option>
-						  <option id="2015rismi" value="2015rismi">Rhode Island</option>
-						  <option id="2015ctwat" value="2015ctwat">Waterbury</option>
+						  <option id="2015ctbb" value="2015ctbb">Bash at the Beach</option>
+						  <option id="2015gal" value="2015gal">Example Event</option>
 						</select>
 						<button class="submit" type="submit">Submit</button>
 					</form>
