@@ -34,8 +34,9 @@ class PiScout:
 			added = files - f #check if any files were added (if first iteration, added = files)
 			f = files #will hold onto this value for the next iteration
 			for file in added:
-				self.loadsheet("Sheets/" + file)
-				main(self) #call the main loop with this PiScout object as an argument
+				if '.jpg' in file or '.png' in file:
+					self.loadsheet("Sheets/" + file)
+					main(self) #call the main loop with this PiScout object as an argument
 
 
 	# Loads a new scout sheet from an image
@@ -202,6 +203,11 @@ class PiScout:
 	# Opens up the data in notepad, and lets the user make modifications
 	# Afterward, it re-opens the GUI with the updated data
 	def edit(self, event):
+		with open('history.txt', 'r') as file:
+			lines = file.readlines()
+			lines = lines[:-1]
+		with open('history.txt', 'w+') as file:
+			file.writelines(lines)
 		datastr = ''
 		for key,val in self.data.items():
 			datastr += "'" + key + "'" + ": " + str(val) + "\n"
@@ -224,9 +230,10 @@ class PiScout:
 	# Closes the GUI and erases the entry from the history file
 	def cancel(self, event):
 		plt.close()
-		with open('history.txt', 'w+') as file:
+		with open('history.txt', 'r') as file:
 			lines = file.readlines()
 			lines = lines[:-1]
+		with open('history.txt', 'w+') as file:
 			file.writelines(lines)
 
 	# Displays a message box
