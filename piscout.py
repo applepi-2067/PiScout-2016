@@ -184,7 +184,7 @@ class PiScout:
 		try:
 			requests.post("http://52.2.17.191/submit", data={'data': str(self.data)})
 			print("Uploading this match was successful")
-			if(os.path.isfile('queue.txt')):
+			if os.path.isfile('queue.txt'):
 				with open("queue.txt", "r") as file:
 					for line in file:
 						requests.post("http://52.2.17.191/submit", data={'data': line})
