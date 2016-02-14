@@ -24,6 +24,7 @@ class ScoutServer(object):
 		#This secction generates the table of averages
 		table = ''
 		conn = sql.connect(self.datapath())
+		#'''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)'''
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
 		conn.close()
 		for team in averages:
@@ -35,9 +36,8 @@ class ScoutServer(object):
 				<td>{3}</td>
 				<td>{4}</td>
 				<td>{5}</td>
-				<td>{6}</td>
 			</tr>
-			'''.format(team[0], team[6], team[1], team[2], team[3], team[4], team[5])
+			'''.format(team[0], team[6], team[1], team[2], team[3], team[5])
 
 		return '''
 		<html>
@@ -76,8 +76,11 @@ class ScoutServer(object):
 					 <p class="main">Change Event</p>
 					<form method="post" action="">
 						<select class="fieldsm" name="e">
-						  <option id="2015ctbb" value="2015ctbb">Bash at the Beach</option>
-						  <option id="2015gal" value="2015gal">Example Event</option>
+						  <option id="2016ctss" value="2016ctss">Suffield Shakedown</option>
+						  <option id="2016mawor" value="2016mawor">WPI District Event</option>
+						  <option id="2016ripro" value="2016ripro">Rhode Island District Event</option>
+						  <option id="2016cthar" value="2016cthar">Hartford District Event</option>
+						  <option id="2016necmp" value="2016necmp">NE District Championship</option>
 						</select>
 						<button class="submit" type="submit">Submit</button>
 					</form>
@@ -107,10 +110,9 @@ class ScoutServer(object):
 						<th>Team</th>
 						<th>APR</th>
 						<th>Auto</th>
-						<th>Step</th>
-						<th>Tote</th>
-						<th>RC/Noodle</th>
-						<th>Coop</th>
+						<th>Defenses</th>
+						<th>Shooting</th>
+						<th>Endgame</th>
 					</tr></thead>
 					<tbody>{0}</tbody>
 				</table>
