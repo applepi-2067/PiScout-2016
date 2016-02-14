@@ -5,7 +5,7 @@ from ast import literal_eval
 import requests
 
 # Update this value before every event
-CURRENT_EVENT = '2015ctbb'
+CURRENT_EVENT = '2016ctss'
 
 class ScoutServer(object):
 	@cherrypy.expose
@@ -745,13 +745,14 @@ class ScoutServer(object):
 			raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
 		d = literal_eval(data)
-		cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
-			,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
-			+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'], 0)))
-		conn.commit()
-		conn.close()
+		print(d)
+		#cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
+		#	,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
+		#	+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'], 0)))
+		#conn.commit()
+		#conn.close()
 
-		self.calcavg(d['team'])
+		#self.calcavg(d['team'])
 		return ''
 
 	# Calculates average scores for a team
@@ -846,11 +847,8 @@ if not os.path.isfile(datapath):
 	# Generate a new database with the three tables
 	conn = sql.connect(datapath)
 	cursor = conn.cursor()
-	cursor.execute('''CREATE TABLE scout (team integer,match integer,auto_tote integer,auto_RC_zone integer
-		,auto_RC_step integer,auto_stack integer,in_auto_zone integer,stack1 text,stack2 text,stack3 text,stack4 text
-		,stack5 text,stack6 text,coop integer,tele_RC_step integer,coop_stack integer,tote_loc integer, flag integer)''')
-	cursor.execute('''CREATE TABLE averages (team integer,auto real,step real,tote real,rc real
-													,coop real,apr integer)''')
+	cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (36)]) + ')')
+	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, climb real,apr integer)''')
 	cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
 	conn.close()
 

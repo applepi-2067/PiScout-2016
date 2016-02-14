@@ -10,53 +10,53 @@ def main(scout):
 		num2 = scout.rangefield('N-5', 0, 9)
 		num3 = scout.rangefield('N-6', 0, 9)
 		num4 = scout.rangefield('N-7', 0, 9)
-		scout.set("team", 1000*num1 + 100*num2 + 10*num3 + num4)
+		scout.set("Team", 1000*num1 + 100*num2 + 10*num3 + num4) #0
 
 		match1 = scout.rangefield('N-9', 0, 1)
 		match2 = scout.rangefield('N-10', 0, 9)
 		match3 = scout.rangefield('N-11', 0, 9)
-		scout.set("match", 100*match1 + 10*match2 + match3)
+		scout.set("Match", 100*match1 + 10*match2 + match3) #1
 
-		scout.set("foul", scout.countfield('G-11', 'I-11'))
-		scout.set("techfoul", scout.countfield('G-12', 'I-12'))
+		scout.set("Fouls", scout.countfield('G-11', 'I-11')) #2
+		scout.set("Tech fouls", scout.countfield('G-12', 'I-12')) #3
 
-		scout.set("spy", scout.boolfield('AB-5'))
-		scout.set("reach", scout.boolfield('AB-6'))
+		scout.set("Spy box", scout.boolfield('AB-5')) #4
+		scout.set("Reach", scout.boolfield('AB-6')) #5
 
-		scout.set("preload", scout.boolfield('AH-4'))
-		scout.set("a_high", scout.countfield('AH-5', 'AI-5'))
-		scout.set("a_low", scout.countfield('AH-6', 'AI-6'))
-		scout.set("a_miss", scout.countfield('AH-7', 'AI-7'))
+		scout.set("Preloaded", scout.boolfield('AH-4')) #6
+		scout.set("Auto: High goal", scout.countfield('AH-5', 'AI-5')) #7
+		scout.set("Auto: Low goal", scout.countfield('AH-6', 'AI-6')) #8
+		scout.set("Auto: Miss", scout.countfield('AH-7', 'AI-7')) #9
 
-		scout.set("a_port", scout.boolfield('AD-8'))
-		scout.set("a_chev", scout.boolfield('AI-8'))
-		scout.set("a_moat", scout.boolfield('AD-9'))
-		scout.set("a_ramp", scout.boolfield('AI-9'))
-		scout.set("a_draw", scout.boolfield('AD-10'))
-		scout.set("a_sall", scout.boolfield('AI-10'))
-		scout.set("a_rock", scout.boolfield('AD-11'))
-		scout.set("a_roug", scout.boolfield('AI-11'))		
-		scout.set("a_lowb", scout.boolfield('AD-12'))	
+		scout.set("Auto: Portcullis", scout.boolfield('AD-8')) #10 
+		scout.set("Auto: Cheval de frise", scout.boolfield('AI-8')) #11
+		scout.set("Auto: Moat", scout.boolfield('AD-9')) #12
+		scout.set("Auto: Ramparts", scout.boolfield('AI-9')) #13
+		scout.set("Auto: Drawbridge", scout.boolfield('AD-10')) #14
+		scout.set("Auto: Sally port", scout.boolfield('AI-10')) #15
+		scout.set("Auto: Rock wall", scout.boolfield('AD-11')) #16
+		scout.set("Auto: Rough terrain", scout.boolfield('AI-11')) #17		
+		scout.set("Auto: Low bar", scout.boolfield('AD-12')) #18
 
-		scout.set("port", scout.countfield('H-14', 'K-14'))
-		scout.set("chev", scout.countfield('P-14', 'S-14'))
-		scout.set("moat", scout.countfield('H-15', 'K-15'))
-		scout.set("ramp", scout.countfield('P-15', 'S-15'))
-		scout.set("draw", scout.countfield('H-16', 'K-16'))
-		scout.set("sall", scout.countfield('P-16', 'S-16'))
-		scout.set("rock", scout.countfield('H-17', 'K-17'))
-		scout.set("roug", scout.countfield('P-17', 'S-17'))	
-		scout.set("lowb", scout.countfield('H-18', 'K-18'))
+		scout.set("Portcullis", scout.countfield('H-14', 'K-14')) #19
+		scout.set("Cheval de frise", scout.countfield('P-14', 'S-14')) #20
+		scout.set("Moat", scout.countfield('H-15', 'K-15')) #21
+		scout.set("Ramparts", scout.countfield('P-15', 'S-15')) #22
+		scout.set("Drawbridge", scout.countfield('H-16', 'K-16')) #23
+		scout.set("Sally port", scout.countfield('P-16', 'S-16')) #24 
+		scout.set("Rock wall", scout.countfield('H-17', 'K-17')) #25
+		scout.set("Rough terrain", scout.countfield('P-17', 'S-17')) #26	
+		scout.set("Low bar", scout.countfield('H-18', 'K-18')) #27
 
-		scout.set("high", scout.countfield('X-14', 'AE-14'))
-		scout.set("miss", scout.countfield('X-15', 'AE-15'))
-		scout.set("low", scout.countfield('X-17', 'AE-17'))
+		scout.set("High goal", scout.countfield('X-14', 'AE-14')) #28
+		scout.set("High miss", scout.countfield('X-15', 'AE-15')) #29
+		scout.set("Low goal", scout.countfield('X-17', 'AE-17')) #30
 
-		scout.set("challenge", scout.boolfield('AJ-13'))
-		scout.set("scale", scout.boolfield('AJ-14'))
-		scout.set("failscale", scout.boolfield('AJ-15'))
-		scout.set("defense", scout.boolfield('AJ-16'))
-		scout.set("feeder", scout.boolfield('AJ-17'))
+		scout.set("Challenging", scout.boolfield('AJ-13')) #31
+		scout.set("Scale", scout.boolfield('AJ-14')) #32
+		scout.set("Failed scale", scout.boolfield('AJ-15')) #33
+		scout.set("Defense", scout.boolfield('AJ-16')) #34
+		scout.set("Feeder", scout.boolfield('AJ-17')) #35
 	
 		scout.submit()
 
