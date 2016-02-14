@@ -1,7 +1,6 @@
 import cv2
 import os
 import numpy as np
-from ast import literal_eval
 from matplotlib import pyplot as plt
 from matplotlib.widgets import Button
 from time import sleep
@@ -23,7 +22,8 @@ class PiScout:
 		print('PiScout Starting')
 		self.sheet = None;
 		self.display = None;
-		self.data = {}
+		self.data = []
+		self.labels = []
 		self.shift = 0
 
 		Thread(target=server.start).start() # local database server
@@ -42,6 +42,8 @@ class PiScout:
 	# Loads a new scout sheet from an image
 	# Processes the image and stores the result in self.sheet
 	def loadsheet(self, imgpath):
+		self.data = []
+		self.labels = []
 		print('Loading a new sheet: ' + imgpath)
 		img = cv2.imread(imgpath)
 		imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -107,7 +109,7 @@ class PiScout:
 	def boolfield(self, location):
 		loc = self.parse(location)
 		cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (loc[0]*16+16, loc[1]*16+16), (0,50,150),3)
-		return self.getvalue(loc) < 45000
+		return int(self.getvalue(loc) < 45000)
 
 	# Define a new range field at a given location
 	# This field spans across multiple grid units
@@ -122,28 +124,42 @@ class PiScout:
 			return startval + min
 		return 0
 
+	# Define a new count field at a given location
+	# This field spans across multiple grid units
+	# Returns the highest shaded value, or 0 if none are shaded
+	def countfield(self, startlocation, endlocation):
+		loc = self.parse(startlocation)
+		end = self.parse(endlocation)[0] + 1
+		cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (end*16, loc[1]*16+16), (0,50,150),3)
+		values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
+		for el,box in enumerate(values[::-1]):
+			if box < 45000:
+				return len(values) - el
+		return 0
+
 	# Adds a data entry into the data dictionary
 	def set(self, name, contents):
-		self.data[name] = contents
+		self.data.append(contents)
+		self.labels.append(name)
 
 	# Opens the GUI, preparing the data for submission
 	def submit(self):
-		if self.data['team'] == 0:
+		if self.data[0] == 0:
 			print("Found an empty match, skipping")
 			return
 		with open("history.txt", "a+") as file:
-			d = str(self.data['team']) + ' ' + str(self.data['match'])
+			d = str(self.data[0]) + ' ' + str(self.data[1]) + '\n'
 			file.seek(0)
 			if d in file.read():
 				print("Already processed this match, skipping")
 				return
-			file.write(d + '\n')
+			file.write(d)
 
 		print("Found a new match, opening")
 		output = ''
-		for key,val in self.data.items():
-			output += "'" + key + "'" + ": " + str(val) + '\n'
-		output = output.replace(', ', '\n    ')
+		assert len(self.labels) == len(self.data)
+		for a in range(len(self.data)):
+			output += self.labels[a] + "=" + str(self.data[a]) + '\n'
 		fig = plt.figure('PiScout')
 		fig.subplots_adjust(left=0, right=0.6)
 		plt.subplot(111)
@@ -159,9 +175,13 @@ class PiScout:
 		cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
 		cancel.on_clicked(self.cancel)
 		mng = plt.get_current_fig_manager()
-		mng.window.state('zoomed')
+		try:		
+			mng.window.state('zoomed')
+		except AttributeError:
+			print("Window resizing exploded, oh well.")
 		plt.show()
-		self.data = {}
+		self.data = []
+		self.labels = []
 		self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
 	# Invoked by the "Save Data Offline" button
@@ -209,18 +229,17 @@ class PiScout:
 		with open('history.txt', 'w+') as file:
 			file.writelines(lines)
 		datastr = ''
-		for key,val in self.data.items():
-			datastr += "'" + key + "'" + ": " + str(val) + "\n"
+		for a in range(len(self.data)):
+			datastr += self.labels[a] + "=" + str(self.data[a]) + '\n'
 		with open('piscout.txt', "w") as file:
 			file.write(datastr)
 		os.system('piscout.txt')
-		datastr = '{'
-		with open('piscout.txt', 'r') as file:
-			for line in file:
-				datastr += line.replace('\n', ', ')
-		datastr += "}"
 		try:
-			self.data = literal_eval(datastr)
+			d = []
+			with open('piscout.txt', 'r') as file:
+				for line in file:
+					d.append(int(line.split('=')[1].replace('\n', '')))
+			self.data = d
 		except:
 			self.message("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
 		plt.close()
