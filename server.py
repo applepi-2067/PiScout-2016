@@ -746,61 +746,51 @@ class ScoutServer(object):
 
 		d = literal_eval(data)
 		print(d)
-		#cursor.execute('INSERT INTO scout VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',((d['team'],d['match']
-		#	,d['auto_tote'],d['auto_RC_zone'],d['auto_RC_step'],int(d['auto_stack']),int(d['in_auto_zone']))
-		#	+ tuple(map(str, d['stacks'])) + (d['coop'],d['tele_RC_step'],int(d['coop_stack']),d['tote_loc'], 0)))
-		#conn.commit()
-		#conn.close()
+		cursor.execute('INSERT INTO scout VALUES (' + ','.join([str(a) for a in d])  + ',0' + ')')
+		conn.commit()
+		conn.close()
 
-		#self.calcavg(d['team'])
+		self.calcavg(d[0])
 		return ''
 
 	# Calculates average scores for a team
 	def calcavg(self, n):
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
-		entries = cursor.execute('SELECT * FROM scout WHERE team=? AND flag=0 ORDER BY MATCH DESC', (n,)).fetchall()
-		sum = {'auto': 0, 'step': 0, 'tote': 0, 'rc': 0, 'coop': 0}
+		#d0 is the identifier for team, d1 is the identifier for match
+		entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
+		s = {'auto': 0, 'def': 0, 'shoot': 0, 'end': 0}
+		accur = [0,0]
 		apr = 0
 		# Iterate through all entries (if any exist) and sum all categories
 		if entries:
 			for e in entries:
-				if e[5]: #stacked?
-					sum['auto'] += 20
-				elif e[2] == 3: #number of totes
-					sum['auto'] += 6
-				elif e[2]:
-					sum['auto'] += 2*e[2]
-				if e[3]:
-					sum['auto'] += 8/3 * e[3]
-				if e[4]:
-					sum['step'] += e[4]
-				if e[6]:
-					sum['auto'] += 4/3
-				for stack in range(7, 13):
-					if e[stack] == 'None':
-						continue
-					st = literal_eval(e[stack])
-					if not st['capping']:
-						sum['tote'] += st['height'] * 2
-					if st['capped'] or st['capping']:
-						sum['rc'] += st['height'] * 4
-					if st['noodled']:
-						sum['rc'] += 6
-				if e[13]:
-					sum['coop'] += 10*e[13]
+				if any(e[10:19]): #if any of the defenses were crossed
+					s['auto'] += 10
+				else:
+					s['auto'] += 2*e[5] #otherwsie add points if reach
+				s['auto'] += e[7]*10 #high goal
+				s['auto'] += e[8]*5 #low goal
+
+				s['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
+				s['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
+				accur[0] += e[28] #high shots made
+				accur[1] += e[28] + e[29] #high shots attempted
+				s['end'] += e[32]*15 if e[32] else e[31]*5 #scale/challenge points
 
 			# take the average (divide by number of entries)
-			for key,val in sum.items():
-				sum[key] = round(val/len(entries), 2)
+			for key,val in s.items():
+				s[key] = round(val/len(entries), 2)
+			
+			# calculate the percent of shots made (assign 0 if no shots attemped)
+			accuracy = int(100*accur[0]/accur[1] if accur[1] else 0)
 
-			# formula for calculating APR
-			apr = int(sum['auto']*1.2 + sum['step']*5 + sum['tote'] + sum['rc'] + sum['coop']*0.2)
+			# formula for calculating APR (point contribution)
+			apr = int(s['auto'] + s['def'] + s['shoot'] + s['end'])
 
 		#replace the data entry with a new one
 		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
-		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(n, sum['auto'], sum['step'],
-																sum['tote'], sum['rc'], sum['coop'], apr))
+		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(n, s['auto'], s['def'], s['shoot'], accuracy, s['end'], apr))
 		conn.commit()
 		conn.close()
 
@@ -847,8 +837,8 @@ if not os.path.isfile(datapath):
 	# Generate a new database with the three tables
 	conn = sql.connect(datapath)
 	cursor = conn.cursor()
-	cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (36)]) + ')')
-	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, climb real,apr integer)''')
+	cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (36)]) + ',flag integer' + ')')
+	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)''')
 	cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
 	conn.close()
 
