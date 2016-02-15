@@ -24,7 +24,6 @@ class ScoutServer(object):
 		#This secction generates the table of averages
 		table = ''
 		conn = sql.connect(self.datapath())
-		#'''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)'''
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
 		conn.close()
 		for team in averages:
@@ -131,13 +130,14 @@ class ScoutServer(object):
 			raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
-		entries = cursor.execute('SELECT * FROM scout WHERE team=? ORDER BY MATCH DESC', (n,)).fetchall()
+		entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 DESC', (n,)).fetchall()
+		#'''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)'''
 		averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
 		assert len(averages) < 2 #ensure there aren't two entries for one team
 		if len(averages):
-			sum = averages[0]
+			s = averages[0]
 		else:
-			sum = [0]*7 #generate zeros if no data exists for the team yet
+			s = [0]*7 #generate zeros if no data exists for the team yet
 
 		comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
 		conn.close()
@@ -150,75 +150,58 @@ class ScoutServer(object):
 		#Iterate through all the data entries and generate some text to go in the main table
 		output = ''
 		dataset = []
+		labels = ['portcullis', 'cheval', 'moat', 'ramparts', 'drawbridge', 'sally', 'rock wall', 'terrain', 'low bar']
 		for e in entries:
-			dp = {"match": e[1], "rc":0, "tote":0, "auto":0, "step":0}
+			dp = {"match": e[1], "shoot":0, "def":0, "auto":0, "accur":0}
 			a = ''
-			if e[5]: #stacked?
-				a += "3 tote; "
-				dp['auto'] += 20;
-			elif e[2] == 3: #number of totes
-				a += "3 tote, not stacked; "
-				dp['auto'] += 6
-			elif e[2]:
-				a += str(e[2]) + ' totes; '
-				dp['auto'] += 2*e[2]
-			if e[3]:
-				dp['auto'] += 8/3 * e[3]
-				a += str(e[3]) +  ' RC(s) in zone; '
-			if e[4]:
-				dp['step'] = e[4]
-				a += str(e[4]) + ' RC(s) from step; '
-			if e[6]:
-				dp['auto'] += 4/3
-				a += 'moved into auto zone; '
-			s = ''
-			for stack in range(7, 13):
-				if e[stack] == 'None':
-					continue
-				st = literal_eval(e[stack])
-				if st['capping']:
-					s += 'capped '
-					dp['rc'] += st['height']*4
-				else:
-					dp['tote'] += st['height']*2
-				s += str(st['height']) + ' stack'
-				if st['capped']:
-					dp['rc'] += st['height']*4
-					s += ', capped'
-				if st['noodled']:
-					dp['rc'] += 6
-					s += '/noodled'
-				s += '; '
-
-			#tote location
-			o = ''
-			if e[13]:
-				o += str(e[13]) + ' coop totes; '
-			if e[14]:
-				o += str(e[14]) + ' RCs from step; '
-			if e[16] == 1:
-				o += 'all totes from HP'
-			elif e[16] == 18:
-				o += 'all totes from landfill'
-			elif 2 <= e[16] <= 7:
-				o += 'most totes from HP'
-			elif 17 >= e[16] >= 12:
-				o += 'most totes from landfill'
-			elif e[16] == 0:
-				o += "doesn't pick up gray totes"
+			a += '' if e[6] else 'not preloaded, '
+			a += 'spy box, ' if e[4] else ''
+			if any(e[10:19]): #if any of the defenses were crossed
+				dp['auto'] += 10
+				for num,lab in enumerate(labels):
+					a += str(e[10+num]) + 'x ' + lab + ', ' if e[10+num] else ''	
 			else:
-				o += "totes equally from landfill/HP"
+				dp['auto'] += 2*e[5] #otherwsie add points if reach
+				a = 'reach, '
+			dp['auto'] += e[7]*10 #high goal
+			a += str(e[7]) + 'x high goal, ' if e[7] else ''
+			dp['auto'] += e[8]*5 #low goal
+			a += str(e[8]) + 'x low goal, ' if e[8] else ''
+			a += str(e[9]) + 'x miss, ' if e[9] else ''
+			
+			d = ''
+			dp['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
+			for num,lab in enumerate(labels):
+				d += str(e[19+num]) + 'x ' + lab + ', ' if e[19+num] else ''	
+
+			sh = ''
+			dp['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
+			sh += str(e[28]) + 'x high goal, ' if e[28] else ''
+			sh += str(e[29]) + 'x high miss, ' if e[29] else ''
+			sh += str(e[30]) + 'x low goal, ' if e[30] else ''
+			dp['accur'] = int(100*e[28]/(e[28]+e[29])) if e[28] else 0
+
+			o = 'scaling, ' if e[32] else 'challenging, ' if e[31] else ''
+			o += 'failed scale, ' if e[33] else ''
+			o += str(e[2]) + 'x foul, ' if e[2] else ''
+			o += str(e[3]) + 'x tech foul, ' if e[3] else ''
+			o += 'defense, ' if e[34] else ''
+			o += 'feeder, ' if e[35] else ''
+
+			#dp['end'] += e[32]*15 if e[32] else e[31]*5 #scale/challenge points
+
 			output += '''
-			<tr {4}>
+			<tr {5}>
 				<td>{0}</td>
 				<td>{1}</td>
 				<td>{2}</td>
 				<td>{3}</td>
-				<td><a class="flag" href="javascript:flag({5}, {6});">X</a></td>
-			</tr>'''.format(e[1], a[:-2], s[:-2], o, 'style="color: #B20000"' if e[17] else '', e[1], e[17])
+				<td>{4}</td>
+				<td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
+			</tr>'''.format(e[1], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[36] else '', e[1], e[36])
 			for key,val in dp.items():
 				dp[key] = round(val, 2)
-			if not e[17]:
+			if not e[36]:
 				dataset.append(dp)
 		dataset.reverse() #reverse so that graph is in the correct order
 
@@ -234,6 +217,7 @@ class ScoutServer(object):
 						<p style="font-size: 32px; line-height: 0em;">Image</p>
 						<img src={}></img>
 						</div>'''.format(img['content']['src'])
+		
 		return '''
 		<html>
 			<head>
@@ -285,7 +269,7 @@ class ScoutServer(object):
 
 						// GRAPH
 						graph = new AmCharts.AmGraph();
-						graph.title = "RC/Noodle Points";
+						graph.title = "Shoot Points";
 						graph.valueAxis = valueAxis;
 						graph.type = "smoothedLine"; // this line makes the graph smoothed line.
 						graph.lineColor = "#637bb6";
@@ -295,12 +279,12 @@ class ScoutServer(object):
 						graph.bulletBorderAlpha = 1;
 						graph.bulletBorderThickness = 2;
 						graph.lineThickness = 2;
-						graph.valueField = "tote";
-						graph.balloonText = "Tote Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+						graph.valueField = "shoot";
+						graph.balloonText = "Shoot Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
 						chart.addGraph(graph);
 
 						graph2 = new AmCharts.AmGraph();
-						graph2.title = "Tote Points";
+						graph2.title = "Defense Points";
 						graph2.valueAxis = valueAxis;
 						graph2.type = "smoothedLine"; // this line makes the graph smoothed line.
 						graph2.lineColor = "#187a2e";
@@ -310,8 +294,8 @@ class ScoutServer(object):
 						graph2.bulletBorderAlpha = 1;
 						graph2.bulletBorderThickness = 2;
 						graph2.lineThickness = 2;
-						graph2.valueField = "rc";
-						graph2.balloonText = "RC Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+						graph2.valueField = "def";
+						graph2.balloonText = "Defense Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
 						chart.addGraph(graph2);
 
 						graph3 = new AmCharts.AmGraph();
@@ -331,7 +315,7 @@ class ScoutServer(object):
 
 						graph4 = new AmCharts.AmGraph();
 						graph4.valueAxis = valueAxis2;
-						graph4.title = "Step RCs";
+						graph4.title = "High Goal Accuracy";
 						graph4.type = "smoothedLine"; // this line makes the graph smoothed line.
 						graph4.lineColor = "#FCD202";
 						graph4.bullet = "round";
@@ -340,8 +324,8 @@ class ScoutServer(object):
 						graph4.bulletBorderAlpha = 1;
 						graph4.bulletBorderThickness = 2;
 						graph4.lineThickness = 2;
-						graph4.valueField = "step";
-						graph4.balloonText = "RCs from Step:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+						graph4.valueField = "accur";
+						graph4.balloonText = "High Goal Accuracy:<br><b><span style='font-size:14px;'>[[value]]%</span></b>";
 						chart.addGraph(graph4);
 
 						// CURSOR
@@ -382,10 +366,10 @@ class ScoutServer(object):
 					<div id="stats">
 						<p class="statbox" style="font-weight:bold">Average match:</p>
 						<p class="statbox">Auto points: {2}</p>
-						<p class="statbox">Step RCs: {3}</p>
-						<p class="statbox">Tote points: {4}</p>
-						<p class="statbox">RC/noodle points: {5}</p>
-						<p class="statbox">Coop points: {6}</p>
+						<p class="statbox">Defense points: {3}</p>
+						<p class="statbox">Shooting points: {4}</p>
+						<p class="statbox">High goal accuracy: {5}%</p>
+						<p class="statbox">Endgame points: {6}</p>
 					</div>
 				</div>
 				<br>
@@ -395,8 +379,9 @@ class ScoutServer(object):
 					<thead><tr>
 						<th>Match</th>
 						<th>Auto</th>
-						<th>Stacks</th>
-						<th>Other Teleop</th>
+						<th>Defenses</th>
+						<th>Shooting</th>
+						<th>Endgame</th>
 						<th>Flag</th>
 					</tr></thead>{1}
 				</table>
@@ -414,7 +399,7 @@ class ScoutServer(object):
 				<br>
 				<p style="text-align: center; font-size: 24px"><a href="/matches?n={0}">View this team's match schedule</a></p>
 			</body>
-		</html>'''.format(n, output, sum[1], sum[2], sum[3], sum[4], sum[5], sum[6], str(dataset).replace("'",'"'),imcode, commentstr)
+		</html>'''.format(n, output, s[1], s[2], s[3], s[4], s[5], s[6], str(dataset).replace("'",'"'), imcode, commentstr)
 
 	# Called to flag a data entry
 	@cherrypy.expose()
@@ -810,6 +795,7 @@ class ScoutServer(object):
 	# Refreshing this will request a new album (if event is changed, for example)
 	def getalbum(self, refresh=False):
 		if refresh or ('album' not in cherrypy.session):
+			cherrypy.session['album'] = ''
 			headers = {"GData-Version": "2"}
 			usr = self.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
 			for album in usr['feed']['entry']:
