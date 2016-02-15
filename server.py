@@ -795,7 +795,7 @@ class ScoutServer(object):
 	# Refreshing this will request a new album (if event is changed, for example)
 	def getalbum(self, refresh=False):
 		if refresh or ('album' not in cherrypy.session):
-			cherrypy.session['album'] = ''
+			cherrypy.session['album'] = 'http://127.0.0.1:8000/submit?data=json'
 			headers = {"GData-Version": "2"}
 			usr = self.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
 			for album in usr['feed']['entry']:
