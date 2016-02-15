@@ -848,3 +848,24 @@ conf = {
 def start():
 	cherrypy.quickstart(ScoutServer(), '/', conf)
 
+#the following is run on the real server
+'''
+
+conf = {
+         '/': {
+                 'tools.sessions.on': True,
+                 'tools.staticdir.root': os.path.abspath(os.getcwd())
+         },
+         '/static': {
+                 'tools.staticdir.on': True,
+                 'tools.staticdir.dir': './public'
+         },
+        'global': {
+                'server.socket_host': '0.0.0.0',
+                'server.socket_port': 80
+        }
+}
+
+cherrypy.quickstart(ScoutServer(), '/', conf)
+'''
+
