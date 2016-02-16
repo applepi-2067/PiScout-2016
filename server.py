@@ -221,7 +221,7 @@ class ScoutServer(object):
 		return '''
 		<html>
 			<head>
-				<title>PiScout</title>
+				<title>{0} | PiScout</title>
 				<link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
          		<link href="/static/css/style.css" rel="stylesheet">
          		<script type="text/javascript" src="/static/js/amcharts.js"></script>
@@ -488,10 +488,10 @@ class ScoutServer(object):
 							<div id="stats">
 								<p class="statbox" style="font-weight:bold">Match Averages:</p>
 								<p class="statbox">Auto points: {1}</p>
-								<p class="statbox">Step RCs: {2}</p>
-								<p class="statbox">Tote points: {3}</p>
-								<p class="statbox">RC/noodle points: {4}</p>
-								<p class="statbox">Coop points: {5}</p>
+								<p class="statbox">Defense points: {2}</p>
+								<p class="statbox">Shooting points: {3}</p>
+								<p class="statbox">High goal accuracy: {4}%</p>
+								<p class="statbox">Endgame points: {5}</p>
 							</div>
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		conn.close()
@@ -577,10 +577,10 @@ class ScoutServer(object):
 							<div id="stats">
 								<p class="statbox" style="font-weight:bold">Match Averages:</p>
 								<p class="statbox">Auto points: {1}</p>
-								<p class="statbox">Step RCs: {2}</p>
-								<p class="statbox">Tote points: {3}</p>
-								<p class="statbox">RC/noodle points: {4}</p>
-								<p class="statbox">Coop points: {5}</p>
+								<p class="statbox">Defense points: {2}</p>
+								<p class="statbox">Shooting points: {3}</p>
+								<p class="statbox">High goal accuracy: {4}%</p>
+								<p class="statbox">Endgame points: {5}</p>
 							</div>
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		output += "</div></div>"
@@ -628,18 +628,21 @@ class ScoutServer(object):
 		n = int(n)
 		event = self.getevent()
 		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
-		if n:
-			#request a specific team
-			m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
-		else:
-			#get all the matches from this event
-			m = self.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
-		if m.status_code == 400:
-			return "You botched it."
+		try:
+			if n:
+				#request a specific team
+				m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
+			else:
+				#get all the matches from this event
+				m = self.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+			if m.status_code == 400:
+				raise cherrypy.HTTPError(400, "Request rejected by The Blue Alliance.")
+		except:
+			raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
 		output = ''
 		m = m.json()
 		if 'feed' in m:
-			raise cherrypy.HTTPError(400, "You can't view matches in offline mode.")
+			raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
 
 		#assign weights, so we can sort the matches
 		for match in m:
@@ -732,7 +735,6 @@ class ScoutServer(object):
 			raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
 		d = literal_eval(data)
-		print(d)
 		cursor.execute('INSERT INTO scout VALUES (' + ','.join([str(a) for a in d])  + ',0' + ')')
 		conn.commit()
 		conn.close()
