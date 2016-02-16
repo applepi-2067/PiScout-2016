@@ -381,7 +381,7 @@ class ScoutServer(object):
 						<th>Auto</th>
 						<th>Defenses</th>
 						<th>Shooting</th>
-						<th>Endgame</th>
+						<th>Other</th>
 						<th>Flag</th>
 					</tr></thead>{1}
 				</table>
