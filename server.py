@@ -408,7 +408,7 @@ class ScoutServer(object):
 			return '<img src="http://goo.gl/eAs7JZ" style="width: 1200px"></img>'
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
-		cursor.execute('UPDATE scout SET flag=? WHERE team=? AND match=?', (int(not int(flagval)),num,match))
+		cursor.execute('UPDATE scout SET flag=? WHERE d0=? AND d1=?', (int(not int(flagval)),num,match))
 		conn.commit()
 		conn.close()
 		self.calcavg(num)
