@@ -160,9 +160,9 @@ class ScoutServer(object):
 				dp['auto'] += 10
 				for num,lab in enumerate(labels):
 					a += str(e[10+num]) + 'x ' + lab + ', ' if e[10+num] else ''	
-			else:
-				dp['auto'] += 2*e[5] #otherwsie add points if reach
-				a = 'reach, '
+			elif e[5]:
+				dp['auto'] += 2 #otherwsie add points if reach
+				a += 'reach, '
 			dp['auto'] += e[7]*10 #high goal
 			a += str(e[7]) + 'x high goal, ' if e[7] else ''
 			dp['auto'] += e[8]*5 #low goal
