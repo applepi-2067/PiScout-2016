@@ -41,40 +41,78 @@ class PiScout:
 
 	# Loads a new scout sheet from an image
 	# Processes the image and stores the result in self.sheet
-	def loadsheet(self, imgpath):
+	def loadsheet(self, imgpath, b=3, guess=False):
 		self.data = []
 		self.labels = []
 		print('Loading a new sheet: ' + imgpath)
 		img = cv2.imread(imgpath)
+		#img = cv2.resize(img, (0,0), fx=0.5, fy=0.5)
 		imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 		# The first step is to figure out the four markers on the corners of the page
 		# The next two lines will blur the image and extract the edges from the shapes
-		blur = cv2.GaussianBlur(imgray,(5,5),0)
+		blur = cv2.GaussianBlur(imgray,(b,b),0)
 		edges = cv2.Canny(blur,150,300)
 
 		# Next, we use the edges to find the contours of the shapes
 		# Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
 		# If the polygons have 4 sides and are relatively large, save the center coordinates in sq[]
 		image, contours, hierarchy = cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
 		sq = []
+		sqsize = []
 		for cont in contours:
-				poly = cv2.approxPolyDP(np.array(cont), 3, True)
-				if len(poly) == 4 and cv2.contourArea(cont) > 2048:
+				poly = cv2.approxPolyDP(np.array(cont), 64, True)
+				if len(poly) == 4 and cv2.contourArea(cont) > 8192:
 					xpos = 0; ypos = 0
 					for a in poly:
 						xpos += a[0][0]
 						ypos += a[0][1]
 					sq.append((int(xpos/4), int(ypos/4)))
+					sqsize.append(cv2.contourArea(cont))
 
 		# Here, we determine which four elements of sq[] are the marks
 		# To do this, we iterate through each corner of the sheet
 		# On each iteration, we find the element of sq[] with the shortest distance to the corner being examined
 		marks = []
+		marksize = []
 		h, w, c  = img.shape
 		corners = [(0, 0), (0, h), (w, 0), (w,h)]
 		for corner in corners:
-			marks.append(sq[np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])])
+			try:
+				ind = np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])
+			except:
+				print("No markers found. Is this an empty image?")
+			marks.append(sq[ind])
+			marksize.append(sqsize[ind])
+
+		u_marksize = marksize[:] #clone the list
+		marksize.sort()
+		median = (marksize[1] + marksize[2]) / 2
+		for i,m in enumerate(u_marksize):
+			if abs(1 - m/median) > 0.04: #if there is a size anomoly in markers, try some things
+				print("Damaged marker detected, attempting fix")
+				if b < 13 and b != 1 and not guess:
+					print("Increasing gaussian blur to " + str(b+2))
+					self.loadsheet(imgpath, b=b+2)
+					return
+				if b != 1 and not guess:
+					print("Trying a really small blur")
+					self.loadsheet(imgpath, b=1)
+					return
+				if not guess:
+					print("Attempting to guess the location of the last one")
+					self.loadsheet(imgpath, b=3, guess=True)
+					return
+				if i == 0: #geometry to calculate approximate position of damaged marker
+					marks[0] = (marks[1][0] - (marks[3][0]-marks[2][0]), marks[2][1] + (marks[1][1]-marks[3][1]))
+				elif i == 1:
+					marks[1] = (marks[0][0] + (marks[3][0]-marks[2][0]), marks[3][1] + (marks[0][1]-marks[2][1]))
+				elif i == 2:
+					marks[2] = (marks[3][0] - (marks[1][0]-marks[0][0]), marks[0][1] - (marks[1][1]-marks[3][1]))
+				elif i == 3:
+					marks[3] = (marks[2][0] + (marks[1][0]-marks[0][0]), marks[1][1] - (marks[0][1]-marks[2][1]))
+			
 
 		# Now, we fit apply a perspective transform
 		# The centers of the 4 marks become the 4 corners of the image
@@ -146,12 +184,16 @@ class PiScout:
 	def submit(self):
 		if self.data[0] == 0:
 			print("Found an empty match, skipping")
+			self.data = []
+			self.labels = []
 			return
 		with open("history.txt", "a+") as file:
 			d = str(self.data[0]) + ' ' + str(self.data[1]) + '\n'
 			file.seek(0)
 			if d in file.read():
 				print("Already processed this match, skipping")
+				self.data = []
+				self.labels = []
 				return
 			file.write(d)
 
