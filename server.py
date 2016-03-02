@@ -5,7 +5,7 @@ from ast import literal_eval
 import requests
 
 # Update this value before every event
-CURRENT_EVENT = '2016ctss'
+CURRENT_EVENT = '2016ctwat'
 
 class ScoutServer(object):
 	@cherrypy.expose
@@ -76,6 +76,7 @@ class ScoutServer(object):
 					<form method="post" action="">
 						<select class="fieldsm" name="e">
 						  <option id="2016ctss" value="2016ctss">Suffield Shakedown</option>
+						  <option id="2016ctwat" value="2016ctwat">Waterbury District Event</option>
 						  <option id="2016mawor" value="2016mawor">WPI District Event</option>
 						  <option id="2016ripro" value="2016ripro">Rhode Island District Event</option>
 						  <option id="2016cthar" value="2016cthar">Hartford District Event</option>

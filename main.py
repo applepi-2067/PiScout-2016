@@ -38,19 +38,27 @@ def main(scout):
 		scout.set("Auto: Rough terrain", scout.boolfield('AI-11')) #17		
 		scout.set("Auto: Low bar", scout.boolfield('AD-12')) #18
 
-		scout.set("Portcullis", scout.countfield('H-14', 'K-14')) #19
-		scout.set("Cheval de frise", scout.countfield('P-14', 'S-14')) #20
-		scout.set("Moat", scout.countfield('H-15', 'K-15')) #21
-		scout.set("Ramparts", scout.countfield('P-15', 'S-15')) #22
-		scout.set("Drawbridge", scout.countfield('H-16', 'K-16')) #23
-		scout.set("Sally port", scout.countfield('P-16', 'S-16')) #24 
-		scout.set("Rock wall", scout.countfield('H-17', 'K-17')) #25
-		scout.set("Rough terrain", scout.countfield('P-17', 'S-17')) #26	
-		scout.set("Low bar", scout.countfield('H-18', 'K-18')) #27
+		a = scout.countfield('N-14', 'R-14')
+		scout.set("Portcullis", a * scout.boolfield('H-14')) #19
+		scout.set("Cheval de frise", a * scout.boolfield('L-14')) #20
 
-		scout.set("High goal", scout.countfield('X-14', 'AE-14')) #28
-		scout.set("High miss", scout.countfield('X-15', 'AE-15')) #29
-		scout.set("Low goal", scout.countfield('X-17', 'AE-17')) #30
+		b = scout.countfield('N-15', 'R-15')
+		scout.set("Moat", b * scout.boolfield('H-15')) #21
+		scout.set("Ramparts", b * scout.boolfield('L-15')) #22
+
+		c = scout.countfield('N-16', 'R-16')
+		scout.set("Drawbridge", c * scout.boolfield('H-16')) #23
+		scout.set("Sally port", c * scout.boolfield('L-16')) #24 
+		
+		d = scout.countfield('N-17', 'R-17')
+		scout.set("Rock wall", d * scout.boolfield('H-17')) #25
+		scout.set("Rough terrain", d * scout.boolfield('L-17')) #26
+	
+		scout.set("Low bar", scout.countfield('N-18', 'R-18')) #27
+
+		scout.set("High goal", scout.countfield('W-14', 'AE-14')) #28
+		scout.set("High miss", scout.countfield('W-15', 'AE-15')) #29
+		scout.set("Low goal", scout.countfield('W-17', 'AE-17')) #30
 
 		scout.set("Challenging", scout.boolfield('AJ-13')) #31
 		scout.set("Scale", scout.boolfield('AJ-14')) #32
