@@ -207,7 +207,7 @@ class PiScout:
 		plt.subplot(111)
 		plt.imshow(self.display)
 		plt.title('Scanned Sheet')
-		plt.text(600,784,output,fontsize=14)
+		plt.text(600,784,output,fontsize=12)
 		upload = Button(plt.axes([0.68, 0.31, 0.15, 0.07]), 'Upload Data')
 		upload.on_clicked(self.upload)
 		save = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), 'Save Data Offline')
