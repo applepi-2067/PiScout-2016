@@ -3,6 +3,7 @@ import sqlite3 as sql
 import os
 from ast import literal_eval
 import requests
+import math
 
 # Update this value before every event
 CURRENT_EVENT = '2016ctwat'
@@ -542,6 +543,7 @@ class ScoutServer(object):
 		output = '''<div style="display: table">
 				        <div style="display: table-cell;">
 				        <p style="font-size: 36px; color: #0000B8; line-height: 0;">Blue Alliance</p>
+					<p style="font-size: 24px; color: #0000B8; line-height: 0.2;">{2}% chance of win</p>
 				        <div id="apr">
 							<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
 							<p style="font-size: 400%; line-height: 0em">{0}</p>
@@ -555,6 +557,7 @@ class ScoutServer(object):
 				output+='''</div>
 						<div style="display: table-cell;">
 						<p style="font-size: 36px; color: #B20000; line-height: 0;">Red Alliance</p>
+						<p style="font-size: 24px; color: #B20000; line-height: 0.2;">{3}% chance of win</p>
 						<div id="apr">
 							<p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
 							<p style="font-size: 400%; line-height: 0em">{1}</p>
@@ -585,7 +588,8 @@ class ScoutServer(object):
 							</div>
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		output += "</div></div>"
-		output = output.format(sum(apr[0:3]), sum(apr[3:6]))
+		prob_red = 1/(1+math.e**(-0.08297*(sum(apr[3:6]) - sum(apr[0:3]))))
+		output = output.format(sum(apr[0:3]), sum(apr[3:6]), round((1-prob_red)*100,1), round(prob_red*100,1))
 		conn.close()
 
 		#get all six images
