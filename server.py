@@ -6,7 +6,7 @@ import requests
 import math
 
 # Update this value before every event
-CURRENT_EVENT = '2016ctwat'
+CURRENT_EVENT = '2016ripro'
 
 class ScoutServer(object):
 	@cherrypy.expose
@@ -36,8 +36,9 @@ class ScoutServer(object):
 				<td>{3}</td>
 				<td>{4}</td>
 				<td>{5}</td>
+				<td>{6}</td>
 			</tr>
-			'''.format(team[0], team[6], team[1], team[2], team[3], team[5])
+			'''.format(team[0], team[6], team[1], team[2], team[3], team[5], team[7])
 
 		return '''
 		<html>
@@ -114,6 +115,7 @@ class ScoutServer(object):
 						<th>Defenses</th>
 						<th>Shooting</th>
 						<th>Endgame</th>
+						<th>Goals</th>
 					</tr></thead>
 					<tbody>{0}</tbody>
 				</table>
@@ -130,6 +132,7 @@ class ScoutServer(object):
 			raise cherrypy.HTTPRedirect('/')
 		if int(n)==666:
 			raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
+		#self.calcavg(n)
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
 		entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 DESC', (n,)).fetchall()
@@ -753,7 +756,7 @@ class ScoutServer(object):
 		cursor = conn.cursor()
 		#d0 is the identifier for team, d1 is the identifier for match
 		entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
-		s = {'auto': 0, 'def': 0, 'shoot': 0, 'end': 0}
+		s = {'auto': 0, 'def': 0, 'shoot': 0, 'end': 0, 'goals':0}
 		accur = [0,0]
 		apr = 0
 		# Iterate through all entries (if any exist) and sum all categories
@@ -765,9 +768,10 @@ class ScoutServer(object):
 					s['auto'] += 2*e[5] #otherwsie add points if reach
 				s['auto'] += e[7]*10 #high goal
 				s['auto'] += e[8]*5 #low goal
-
+				s['goals'] += e[30] + e[28]
 				s['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
 				s['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
+	
 				accur[0] += e[28] #high shots made
 				accur[1] += e[28] + e[29] #high shots attempted
 				s['end'] += e[32]*15 if e[32] else e[31]*5 #scale/challenge points
@@ -775,7 +779,8 @@ class ScoutServer(object):
 			# take the average (divide by number of entries)
 			for key,val in s.items():
 				s[key] = round(val/len(entries), 2)
-			
+			s['goals'] = round(s['goals'], 1)
+
 			# calculate the percent of shots made (assign 0 if no shots attemped)
 			accuracy = int(100*accur[0]/accur[1] if accur[1] else 0)
 
@@ -784,7 +789,7 @@ class ScoutServer(object):
 
 		#replace the data entry with a new one
 		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
-		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?)',(n, s['auto'], s['def'], s['shoot'], accuracy, s['end'], apr))
+		cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?)',(n, s['auto'], s['def'], s['shoot'], accuracy, s['end'], apr, s['goals']))
 		conn.commit()
 		conn.close()
 
@@ -833,7 +838,7 @@ if not os.path.isfile(datapath):
 	conn = sql.connect(datapath)
 	cursor = conn.cursor()
 	cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (36)]) + ',flag integer' + ')')
-	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)''')
+	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer,goals integer)''')
 	cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
 	conn.close()
 
