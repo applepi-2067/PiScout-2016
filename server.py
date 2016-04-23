@@ -751,7 +751,7 @@ class ScoutServer(object):
 					s['auto'] += 2*e[5] #otherwsie add points if reach
 				s['auto'] += e[7]*10 #high goal
 				s['auto'] += e[8]*5 #low goal
-				s['goals'] += e[30] + e[28]
+				s['goals'] += e[30] + e[28] + e[7] + e[8]
 				s['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
 				s['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
 	
@@ -768,7 +768,7 @@ class ScoutServer(object):
 			accuracy = int(100*accur[0]/accur[1] if accur[1] else 0)
 
 			# formula for calculating APR (point contribution)
-			apr = int(s['auto'] + s['def'] + s['shoot'] + s['end'])
+			apr = int(s['auto'] + s['def'] + s['shoot'] + s['end'] - e[2]*5 - e[3]*5 + 0.5) #2 and 3 are fouls
 
 		#replace the data entry with a new one
 		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
