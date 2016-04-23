@@ -6,7 +6,7 @@ import requests
 import math
 
 # Update this value before every event
-CURRENT_EVENT = '2016ripro'
+CURRENT_EVENT = '2016cars'
 
 class ScoutServer(object):
 	@cherrypy.expose
@@ -16,7 +16,6 @@ class ScoutServer(object):
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
 				cherrypy.session['event'] = e
-				self.getalbum(refresh=True)
 			else:
 				illegal = e
 		if 'event' not in cherrypy.session:
@@ -83,6 +82,7 @@ class ScoutServer(object):
 						  <option id="2016ripro" value="2016ripro">Rhode Island District Event</option>
 						  <option id="2016cthar" value="2016cthar">Hartford District Event</option>
 						  <option id="2016necmp" value="2016necmp">NE District Championship</option>
+						  <option id="2016cars" value="2016cars">Carson Division</option>
 						</select>
 						<button class="submit" type="submit">Submit</button>
 					</form>
@@ -210,18 +210,32 @@ class ScoutServer(object):
 				dataset.append(dp)
 		dataset.reverse() #reverse so that graph is in the correct order
 
-		#Grab the image from picasa
+		#Grab the image from the blue alliance
 		imcode = ''
-		headers = {"GData-Version": "2"}
-		images = self.get(self.getalbum(), params=headers).json()
-		if 'entry' in images['feed']:
-			for img in images['feed']['entry']:
-				if img['title']['$t'].split('.')[0] == str(n):
-					imcode = '''<br>
-						<div style="text-align: center">
-						<p style="font-size: 32px; line-height: 0em;">Image</p>
-						<img src={}></img>
-						</div>'''.format(img['content']['src'])
+		headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
+		m = []
+		try:
+			#get the picture for a given team
+			m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/media".format(n), params=headers).json()
+			if m.status_code == 400:
+				m = []
+		except:
+			pass #swallow the error lol
+		for media in m:
+			if media['type'] == 'imgur':
+				imcode = '''<br>
+				<div style="text-align: center">
+				<p style="font-size: 32px; line-height: 0em;">Image</p>
+				<img src=http://i.imgur.com/{}.jpg></img>
+				</div>'''.format(media['foreign_key'])
+				break
+			if media['type'] == 'cdphotothread':
+				imcode = '''<br>
+				<div style="text-align: center">
+				<p style="font-size: 32px; line-height: 0em;">Image</p>
+				<img src=http://chiefdelphi.com/media/img/{}></img>
+				</div>'''.format(media['details']['image_partial'].replace('_l', '_m'))
+				break
 		
 		return '''
 		<html>
@@ -501,20 +515,6 @@ class ScoutServer(object):
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		conn.close()
 
-		# Get all the images
-		imcode = ''
-		headers = {"GData-Version": "2"}
-		images = self.get(self.getalbum(), params=headers).json()
-		if 'entry' in images['feed']:
-			for img in images['feed']['entry']:
-				team = img['title']['$t'].split('.')[0]
-				if team in nums:
-					imcode += '''
-						<div style="text-align: center; display: inline-block;">
-						<p style="font-size: 32px; line-height: 0em;">Team {0}</p>
-						<img src={1}></img>
-						</div>'''.format(team, img['content']['src'])
-
 		return '''
 		<html>
 			<head>
@@ -529,10 +529,9 @@ class ScoutServer(object):
 				<div style="margin: 0 auto; text-align: center; max-width: 900px;">
 				{0}
 				<br><br><br>
-				{1}
 				</div>
 			</body>
-		</html>'''.format(output, imcode)
+		</html>'''.format(output)
 
 	# Output for alliance comparison
 	@cherrypy.expose()
@@ -591,25 +590,10 @@ class ScoutServer(object):
 							</div>
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		output += "</div></div>"
-		prob_red = 1/(1+math.e**(-0.08297*(sum(apr[3:6]) - sum(apr[0:3]))))
+		prob_red = 1/(1+math.e**(-0.08099*(sum(apr[3:6]) - sum(apr[0:3]))))
 		output = output.format(sum(apr[0:3]), sum(apr[3:6]), round((1-prob_red)*100,1), round(prob_red*100,1))
 		conn.close()
 
-		#get all six images
-		imcode = ''
-		headers = {"GData-Version": "2"}
-		images = self.get(self.getalbum(), params=headers).json()
-		if 'entry' in images['feed']:
-			#outer loop to process the two alliances separately
-			for a in [0, 3]:
-				for img in images['feed']['entry']:
-					team = img['title']['$t'].split('.')[0]
-					if team in nums[a:a+3]:
-						imcode += '''
-							<div style="text-align: center; display: inline-block;">
-							<p style="font-size: 32px; line-height: 0em; color: {2}">Team {0}</p>
-							<img src={1}></img>
-							</div>'''.format(team, img['content']['src'], "#0000B8" if a==0 else "#B20000")
 
 		return '''
 		<html>
@@ -625,10 +609,9 @@ class ScoutServer(object):
 				<div style="margin: 0 auto; text-align: center; max-width: 1000px;">
 				{0}
 				<br><br><br>
-				{1}
 				</div>
 			</body>
-		</html>'''.format(output, imcode)
+		</html>'''.format(output)
 
 	# Lists schedule data from TBA
 	@cherrypy.expose()
@@ -728,7 +711,7 @@ class ScoutServer(object):
 				<p>Erasing database to prevent further damage to the system.</p>'''
 
 		if data == 'json':
-			return '{"feed": {"entry": []}}' #bogus json for local version
+			return '[]' #bogus json for local version
 
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
@@ -803,17 +786,6 @@ class ScoutServer(object):
 			cherrypy.session['event'] = CURRENT_EVENT
 		return cherrypy.session['event']
 
-	# Return the URL for a picasa web album
-	# Refreshing this will request a new album (if event is changed, for example)
-	def getalbum(self, refresh=False):
-		if refresh or ('album' not in cherrypy.session):
-			cherrypy.session['album'] = 'http://127.0.0.1:8000/submit?data=json'
-			headers = {"GData-Version": "2"}
-			usr = self.get("https://picasaweb.google.com/data/feed/api/user/110165600126232321372?alt=json", params=headers).json()
-			for album in usr['feed']['entry']:
-				if album['title']['$t'] == self.getevent():
-					cherrypy.session['album'] = album['id']['$t'].replace('entry', 'feed')
-		return cherrypy.session['album']
 	
 	# Wrapper for requests, ensuring nothing goes terribly wrong
 	# This code is trash; it just works to avoid errors when running without internet
@@ -822,11 +794,10 @@ class ScoutServer(object):
 		try:
 			a = requests.get(req, params=params)
 			if a.status_code == 404:
-				raise Exception
+				raise Exception #freaking stupid laziness
 		except:
 			#stupid lazy solution for local mode
 			a = requests.get('http://127.0.0.1:8000/submit?data=json')
-			cherrypy.session['album'] = 'http://127.0.0.1:8000/submit?data=json'
 		return a
 	#END OF CLASS
 
