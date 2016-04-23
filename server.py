@@ -768,7 +768,7 @@ class ScoutServer(object):
 			accuracy = int(100*accur[0]/accur[1] if accur[1] else 0)
 
 			# formula for calculating APR (point contribution)
-			apr = int(s['auto'] + s['def'] + s['shoot'] + s['end'] - e[2]*5 - e[3]*5 + 0.5) #2 and 3 are fouls
+			apr = int(s['auto'] + s['def'] + s['shoot'] + s['end'] + 0.5)
 
 		#replace the data entry with a new one
 		cursor.execute('DELETE FROM averages WHERE team=?',(n,))
