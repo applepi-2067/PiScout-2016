@@ -6,13 +6,14 @@ import requests
 import math
 
 # Update this value before every event
+# Use the event codes given by thebluealliance
 CURRENT_EVENT = '2016cars'
 
 class ScoutServer(object):
 	@cherrypy.expose
 	def index(self, e=''):
 		#First part is to handle event selection. When the event is changed, a POST request is sent here.
-		illegal = ''
+		illegal = '' #i competely forget what this variable does, just leave it
 		if e != '':
 			if os.path.isfile('data_' + e + '.db'):
 				cherrypy.session['event'] = e
@@ -21,12 +22,12 @@ class ScoutServer(object):
 		if 'event' not in cherrypy.session:
 			cherrypy.session['event'] = CURRENT_EVENT
 
-		#This secction generates the table of averages
+		#This section generates the table of averages
 		table = ''
 		conn = sql.connect(self.datapath())
 		averages = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
 		conn.close()
-		for team in averages:
+		for team in averages: #this table will need to change based on the number of columns on the main page
 			table += '''
 			<tr>
 				<td><a href="team?n={0}">{0}</a></td>
@@ -38,7 +39,7 @@ class ScoutServer(object):
 				<td>{6}</td>
 			</tr>
 			'''.format(team[0], team[6], team[1], team[2], team[3], team[5], team[7])
-
+		#in this next block, update the event list and the column titles
 		return '''
 		<html>
 			<head>
@@ -132,11 +133,9 @@ class ScoutServer(object):
 			raise cherrypy.HTTPRedirect('/')
 		if int(n)==666:
 			raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
-		#self.calcavg(n)
 		conn = sql.connect(self.datapath())
 		cursor = conn.cursor()
 		entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 DESC', (n,)).fetchall()
-		#'''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer)'''
 		averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
 		assert len(averages) < 2 #ensure there aren't two entries for one team
 		if len(averages):
@@ -153,10 +152,13 @@ class ScoutServer(object):
 			commentstr += '<div class="commentbox"><p>{}</p></div>'.format(comment[1])
 
 		#Iterate through all the data entries and generate some text to go in the main table
+		#this entire section will need to change from year to year
 		output = ''
 		dataset = []
 		labels = ['portcullis', 'cheval', 'moat', 'ramparts', 'drawbridge', 'sally', 'rock wall', 'terrain', 'low bar']
 		for e in entries:
+			# Important: the index of e refers to the number of the field set in main.py
+			# For example e[1] gets value #1 from main.py
 			dp = {"match": e[1], "shoot":0, "def":0, "auto":0, "accur":0}
 			a = ''
 			a += '' if e[6] else 'not preloaded, '
@@ -164,7 +166,7 @@ class ScoutServer(object):
 			if any(e[10:19]): #if any of the defenses were crossed
 				dp['auto'] += 10
 				for num,lab in enumerate(labels):
-					a += str(e[10+num]) + 'x ' + lab + ', ' if e[10+num] else ''	
+					a += str(e[10+num]) + 'x ' + lab + ', ' if e[10+num] else ''
 			elif e[5]:
 				dp['auto'] += 2 #otherwsie add points if reach
 				a += 'reach, '
@@ -173,11 +175,11 @@ class ScoutServer(object):
 			dp['auto'] += e[8]*5 #low goal
 			a += str(e[8]) + 'x low goal, ' if e[8] else ''
 			a += str(e[9]) + 'x miss, ' if e[9] else ''
-			
+
 			d = ''
 			dp['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
 			for num,lab in enumerate(labels):
-				d += str(e[19+num]) + 'x ' + lab + ', ' if e[19+num] else ''	
+				d += str(e[19+num]) + 'x ' + lab + ', ' if e[19+num] else ''
 
 			sh = ''
 			dp['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
@@ -195,6 +197,7 @@ class ScoutServer(object):
 
 			#dp['end'] += e[32]*15 if e[32] else e[31]*5 #scale/challenge points
 
+			#Generate a row in the table for each match
 			output += '''
 			<tr {5}>
 				<td>{0}</td>
@@ -206,8 +209,8 @@ class ScoutServer(object):
 			</tr>'''.format(e[1], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[36] else '', e[1], e[36])
 			for key,val in dp.items():
 				dp[key] = round(val, 2)
-			if not e[36]:
-				dataset.append(dp)
+			if not e[36]: #if flagged
+				dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
 		dataset.reverse() #reverse so that graph is in the correct order
 
 		#Grab the image from the blue alliance
@@ -222,7 +225,7 @@ class ScoutServer(object):
 		except:
 			pass #swallow the error lol
 		for media in m:
-			if media['type'] == 'imgur':
+			if media['type'] == 'imgur': #check if there's an imgur image on TBA
 				imcode = '''<br>
 				<div style="text-align: center">
 				<p style="font-size: 32px; line-height: 0em;">Image</p>
@@ -236,7 +239,9 @@ class ScoutServer(object):
 				<img src=http://chiefdelphi.com/media/img/{}></img>
 				</div>'''.format(media['details']['image_partial'].replace('_l', '_m'))
 				break
-		
+
+		#Every year, update the labels for the graphs. The data will come from the variable dataset
+		#Then update all the column headers and stuff
 		return '''
 		<html>
 			<head>
@@ -434,6 +439,7 @@ class ScoutServer(object):
 		return ''
 
 	# Input interface to compare teams or alliances
+	# This probably won't ever need to be modified
 	@cherrypy.expose()
 	def compare(self, t='team'):
 		return 		'''
@@ -590,7 +596,7 @@ class ScoutServer(object):
 							</div>
 						</div>'''.format(n, *entry[1:]) #unpack the elements
 		output += "</div></div>"
-		prob_red = 1/(1+math.e**(-0.08099*(sum(apr[3:6]) - sum(apr[0:3]))))
+		prob_red = 1/(1+math.e**(-0.08099*(sum(apr[3:6]) - sum(apr[0:3])))) #calculates win probability from 2016 data
 		output = output.format(sum(apr[0:3]), sum(apr[3:6]), round((1-prob_red)*100,1), round(prob_red*100,1))
 		conn.close()
 
@@ -702,6 +708,7 @@ class ScoutServer(object):
 		'''.format(": {}".format(n) if n else "", output)
 
 	# Used by the scanning program to submit data, and used by comment system to submit data
+	# this won't ever need to change
 	@cherrypy.expose()
 	def submit(self, data='', team='', comment=''):
 		if not (data or team):
@@ -754,7 +761,7 @@ class ScoutServer(object):
 				s['goals'] += e[30] + e[28] + e[7] + e[8]
 				s['def'] += 5*sum([min(2,a) for a in e[19:28]]) #points for crossing defenses
 				s['shoot'] += e[30]*2 + e[28]*5 #add low/high goal points
-	
+
 				accur[0] += e[28] #high shots made
 				accur[1] += e[28] + e[29] #high shots attempted
 				s['end'] += e[32]*15 if e[32] else e[31]*5 #scale/challenge points
@@ -786,7 +793,7 @@ class ScoutServer(object):
 			cherrypy.session['event'] = CURRENT_EVENT
 		return cherrypy.session['event']
 
-	
+
 	# Wrapper for requests, ensuring nothing goes terribly wrong
 	# This code is trash; it just works to avoid errors when running without internet
 	def get(self, req, params=""):
@@ -808,6 +815,7 @@ if not os.path.isfile(datapath):
 	# Generate a new database with the three tables
 	conn = sql.connect(datapath)
 	cursor = conn.cursor()
+	# Replace 36 with the number of entries in main.py
 	cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (36)]) + ',flag integer' + ')')
 	cursor.execute('''CREATE TABLE averages (team integer,auto real,def real, shoot real, accur integer, end real,apr integer,goals integer)''')
 	cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
@@ -851,4 +859,3 @@ conf = {
 
 cherrypy.quickstart(ScoutServer(), '/', conf)
 '''
-

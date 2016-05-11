@@ -89,6 +89,8 @@ class PiScout:
 		u_marksize = marksize[:] #clone the list
 		marksize.sort()
 		median = (marksize[1] + marksize[2]) / 2
+
+		#this block contains illegal inefficient recursive nonsense to salvage crappy sheets
 		for i,m in enumerate(u_marksize):
 			if abs(1 - m/median) > 0.04: #if there is a size anomoly in markers, try some things
 				print("Damaged marker detected, attempting fix")
@@ -112,7 +114,7 @@ class PiScout:
 					marks[2] = (marks[3][0] - (marks[1][0]-marks[0][0]), marks[0][1] - (marks[1][1]-marks[3][1]))
 				elif i == 3:
 					marks[3] = (marks[2][0] + (marks[1][0]-marks[0][0]), marks[1][1] - (marks[0][1]-marks[2][1]))
-			
+
 
 		# Now, we fit apply a perspective transform
 		# The centers of the 4 marks become the 4 corners of the image
@@ -125,7 +127,7 @@ class PiScout:
 		print("Loading complete")
 
 	# Shifts all fields down by amount
-	# Useful for when there are two matches on one sheet of paper
+	# Useful for when there are two (or more) matches on one sheet of paper
 	# After reading the first match, shift down and read again
 	def shiftDown (self, amount):
 		self.shift = amount
@@ -197,6 +199,7 @@ class PiScout:
 				return
 			file.write(d)
 
+		#the following block opens the GUI for piscout, this code shouldn't need to change
 		print("Found a new match, opening")
 		output = ''
 		assert len(self.labels) == len(self.data)
@@ -217,7 +220,7 @@ class PiScout:
 		cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
 		cancel.on_clicked(self.cancel)
 		mng = plt.get_current_fig_manager()
-		try:		
+		try:
 			mng.window.state('zoomed')
 		except AttributeError:
 			print("Window resizing exploded, oh well.")
@@ -243,7 +246,7 @@ class PiScout:
 		plt.close()
 		print("Attempting upload to server")
 
-		try:
+		try: #post it to piscout's ip address
 			requests.post("http://52.2.17.191/submit", data={'data': str(self.data)})
 			print("Uploading this match was successful")
 			if os.path.isfile('queue.txt'):
