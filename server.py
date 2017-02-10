@@ -177,30 +177,29 @@ class ScoutServer(object):
         #this entire section will need to change from year to year
         output = ''
         dataset = []
-        labels = ['portcullis', 'cheval', 'moat', 'ramparts', 'drawbridge', 'sally', 'rock wall', 'terrain', 'low bar']
         for e in entries:
             # Important: the index of e refers to the number of the field set in main.py
             # For example e[1] gets value #1 from main.py
             dp = {"match": e[1], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
             a += 'baseline, ' if e[5] else ''
-            a += str(e[4]) + 'x gears' if e[4] else ''
+            a += str(e[4]) + 'x gears, ' if e[4] else ''
             dp['autogears'] += e[4]
             dp['gears'] += e[4]
             a += str(e[6]) + 'x low goal, ' if e[6] else ''
-            a += str(e[7]) + 'x high goal, ' if e[7] else ''
+            a += str(e[7]) + 'x high goal' if e[7] else ''
             dp['autoshoot'] += e[6]/3 + e[7]
             dp['shoot'] += e[6]/3 + e[7]
 
             d = ''
-            d += str(e[12]) + 'x gears' if e[12] else ''
+            d += str(e[12]) + 'x gears, ' if e[12] else ''
             d += str(e[13]) + 'x gears dropped' if e[13] else ''
             dp['gears'] += e[12]
             dp['geardrop'] += e[13]
 
             sh = ''
             sh += str(e[14]) + 'x low goal, ' if e[14] else ''
-            sh += str(e[15]) + 'x high goal, ' if e[15] else ''
+            sh += str(e[15]) + 'x high goal' if e[15] else ''
             dp['shoot'] += e[14]/9 + e[15]/3
 
             o = 'hanging, ' if e[16] else 'failed hang, ' if e[17] else ''
@@ -208,7 +207,7 @@ class ScoutServer(object):
             o += str(e[3]) + 'x tech foul, ' if e[3] else ''
             o += 'defense, ' if e[10] else ''
             o += 'feeder, ' if e[9] else ''
-            o += 'defended, ' if e[11] else ''
+            o += 'defended' if e[11] else ''
 
             #Generate a row in the table for each match
             output += '''
