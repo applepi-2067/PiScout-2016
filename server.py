@@ -738,7 +738,7 @@ class ScoutServer(object):
     # Used by the scanning program to submit data, and used by comment system to submit data
     # this won't ever need to change
     @cherrypy.expose()
-    def submit(self, data='', team='', comment=''):
+    def submit(self, data='', event='', team='', comment=''):
         if not (data or team):
             return '''
                 <h1>FATAL ERROR</h1>
@@ -748,7 +748,9 @@ class ScoutServer(object):
         if data == 'json':
             return '[]' #bogus json for local version
 
-        conn = sql.connect(self.datapath())
+        datapath = 'data_' + event + '.db'
+        self.database_exists(event)
+        conn = sql.connect(datapath)
         cursor = conn.cursor()
 
         if team:
@@ -765,13 +767,14 @@ class ScoutServer(object):
         conn.commit()
         conn.close()
 
-        self.calcavg(d[0])
-        self.calcmaxes(d[0])
+        self.calcavg(d[0], event)
+        self.calcmaxes(d[0], event)
         return ''
 
     # Calculates average scores for a team
-    def calcavg(self, n):
-        conn = sql.connect(self.datapath())
+    def calcavg(self, n, event):
+        datapath = 'data_' + event + '.db'
+        conn = sql.connect(datapath)
         cursor = conn.cursor()
         #d0 is the identifier for team, d1 is the identifier for match
         entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
@@ -800,8 +803,9 @@ class ScoutServer(object):
         conn.commit()
         conn.close()
         
-    def calcmaxes(self, n):
-        conn = sql.connect(self.datapath())
+    def calcmaxes(self, n, event):
+        datapath = 'data_' + event + '.db'
+        conn = sql.connect(datapath)
         cursor = conn.cursor()
         
         entries = cursor.execute('SELECT * FROM scout WHERE d0 = ? AND flag=0 ORDER BY d1 DESC',(n,)).fetchall()
@@ -849,6 +853,19 @@ class ScoutServer(object):
             #stupid lazy solution for local mode
             a = requests.get('http://127.0.0.1:8000/submit?data=json')
         return a
+    
+    def database_exists(self, event):
+        datapath = 'data_' + event + '.db'
+        if not os.path.isfile(datapath):
+            # Generate a new database with the three tables
+            conn = sql.connect(datapath)
+            cursor = conn.cursor()
+            # Replace 36 with the number of entries in main.py
+            cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
+            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+            cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+            cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
+            conn.close()
     #END OF CLASS
 
 # Execution starts here

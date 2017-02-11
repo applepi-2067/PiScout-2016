@@ -8,6 +8,7 @@ import ctypes
 import requests
 import server
 from threading import Thread
+from server import CURRENT_EVENT
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -237,7 +238,7 @@ class PiScout:
         with open("queue.txt", "a+") as file:
             file.write(str(self.data) + '\n')
         plt.close()
-        requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
+        requests.post("http://127.0.0.1:8000/submit", data={'event':server.CURRENT_EVENT, 'data': str(self.data)})
 
     # Invoked by the "Upload Data" button
     # Uploads all data (including queue) to the online database
@@ -252,10 +253,10 @@ class PiScout:
             if os.path.isfile('queue.txt'):
                 with open("queue.txt", "r") as file:
                     for line in file:
-                        requests.post("http://52.2.17.191/submit", data={'data': line})
+                        requests.post("http://52.2.17.191/submit", data={'event':server.CURRENT_EVENT, 'data': line})
                         print("Uploaded an entry from the queue")
                 os.remove('queue.txt')
-            requests.post("http://127.0.0.1:8000/submit", data={'data': str(self.data)})
+            requests.post("http://127.0.0.1:8000/submit", data={'event':server.CURRENT_EVENT, 'data': str(self.data)})
         except:
             print("Failed miserably")
             r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)
