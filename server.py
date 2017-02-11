@@ -1,6 +1,7 @@
 import cherrypy
 import sqlite3 as sql
 import os
+import json
 from ast import literal_eval
 import requests
 import math
@@ -652,23 +653,37 @@ class ScoutServer(object):
     def matches(self, n=0):
         n = int(n)
         event = self.getevent()
+        datapath = 'data_' + event + '.db'
+        self.database_exists(event)
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        m = []
+        
         headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
         try:
             if n:
                 #request a specific team
-                m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
+                m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
             else:
                 #get all the matches from this event
-                m = self.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+                m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
             if m.status_code == 400:
                 raise cherrypy.HTTPError(400, "Request rejected by The Blue Alliance.")
+            with open(event + "_matches.json", "w+") as file:
+                file.write(str(m.text))
+            m = m.json()
         except:
-            raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
+            try:
+                with open(event + '_matches.json') as matches_data:
+                    m = json.load(matches_data)
+            except:
+                m = []
+
         output = ''
-        m = m.json()
+
         if 'feed' in m:
             raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
-
+        
         #assign weights, so we can sort the matches
         for match in m:
             match['value'] = match['match_number']
@@ -880,6 +895,7 @@ if not os.path.isfile(datapath):
     cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
     cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
     cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
+    cursor.execute('''CREATE TABLE matches (match_number integer, comp_level text, red1 integer, red2 integer, red3 integer, blue1 integer, blue2 integer, blue3 integer, red_score integer, blue_score integer)''')
     conn.close()
 
 conf = {
