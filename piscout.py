@@ -47,7 +47,7 @@ class PiScout:
         self.labels = []
         print('Loading a new sheet: ' + imgpath)
         img = cv2.imread(imgpath)
-        img = cv2.resize(img, (0,0), fx=2, fy=2)
+        img = cv2.resize(img, (3400,4400))
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # The first step is to figure out the four markers on the corners of the page
