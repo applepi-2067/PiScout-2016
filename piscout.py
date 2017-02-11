@@ -9,6 +9,7 @@ import requests
 import server
 from threading import Thread
 from server import CURRENT_EVENT
+import sqlite3 as sql
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -190,15 +191,16 @@ class PiScout:
             self.data = []
             self.labels = []
             return
-        with open("history.txt", "a+") as file:
-            d = str(self.data[0]) + ' ' + str(self.data[1]) + '\n'
-            file.seek(0)
-            if d in file.read():
-                print("Already processed this match, skipping")
-                self.data = []
-                self.labels = []
-                return
-            file.write(d)
+        
+        datapath = 'data_' + CURRENT_EVENT + '.db'
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        history = cursor.execute('SELECT * FROM scout WHERE d0=? AND d1=?', (str(self.data[0]),str(self.data[1]))).fetchall()
+        if history:
+            print("Already processed this match, skipping")
+            self.data = []
+            self.labels = []
+            return
 
         #the following block opens the GUI for piscout, this code shouldn't need to change
         print("Found a new match, opening")
