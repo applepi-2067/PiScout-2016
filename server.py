@@ -88,7 +88,7 @@ class ScoutServer(object):
                     </form>
                     <br><br>
                     <p class="main">Main Display</p>
-                    <form method="post" action="">
+                    <form method="post" action="/">
                         <select class="fieldsm" name="m">
                             <option id="maxes" value="maxes">Maxes</option>
                             <option id="averages" value="averages">Averages</option>
@@ -97,7 +97,7 @@ class ScoutServer(object):
                     </form>
                     <br><br>
                      <p class="main">Change Event</p>
-                    <form method="post" action="">
+                    <form method="post" action="/">
                         <select class="fieldsm" name="e">
                           <option id="2016ctss" value="2016ctss">Suffield Shakedown</option>
                           <option id="2016ctwat" value="2016ctwat">Waterbury District Event</option>
@@ -183,32 +183,32 @@ class ScoutServer(object):
             # For example e[1] gets value #1 from main.py
             dp = {"match": e[1], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
-            a += 'baseline, ' if e[5] else ''
-            a += str(e[4]) + 'x gears, ' if e[4] else ''
-            dp['autogears'] += e[4]
-            dp['gears'] += e[4]
-            a += str(e[6]) + 'x low goal, ' if e[6] else ''
-            a += str(e[7]) + 'x high goal' if e[7] else ''
-            dp['autoshoot'] += e[6]/3 + e[7]
-            dp['shoot'] += e[6]/3 + e[7]
+            a += 'baseline, ' if e[6] else ''
+            a += str(e[4]) + 'x gears, ' if e[5] else ''
+            dp['autogears'] += e[5]
+            dp['gears'] += e[5]
+            a += str(e[6]) + 'x low goal, ' if e[7] else ''
+            a += str(e[7]) + 'x high goal' if e[8] else ''
+            dp['autoshoot'] += e[7]/3 + e[8]
+            dp['shoot'] += e[7]/3 + e[8]
 
             d = ''
-            d += str(e[12]) + 'x gears, ' if e[12] else ''
-            d += str(e[13]) + 'x gears dropped' if e[13] else ''
-            dp['gears'] += e[12]
-            dp['geardrop'] += e[13]
+            d += str(e[13]) + 'x gears, ' if e[13] else ''
+            d += str(e[14]) + 'x gears dropped' if e[14] else ''
+            dp['gears'] += e[13]
+            dp['geardrop'] += e[14]
 
             sh = ''
-            sh += str(e[14]) + 'x low goal, ' if e[14] else ''
-            sh += str(e[15]) + 'x high goal' if e[15] else ''
-            dp['shoot'] += e[14]/9 + e[15]/3
+            sh += str(e[15]) + 'x low goal, ' if e[15] else ''
+            sh += str(e[16]) + 'x high goal' if e[16] else ''
+            dp['shoot'] += e[15]/9 + e[16]/3
 
-            o = 'hanging, ' if e[16] else 'failed hang, ' if e[17] else ''
-            o += str(e[2]) + 'x foul, ' if e[2] else ''
-            o += str(e[3]) + 'x tech foul, ' if e[3] else ''
-            o += 'defense, ' if e[10] else ''
-            o += 'feeder, ' if e[9] else ''
-            o += 'defended' if e[11] else ''
+            o = 'hanging, ' if e[17] else 'failed hang, ' if e[18] else ''
+            o += str(e[3]) + 'x foul, ' if e[3] else ''
+            o += str(e[4]) + 'x tech foul, ' if e[4] else ''
+            o += 'defense, ' if e[11] else ''
+            o += 'feeder, ' if e[10] else ''
+            o += 'defended' if e[12] else ''
 
             #Generate a row in the table for each match
             output += '''
@@ -219,10 +219,11 @@ class ScoutServer(object):
                 <td>{3}</td>
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
-            </tr>'''.format(e[1], a, d, sh, o, 'style="color: #B20000"' if e[18] else '', e[1], e[18])
+                <td><a class="edit" href="/edit?key={8}">E</a></td>
+            </tr>'''.format(e[2], a, d, sh, o, 'style="color: #B20000"' if e[19] else '', e[2], e[19], e[0])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
-            if not e[18]: #if flagged
+            if not e[19]: #if flagged
                 dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
         dataset.reverse() #reverse so that graph is in the correct order
 
@@ -436,6 +437,7 @@ class ScoutServer(object):
                         <th>Shooting</th>
                         <th>Other</th>
                         <th>Flag</th>
+                        <th>Edit</th>
                     </tr></thead>{1}
                 </table>
                 {10}
@@ -778,7 +780,7 @@ class ScoutServer(object):
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
         d = literal_eval(data)
-        cursor.execute('INSERT INTO scout VALUES (' + ','.join([str(a) for a in d])  + ',0' + ')')
+        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',0' + ')')
         conn.commit()
         conn.close()
 
@@ -798,6 +800,7 @@ class ScoutServer(object):
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
             for e in entries:
+                e = e[1:]
                 s['autogears'] += e[4]
                 s['teleopgears'] += e[12]
                 s['autoballs'] += e[6]/3 + e[7]
@@ -829,6 +832,7 @@ class ScoutServer(object):
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
             for e in entries:
+                e = e[1:]
                 s['autogears'] = max(s['autogears'], e[4])
                 s['teleopgears'] = max(s['teleopgears'], e[12])
                 s['autoballs'] = max(s['autoballs'], (e[6]/3 + e[7]))
@@ -876,11 +880,102 @@ class ScoutServer(object):
             conn = sql.connect(datapath)
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
-            cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
+            cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
             cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
+            
+    @cherrypy.expose()
+    def edit(self, key='', team='', match='', fouls='', techFouls='', autoGears='', autoBaseline='',
+             autoLowBalls='', autoHighBalls='', gearsFloor='', feeder='', defence='', defended='',
+             teleGears='', teleGearsDropped='', teleLowBalls='', teleHighBalls='', hang='', failHang='', flag=''):
+        datapath = 'data_' + self.getevent() + '.db'
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        if team:
+            data = (team, match, fouls, techFouls, autoGears, autoBaseline, autoLowBalls, autoHighBalls,
+                    gearsFloor, feeder, defence, defended, teleGears, teleGearsDropped, teleLowBalls,
+                    teleHighBalls, hang, failHang)
+            sqlCommand = 'UPDATE scout SET '
+            for index, item in enumerate(data):
+                if item:
+                    if item == 'on':
+                        sqlCommand+= 'd' + str(index) + '=1,'
+                    else:
+                        sqlCommand+= 'd' + str(index) + '=' + str(item) + ','
+                else:
+                    sqlCommand+= 'd' + str(index) + '=0,'
+            if flag:
+                sqlCommand+='flag=1 '
+            else: 
+                sqlCommand+='flag=0 '
+            sqlCommand+='WHERE key=' + str(key)
+            cursor.execute(sqlCommand)
+        conn.commit()
+        entries = cursor.execute('SELECT * from scout ORDER BY flag DESC, d0 ASC, d1 ASC').fetchall()
+                
+        if key == '':
+            key = entries[0][0]
+        combobox = '''<form method="post" action="edit">
+                        <select class="fieldsm" name="key">'''
+
+        for e in entries:
+            combobox += '''<option id="{0}" value="{0}">{1} Team {2}: Match {3}</option>\n'''.format(e[0], "*" if e[19] else "", e[1], e[2])
+                         
+        combobox += '''</select>
+                        <button class="submit" type="submit">Submit</button>
+                    </form>
+                    <br><br>'''
+        
+        entry = cursor.execute('SELECT * from scout WHERE key=?', str(key)).fetchone()
+        conn.close()
+        mainEditor = '''<form method="post" action="edit">
+                            <input type="number" name="key" value="{8}" hidden/>
+                            <input type="number" name="team" value="{0[1]}">Team</input>
+                            <input type="number" name="match" value="{0[2]}">Match</input>
+                            <input type="number" name="fouls" value="{0[3]}">Fouls</input>
+                            <input type="number" name="techFouls" value="{0[4]}">Tech fouls</input>
+                            <input type="number" name="autoGears" value="{0[5]}">Auto Gears</input>
+                            <input type="checkbox" name="autoBaseline" {1}>Auto Baseline</input>
+                            <input type="number" name="autoLowBalls" value="{0[7]}">Auto low balls</input>
+                            <input type="number" name="autoHighBalls" value="{0[8]}">Auto high balls</input>
+                            <input type="checkbox" name="gearsFloor" {2}>Gear Floor Intake</input>
+                            <input type="checkbox" name="feeder" {3}>Feeder Bot</input>
+                            <input type="checkbox" name="defence" {4}>Defence Bot</input>
+                            <input type="checkbox" name="defended" {5}>Defended</input>
+                            <input type="number" name="teleGears" value="{0[13]}">Teleop Gears</input>
+                            <input type="number" name="teleGearsDropped" value="{0[14]}">Teleop Dropped Gears</input>
+                            <input type="number" name="teleLowBalls" value="{0[15]}">Tele low balls</input>
+                            <input type="number" name="teleHighBalls" value="{0[16]}">Tele high balls</input>
+                            <input type="checkbox" name="hang" {6}>Hang</input>
+                            <input type="checkbox" name="failHang" {7}>Failed Hang</input>
+                            <input type="checkbox" name="flag" {9}>Flagged</input>
+                            <input type="submit" value="Submit">
+                        </form>'''.format(entry, "checked" if entry[6] else "", "checked" if entry[9] else "",
+                                          "checked" if entry[10] else "", "checked" if entry[11] else "",
+                                          "checked" if entry[12] else "", "checked" if entry[17] else "",
+                                          "checked" if entry[18] else "", key, "checked" if entry[19] else "")
+        
+        
+        return '''
+            <html>
+            <head>
+                <title>PiScout</title>
+                <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+                <link href="/static/css/style.css" rel="stylesheet">
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+                <script>
+                $(document).ready(function() {{
+                    $("#{0}").attr("selected", "selected");
+                }});
+                </script>
+            </head>
+            <body>
+                <h1><a style="color: #B20000" href='/'>PiScout</a></h1>
+                <h2><syle="colorL #B20000">Match Editor</h2>
+                <br><br>
+            '''.format(str(key)) + combobox + mainEditor + '''</body>'''
     #END OF CLASS
 
 # Execution starts here
@@ -891,7 +986,7 @@ if not os.path.isfile(datapath):
     conn = sql.connect(datapath)
     cursor = conn.cursor()
     # Replace 36 with the number of entries in main.py
-    cursor.execute('CREATE TABLE scout (' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
+    cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
     cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
     cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
     cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
