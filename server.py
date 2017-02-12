@@ -964,6 +964,10 @@ class ScoutServer(object):
             flag = 1
         if d[16] and d[17]:
             flag = 1
+            
+        if d[18]:   #replay
+            cursor.execute('DELETE from scout WHERE d0=? AND d1=?', (str(d[0]),str(d[1])))
+        d = d[:-1]
         cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',' + str(flag) + ')')
         conn.commit()
         conn.close()

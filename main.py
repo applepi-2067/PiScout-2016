@@ -45,6 +45,8 @@ def main(scout):
         
         scout.set("Hang", scout.boolfield('G-16')) #16
         scout.set("Failed Hang", scout.boolfield('G-17')) #17
+        
+        scout.set("Replay", scout.boolfield('AK-5'))  #18
 
         scout.submit()
 

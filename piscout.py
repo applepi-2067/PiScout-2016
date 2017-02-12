@@ -196,7 +196,7 @@ class PiScout:
         conn = sql.connect(datapath)
         cursor = conn.cursor()
         history = cursor.execute('SELECT * FROM scout WHERE d0=? AND d1=?', (str(self.data[0]),str(self.data[1]))).fetchall()
-        if history:
+        if history and not self.data[18]:
             print("Already processed this match, skipping")
             self.data = []
             self.labels = []
@@ -271,11 +271,6 @@ class PiScout:
     # Opens up the data in notepad, and lets the user make modifications
     # Afterward, it re-opens the GUI with the updated data
     def edit(self, event):
-        with open('history.txt', 'r') as file:
-            lines = file.readlines()
-            lines = lines[:-1]
-        with open('history.txt', 'w+') as file:
-            file.writelines(lines)
         datastr = ''
         for a in range(len(self.data)):
             datastr += self.labels[a] + "=" + str(self.data[a]) + '\n'
@@ -297,11 +292,6 @@ class PiScout:
     # Closes the GUI and erases the entry from the history file
     def cancel(self, event):
         plt.close()
-        with open('history.txt', 'r') as file:
-            lines = file.readlines()
-            lines = lines[:-1]
-        with open('history.txt', 'w+') as file:
-            file.writelines(lines)
 
     # Displays a message box
     def message(self, title, message, type=0):
