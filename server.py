@@ -164,7 +164,7 @@ class ScoutServer(object):
         if len(averages):
             s = averages[0]
         else:
-            s = [0]*7 #generate zeros if no data exists for the team yet
+            s = [0]*8 #generate zeros if no data exists for the team yet
 
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
         conn.close()
