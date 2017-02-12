@@ -181,7 +181,7 @@ class ScoutServer(object):
         for e in entries:
             # Important: the index of e refers to the number of the field set in main.py
             # For example e[1] gets value #1 from main.py
-            dp = {"match": e[1], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+            dp = {"match": e[2], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
             a += 'baseline, ' if e[6] else ''
             a += str(e[5]) + 'x gears, ' if e[5] else ''
@@ -515,8 +515,13 @@ class ScoutServer(object):
 
     # Output for team comparison
     @cherrypy.expose()
-    def teams(self, n1='', n2='', n3='', n4=''):
+    def teams(self, n1='', n2='', n3='', n4='', stat1='', stat2=''):
         nums = [n1, n2, n3, n4]
+        if stat2 == 'none':
+            stat2 = ''      
+        if not stat1:
+            stat1 = 'autogears'
+            
         averages = []
         conn = sql.connect(self.datapath())
         cursor = conn.cursor()
@@ -549,7 +554,149 @@ class ScoutServer(object):
                         <p class="statbox">Endgame Points: {7}</p>
                     </div>
                         </div>'''.format(n, *entry[1:]) #unpack the elements
-        conn.close()
+        
+        teamCharts = ''
+        dataset = []
+        colors = ["#FF0000", "#000FFF", "#1DD300", "#C100E3", "#AF0000", "#000666", "#0D5B000", "#610172"]
+        for idx, n in enumerate(nums):
+            if not n:
+                continue
+            entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 ASC', (n,)).fetchall()
+
+            for index, e in enumerate(entries):
+            # Important: the index of e refers to the number of the field set in main.py
+                # For example e[1] gets value #1 from main.py
+                dp = {"autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+                a = ''
+                a += 'baseline, ' if e[6] else ''
+                a += str(e[5]) + 'x gears, ' if e[5] else ''
+                dp['autogears'] += e[5]
+                a += str(e[7]) + 'x low goal, ' if e[7] else ''
+                a += str(e[8]) + 'x high goal, ' if e[8] else ''
+                dp['autoshoot'] += e[7]/3 + e[8]
+    
+                d = ''
+                d += str(e[13]) + 'x gears, ' if e[13] else ''
+                d += str(e[14]) + 'x gears dropped, ' if e[14] else ''
+                dp['gears'] += e[13]
+                dp['geardrop'] += e[14]
+    
+                sh = ''
+                sh += str(e[15]) + 'x low goal, ' if e[15] else ''
+                sh += str(e[16]) + 'x high goal, ' if e[16] else ''
+                dp['shoot'] += e[15]/9 + e[16]/3
+    
+                o = 'hang, ' if e[17] else 'failed hang, ' if e[18] else ''
+                o += str(e[3]) + 'x foul, ' if e[3] else ''
+                o += str(e[4]) + 'x tech foul, ' if e[4] else ''
+                o += 'defense, ' if e[11] else ''
+                o += 'feeder, ' if e[10] else ''
+                o += 'defended, ' if e[12] else ''
+                if not e[19]:
+                    if len(dataset) < (index + 1):
+                        if stat2:
+                            dataPoint = {"match":(index+1), "team" + n + "stat1":dp[stat1], "team" + n + "stat2":dp[stat2]}
+                        else:
+                            dataPoint = {"match":(index+1), "team" + n + "stat1":dp[stat1]}
+                        dataset.append(dataPoint)
+                    else:
+                        dataset[index]["team" + n + "stat1"] = dp[stat1]
+                        if stat2:
+                            dataset[index]["team" + n + "stat2"] = dp[stat2]
+
+            teamCharts += '''// GRAPH
+                            graph{0} = new AmCharts.AmGraph();
+                            graph{0}.title = "{1}";
+                            graph{0}.valueAxis = valueAxis;
+                            graph{0}.type = "smoothedLine"; // this line makes the graph smoothed line.
+                            graph{0}.lineColor = "{3}";
+                            graph{0}.bullet = "round";
+                            graph{0}.bulletSize = 8;
+                            graph{0}.bulletBorderColor = "#FFFFFF";
+                            graph{0}.bulletBorderAlpha = 1;
+                            graph{0}.bulletBorderThickness = 2;
+                            graph{0}.lineThickness = 2;
+                            graph{0}.valueField = "{2}";
+                            graph{0}.balloonText = "{1}<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                            chart.addGraph(graph{0});
+                            '''.format(n + "_1", "Team " + n + stat1, "team" + n + "stat1", colors[idx])
+            if stat2:
+                teamCharts += '''// GRAPH
+                graph{0} = new AmCharts.AmGraph();
+                graph{0}.title = "{1}";
+                graph{0}.valueAxis = valueAxis2;
+                graph{0}.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph{0}.lineColor = "{3}";
+                graph{0}.bullet = "round";
+                graph{0}.bulletSize = 8;
+                graph{0}.bulletBorderColor = "#FFFFFF";
+                graph{0}.bulletBorderAlpha = 1;
+                graph{0}.bulletBorderThickness = 2;
+                graph{0}.lineThickness = 2;
+                graph{0}.valueField = "{2}";
+                graph{0}.balloonText = "{1}<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph{0});
+                '''.format(n + "_2", "Team " + n + stat2, "team" + n + "stat2", colors[4+idx])
+        chart = '''
+                <script>
+                    var chart;
+                    var graph;
+
+                    var chartData = {1};
+
+                    AmCharts.ready(function () {{
+                        // SERIAL CHART
+                        chart = new AmCharts.AmSerialChart();
+
+                        chart.dataProvider = chartData;
+                        chart.marginLeft = 10;
+                        chart.categoryField = "match";
+
+                        // AXES
+                        // category
+                        var categoryAxis = chart.categoryAxis;
+                        categoryAxis.dashLength = 3;
+                        categoryAxis.minorGridEnabled = true;
+                        categoryAxis.minorGridAlpha = 0.1;
+
+                        // value
+                        var valueAxis = new AmCharts.ValueAxis();
+                        valueAxis.position = "left";
+                        valueAxis.axisColor = "#111111";
+                        valueAxis.gridAlpha = 0;
+                        valueAxis.axisThickness = 2;
+                        chart.addValueAxis(valueAxis)
+
+                        var valueAxis2 = new AmCharts.ValueAxis();
+                        valueAxis2.position = "right";
+                        valueAxis2.axisColor = "#FCD202";
+                        valueAxis2.gridAlpha = 0;
+                        valueAxis2.axisThickness = 2;
+                        chart.addValueAxis(valueAxis2);
+                        
+                        {0}
+                        
+                        // CURSOR
+                        var chartCursor = new AmCharts.ChartCursor();
+                        chartCursor.cursorAlpha = 0;
+                        chartCursor.cursorPosition = "mouse";
+                        chart.addChartCursor(chartCursor);
+
+                        var legend = new AmCharts.AmLegend();
+                        legend.marginLeft = 110;
+                        legend.useGraphSettings = true;
+                        chart.addLegend(legend);
+                        chart.creditsPosition = "bottom-right";
+
+                        // WRITE
+                        chart.write("chartdiv");
+                    }});
+                $(document).ready(function() {{
+                    $("#{2}").attr("selected", "selected");
+                    $("#{3}").attr("selected", "selected");
+                }});
+                </script>
+            '''.format(teamCharts, str(dataset).replace("'",'"'), stat1, stat2 + "2")
 
         return '''
         <html>
@@ -557,6 +704,14 @@ class ScoutServer(object):
                 <title>PiScout</title>
                 <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
                 <link href="/static/css/style.css" rel="stylesheet">
+                <script type="text/javascript" src="/static/js/amcharts.js"></script>
+                <script type="text/javascript" src="/static/js/serial.js"></script>
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+                <script>
+                if (typeof jQuery === 'undefined')
+                  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+                </script>
+                {1}
             </head>
             <body>
                 <h1 class="big">Compare Teams</h1>
@@ -566,8 +721,32 @@ class ScoutServer(object):
                 {0}
                 <br><br><br>
                 </div>
+                <div id="chartdiv" style="width:1000px; height:400px; margin: 0 auto;"></div>
+                <div id="statSelect" style="width:600px; margin:auto;">
+                    <form method="post" action="" style="float:left">
+                            <select class="fieldsm" name="stat1">
+                              <option id="autoshoot" value="autoshoot">Auto Shoot Points</option>
+                              <option id="autogears" value="autogears">Auto Gears</option>
+                              <option id="shoot" value="shoot">Teleop Shoot Points</option>
+                              <option id="gears" value="gears">Teleop Gears</option>
+                              <option id="geardrop" value="geardrop">Dropped Gears</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                    <form method="post" action="" style="float:right">
+                            <select class="fieldsm" name="stat2">
+                                <option id="none" value="none">None</option>
+                                <option id="autoshoot2" value="autoshoot">Auto Shoot Points</option>
+                                <option id="autogears2" value="autogears">Auto Gears</option>
+                                <option id="shoot2" value="shoot">Teleop Shoot Points</option>
+                                <option id="gears2" value="gears">Teleop Gears</option>
+                                <option id="geardrop2" value="geardrop">Dropped Gears</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                </div>
             </body>
-        </html>'''.format(output)
+        </html>'''.format(output, chart)
 
     # Output for alliance comparison
     @cherrypy.expose()
