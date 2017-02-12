@@ -55,6 +55,57 @@ form {
     background-color: #F9F9EC;
     font-family: 'Chau Philomene One', sans-serif;
 }
+.editLabel {
+    position: absolute;
+    right: 100%;
+    margin-right: 10px;
+    width:150px;
+    text-align:right;
+}
+.editCellLeft {
+    position: relative;
+    width: 80px;
+    float: left;
+    box-sizing: border-box;
+    margin-left:170px;
+    margin-bottom:20px;
+}
+.editCellRight {
+    position: relative;
+    width: 80px;
+    float: right;
+    box-sizing: border-box;
+    margin-left:170px;
+    margin-right:170px;
+    margin-bottom:20px;
+}
+.editNum {
+    width: 100%;
+    height: 18px;
+    margin-bottom:2px;
+    margin-top: 2px;
+}
+.editHeaderLeft {
+    font-weight: normal;
+    text-align: center;
+    color: #8E0000;
+    font-size: 1.5em;
+    line-height: 0.9em;
+    margin-left: 130px;
+    width: 120px;
+    float: left;
+}
+.editHeaderRight {
+    font-weight: normal;
+    text-align: center;
+    color: #8E0000;
+    font-size: 1.5em;
+    line-height: 0.9em;
+    margin-right: 170px;
+    width: 120px;
+    float: right;
+}
+
 table {
     width: auto;
     margin: 0 auto;

@@ -930,28 +930,88 @@ class ScoutServer(object):
         
         entry = cursor.execute('SELECT * from scout WHERE key=?', str(key)).fetchone()
         conn.close()
-        mainEditor = '''<form method="post" action="edit">
-                            <input type="number" name="key" value="{8}" hidden/>
-                            <input type="number" name="team" value="{0[1]}">Team</input>
-                            <input type="number" name="match" value="{0[2]}">Match</input>
-                            <input type="number" name="fouls" value="{0[3]}">Fouls</input>
-                            <input type="number" name="techFouls" value="{0[4]}">Tech fouls</input>
-                            <input type="number" name="autoGears" value="{0[5]}">Auto Gears</input>
-                            <input type="checkbox" name="autoBaseline" {1}>Auto Baseline</input>
-                            <input type="number" name="autoLowBalls" value="{0[7]}">Auto low balls</input>
-                            <input type="number" name="autoHighBalls" value="{0[8]}">Auto high balls</input>
-                            <input type="checkbox" name="gearsFloor" {2}>Gear Floor Intake</input>
-                            <input type="checkbox" name="feeder" {3}>Feeder Bot</input>
-                            <input type="checkbox" name="defence" {4}>Defence Bot</input>
-                            <input type="checkbox" name="defended" {5}>Defended</input>
-                            <input type="number" name="teleGears" value="{0[13]}">Teleop Gears</input>
-                            <input type="number" name="teleGearsDropped" value="{0[14]}">Teleop Dropped Gears</input>
-                            <input type="number" name="teleLowBalls" value="{0[15]}">Tele low balls</input>
-                            <input type="number" name="teleHighBalls" value="{0[16]}">Tele high balls</input>
-                            <input type="checkbox" name="hang" {6}>Hang</input>
-                            <input type="checkbox" name="failHang" {7}>Failed Hang</input>
-                            <input type="checkbox" name="flag" {9}>Flagged</input>
-                            <input type="submit" value="Submit">
+        mainEditor = '''<h1>Editing Team {0[1]}: Match {0[2]}</h1>
+                        <br>
+                        <form method="post" action="edit" style="width:670px">
+                                <div class="editHeaderLeft">Match Info</div>
+                                <div class="editHeaderRight">Fouls</div>
+                                <div class="editCellLeft">
+                                    <input type="number" name="key" value="{8}" hidden/>
+                                    <label for="team" class="editLabel">Team</label>
+                                    <input class="editNum" type="number" name="team" value="{0[1]}">
+                                    <br>
+                                    <label for="match" class="editLabel">Match</label>
+                                    <input class="editNum" type="number" name="match" value="{0[2]}">
+                                </div>
+                                <div class="editCellRight">
+                                    <label for="fouls" class="editLabel">Fouls</label>
+                                    <input class="editNum" type="number" name="fouls" value="{0[3]}">
+                                    <br>
+                                    <label for="techFouls" class="editLabel">Tech Fouls</label>
+                                    <input class="editNum" type="number" name="techFouls" value="{0[4]}">
+                                </div>
+                                <div class="editHeaderLeft">Auto</div>
+                                <div class="editHeaderRight">Teleop</div>
+                                <div class="editCellLeft">
+                                    <label for="autoGears" class="editLabel">Auto Gears</label>
+                                    <input class="editNum" type="number" name="autoGears" value="{0[5]}">
+                                    <br>
+                                    <label for="autoBaseline" class="editLabel">Auto Baseline</label>
+                                    <input class="editNum" type="checkbox" name="autoBaseline" {1}>
+                                    <br>
+                                    <label for="autoLowBalls" class="editLabel">Auto Low Balls</label>
+                                    <input class="editNum" type="number" name="autoLowBalls" value="{0[7]}">
+                                    </br>
+                                    <label for="autoHighBalls" class="editLabel">Auto High Balls</label>
+                                    <input class="editNum" type="number" name="autoHighBalls" value="{0[8]}">
+                                </div>
+                                <div class="editCellRight">
+                                    <label for="teleGears" class="editLabel">Teleop Gears</label>
+                                    <input class="editNum" type="number" name="teleGears" value="{0[13]}">
+                                    <br>
+                                    <label for="teleGearsDropped" class="editLabel">Teleop Dropped Gears</label>
+                                    <input class="editNum" type="number" name="teleGearsDropped" value="{0[14]}">
+                                    <br>
+                                    <label for="teleLowBalls" class="editLabel">Teleop Low Balls</label>
+                                    <input class="editNum" type="number" name="teleLowBalls" value="{0[15]}">
+                                    <br>
+                                    <label for="teleHighBalls" class="editLabel">Teleop High Balls</label>
+                                    <input class="editNum" type="number" name="teleHighBalls" value="{0[16]}">
+                                </div>
+                                <div class="editHeaderLeft">Other</div>
+                                <div class="editHeaderRight">End Game</div>
+                                <div class="editCellLeft">
+                                    <label for="gearsFloor" class="editLabel">Gear Floor Intake</label>
+                                    <input class="editNum" type="checkbox" name="gearsFloor" {2}>
+                                    <br>
+                                    <label for="feeder" class="editLabel">Feeder Bot</label>
+                                    <input class="editNum" type="checkbox" name="feeder" {3}>
+                                    <br>
+                                    <label for="defense" class="editLabel">Defense Bot</label>
+                                    <input class="editNum" type="checkbox" name="defense" {4}>
+                                    <label for="defended" class="editLabel">Defended</label>
+                                    <input class="editNum" type="checkbox" name="defended" {5}>
+                                    <br>
+                                </div>
+                                <div class="editCellRight">
+                                    <label for="hang" class="editLabel">Hang</label>
+                                    <input class="editNum" type="checkbox" name="hang" {6}>
+                                    <br>
+                                    <label for="failhang" class="editLabel">Failed Hang</label>
+                                    <input class="editNum" type="checkbox" name="failHang" {7}>
+                                    <br>
+                                    <br>
+                                    <br>
+                                </div>
+                                <div class="editHeaderLeft">Flag</div>
+                                <div class="editHeaderRight">Submit</div>
+                                <div class="editCellLeft">
+                                    <label for="flag" class="editLabel">Flagged</label>
+                                    <input class="editNum" type="checkbox" name="flag" {9}>
+                                </div>
+                                <div class="editCellRight">
+                                    <input type="submit" value="Submit">
+                                </div>
                         </form>'''.format(entry, "checked" if entry[6] else "", "checked" if entry[9] else "",
                                           "checked" if entry[10] else "", "checked" if entry[11] else "",
                                           "checked" if entry[12] else "", "checked" if entry[17] else "",
