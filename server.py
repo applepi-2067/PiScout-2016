@@ -184,31 +184,29 @@ class ScoutServer(object):
             dp = {"match": e[1], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
             a += 'baseline, ' if e[6] else ''
-            a += str(e[4]) + 'x gears, ' if e[5] else ''
+            a += str(e[5]) + 'x gears, ' if e[5] else ''
             dp['autogears'] += e[5]
-            dp['gears'] += e[5]
-            a += str(e[6]) + 'x low goal, ' if e[7] else ''
-            a += str(e[7]) + 'x high goal' if e[8] else ''
+            a += str(e[7]) + 'x low goal, ' if e[7] else ''
+            a += str(e[8]) + 'x high goal, ' if e[8] else ''
             dp['autoshoot'] += e[7]/3 + e[8]
-            dp['shoot'] += e[7]/3 + e[8]
 
             d = ''
             d += str(e[13]) + 'x gears, ' if e[13] else ''
-            d += str(e[14]) + 'x gears dropped' if e[14] else ''
+            d += str(e[14]) + 'x gears dropped, ' if e[14] else ''
             dp['gears'] += e[13]
             dp['geardrop'] += e[14]
 
             sh = ''
             sh += str(e[15]) + 'x low goal, ' if e[15] else ''
-            sh += str(e[16]) + 'x high goal' if e[16] else ''
+            sh += str(e[16]) + 'x high goal, ' if e[16] else ''
             dp['shoot'] += e[15]/9 + e[16]/3
 
-            o = 'hanging, ' if e[17] else 'failed hang, ' if e[18] else ''
+            o = 'hang, ' if e[17] else 'failed hang, ' if e[18] else ''
             o += str(e[3]) + 'x foul, ' if e[3] else ''
             o += str(e[4]) + 'x tech foul, ' if e[4] else ''
             o += 'defense, ' if e[11] else ''
             o += 'feeder, ' if e[10] else ''
-            o += 'defended' if e[12] else ''
+            o += 'defended, ' if e[12] else ''
 
             #Generate a row in the table for each match
             output += '''
@@ -220,7 +218,7 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
                 <td><a class="edit" href="/edit?key={8}">E</a></td>
-            </tr>'''.format(e[2], a, d, sh, o, 'style="color: #B20000"' if e[19] else '', e[2], e[19], e[0])
+            </tr>'''.format(e[2], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[19] else '', e[2], e[19], e[0])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
             if not e[19]: #if flagged
@@ -539,16 +537,17 @@ class ScoutServer(object):
                             <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
                             <div id="apr">
                                 <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
-                                <p style="font-size: 400%; line-height: 0em">{6}</p>
+                                <p style="font-size: 400%; line-height: 0em">{1}</p>
                             </div>
-                            <div id="stats">
-                                <p class="statbox" style="font-weight:bold">Match Averages:</p>
-                                <p class="statbox">Auto points: {1}</p>
-                                <p class="statbox">Defense points: {2}</p>
-                                <p class="statbox">Shooting points: {3}</p>
-                                <p class="statbox">High goal accuracy: {4}%</p>
-                                <p class="statbox">Endgame points: {5}</p>
-                            </div>
+                    <div id="stats">
+                        <p class="statbox" style="font-weight:bold">Average match:</p>
+                        <p class="statbox">Auto Gears: {2}</p>
+                        <p class="statbox">Teleop Gears: {3}</p>
+                        <p class="statbox">Dropped Gears: {4}</p>
+                        <p class="statbox">Auto Shoot Points: {5}</p>
+                        <p class="statbox">Teleop Shoot Points: {6}</p>
+                        <p class="statbox">Endgame Points: {7}</p>
+                    </div>
                         </div>'''.format(n, *entry[1:]) #unpack the elements
         conn.close()
 
@@ -615,15 +614,16 @@ class ScoutServer(object):
                             <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
                             <div id="apr">
                                 <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
-                                <p style="font-size: 400%; line-height: 0em">{6}</p>
+                                <p style="font-size: 400%; line-height: 0em">{1}</p>
                             </div>
                             <div id="stats">
-                                <p class="statbox" style="font-weight:bold">Match Averages:</p>
-                                <p class="statbox">Auto points: {1}</p>
-                                <p class="statbox">Defense points: {2}</p>
-                                <p class="statbox">Shooting points: {3}</p>
-                                <p class="statbox">High goal accuracy: {4}%</p>
-                                <p class="statbox">Endgame points: {5}</p>
+                                <p class="statbox" style="font-weight:bold">Average match:</p>
+                                <p class="statbox">Auto Gears: {2}</p>
+                                <p class="statbox">Teleop Gears: {3}</p>
+                                <p class="statbox">Dropped Gears: {4}</p>
+                                <p class="statbox">Auto Shoot Points: {5}</p>
+                                <p class="statbox">Teleop Shoot Points: {6}</p>
+                                <p class="statbox">Endgame Points: {7}</p>
                             </div>
                         </div>'''.format(n, *entry[1:]) #unpack the elements
         output += "</div></div>"
@@ -881,7 +881,7 @@ class ScoutServer(object):
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
             cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
-            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+            cursor.execute('''CREATE TABLE averages (team integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
