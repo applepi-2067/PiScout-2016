@@ -959,7 +959,12 @@ class ScoutServer(object):
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
         d = literal_eval(data)
-        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',0' + ')')
+        flag = 0
+        if (d[6] or d[14]) and (d[7] or d[15]): #high and low balls
+            flag = 1
+        if d[16] and d[17]:
+            flag = 1
+        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',' + str(flag) + ')')
         conn.commit()
         conn.close()
 
