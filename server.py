@@ -839,27 +839,8 @@ class ScoutServer(object):
         self.database_exists(event)
         conn = sql.connect(datapath)
         cursor = conn.cursor()
-        m = []
         
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
-        try:
-            if n:
-                #request a specific team
-                m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(n, event), params=headers)
-            else:
-                #get all the matches from this event
-                m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
-            if m.status_code == 400:
-                raise cherrypy.HTTPError(400, "Request rejected by The Blue Alliance.")
-            with open(event + "_matches.json", "w+") as file:
-                file.write(str(m.text))
-            m = m.json()
-        except:
-            try:
-                with open(event + '_matches.json') as matches_data:
-                    m = json.load(matches_data)
-            except:
-                m = []
+        m = self.getMatches(event, n)
 
         output = ''
 
@@ -1047,7 +1028,31 @@ class ScoutServer(object):
         if 'event' not in cherrypy.session:
             cherrypy.session['event'] = CURRENT_EVENT
         return cherrypy.session['event']
-
+    
+    def getMatches(self, event, team=''):
+        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
+        try:
+            if team:
+                #request a specific team
+                m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(team, event), params=headers)
+            else:
+                #get all the matches from this event
+                m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+            if m.status_code == 400 or m.status_code == 404:
+                raise Exception
+            if m.text != '[]':
+                with open(event + "_matches.json", "w+") as file:
+                    file.write(str(m.text))
+                m = m.json()
+            else:
+                m = []
+        except:
+            try:
+                with open(event + '_matches.json') as matches_data:
+                    m = json.load(matches_data)
+            except:
+                m = []
+        return m
 
     # Wrapper for requests, ensuring nothing goes terribly wrong
     # This code is trash; it just works to avoid errors when running without internet
