@@ -6,6 +6,7 @@ from ast import literal_eval
 import requests
 import math
 from statistics import mode
+from ipaddress import IPV6LENGTH
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
@@ -770,7 +771,10 @@ class ScoutServer(object):
                             <p style="font-size: 400%; line-height: 0em">{0}</p>
                             <br>
                         </div>'''
-        apr = []
+        ballScore = []
+        endGame = []
+        autoGears = []
+        teleopGears = []
         #iterate through all six teams
         for i,n in enumerate(nums):
             #at halfway pointm switch to the second row
@@ -792,7 +796,10 @@ class ScoutServer(object):
                 entry = average[0]
             else:
                 entry = [0]*7
-            apr.append(entry[6])
+            autoGears.append(entry[2])
+            teleopGears.append(entry[3])
+            ballScore.append((entry[5]+entry[6]))
+            endGame.append((entry[7]))
             output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
                             <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
                             <div id="apr">
@@ -810,8 +817,34 @@ class ScoutServer(object):
                             </div>
                         </div>'''.format(n, *entry[1:]) #unpack the elements
         output += "</div></div>"
-        prob_red = 1/(1+math.e**(-0.08099*(sum(apr[3:6]) - sum(apr[0:3])))) #calculates win probability from 2016 data
-        output = output.format(sum(apr[0:3]), sum(apr[3:6]), round((1-prob_red)*100,1), round(prob_red*100,1))
+        blue_score = sum(ballScore[0:3]) + sum(endGame[0:3])
+        if sum(autoGears[0:3]):
+            blue_score += 60
+        elif sum(teleopGears[0:3]):
+            blue_score += 40
+        if sum(autoGears[0:3]) >= 3:
+            blue_score += 60
+        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
+            blue_score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
+            blue_score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
+            blue_score += 40
+        red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
+        if sum(autoGears[3:6]):
+            blue_score += 60
+        elif sum(teleopGears[3:6]):
+            blue_score += 40
+        if sum(autoGears[3:6]) >= 3:
+            blue_score += 60
+        elif sum(autoGears[3:6] + teleopGears[3:6]) >= 2:
+            blue_score += 40
+        if sum(autoGears[3:6] + teleopGears[3:6]) >= 6:
+            blue_score += 40
+        if sum(autoGears[3:6] + teleopGears[3:6]) >= 12:
+            blue_score += 40
+        prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score))) #calculates win probability from 2016 data
+        output = output.format(blue_score, red_score, round((1-prob_red)*100,1), round(prob_red*100,1))
         conn.close()
 
 
