@@ -9,7 +9,7 @@ from statistics import mode
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
-CURRENT_EVENT = '2016cars'
+CURRENT_EVENT = '2017wkzo'
 DEFAULT_MODE = 'maxes'
 
 class ScoutServer(object):
@@ -99,13 +99,14 @@ class ScoutServer(object):
                      <p class="main">Change Event</p>
                     <form method="post" action="/">
                         <select class="fieldsm" name="e">
-                          <option id="2016ctss" value="2016ctss">Suffield Shakedown</option>
-                          <option id="2016ctwat" value="2016ctwat">Waterbury District Event</option>
-                          <option id="2016mawor" value="2016mawor">WPI District Event</option>
-                          <option id="2016ripro" value="2016ripro">Rhode Island District Event</option>
-                          <option id="2016cthar" value="2016cthar">Hartford District Event</option>
-                          <option id="2016necmp" value="2016necmp">NE District Championship</option>
-                          <option id="2016cars" value="2016cars">Carson Division</option>
+                          <option id="2017ctss" value="2017ctss">Suffield Shakedown</option>
+                          <option id="2017wkzro" value="2017wkzro">Week Zero</option>
+                          <option id="2017nhgrs" value="2017nhgrs">Granite State District Event</option>
+                          <option id="2017ctwat" value="2017ctwat">Waterbury District Event</option>
+                          <option id="2017mabos" value="2017mabos">Greater Boston District Event</option>
+                          <option id="2017nhbed" value="2017nhbed">Southern New Hampshire District Event</option>
+                          <option id="2017cthar" value="2017cthar">Hartford District Event</option>
+                          <option id="2017necmp" value="2017necmp">NE District Championship</option>
                         </select>
                         <button class="submit" type="submit">Submit</button>
                     </form>
