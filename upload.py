@@ -7,7 +7,7 @@ if os.path.isfile('queue.txt'):
 	with open("queue.txt", "r") as file:
 		try:
 			for line in file:
-				requests.post("http://52.2.17.191/submit", data={'data': line})
+				requests.post("http://34.199.157.169/submit", data={'data': line})
 				print("Uploaded entry number " + str(n))			
 				n += 1
 		except:

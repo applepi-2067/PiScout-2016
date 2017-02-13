@@ -9,7 +9,7 @@ from statistics import mode
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
-CURRENT_EVENT = '2017wkzo'
+CURRENT_EVENT = '2017wkzro'
 DEFAULT_MODE = 'maxes'
 
 class ScoutServer(object):
