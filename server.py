@@ -947,6 +947,14 @@ class ScoutServer(object):
         if d[16] and d[17]:
             flag = 1
             
+        m = self.getMatches(event)
+                
+        if m:
+            match = next((item for item in m if (item['match_number'] == d[1]) and (item['comp_level'] == 'qm')))
+            teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
+            if not 'frc' + str(d[0]) in teams:
+                flag = 1   
+            
         if d[18]:   #replay
             cursor.execute('DELETE from scout WHERE d0=? AND d1=?', (str(d[0]),str(d[1])))
         d = d[:-1]
