@@ -1090,14 +1090,14 @@ class ScoutServer(object):
             
     @cherrypy.expose()
     def edit(self, key='', team='', match='', fouls='', techFouls='', autoGears='', autoBaseline='',
-             autoLowBalls='', autoHighBalls='', gearsFloor='', feeder='', defence='', defended='',
+             autoLowBalls='', autoHighBalls='', gearsFloor='', feeder='', defense='', defended='',
              teleGears='', teleGearsDropped='', teleLowBalls='', teleHighBalls='', hang='', failHang='', flag=''):
         datapath = 'data_' + self.getevent() + '.db'
         conn = sql.connect(datapath)
         cursor = conn.cursor()
         if team:
             data = (team, match, fouls, techFouls, autoGears, autoBaseline, autoLowBalls, autoHighBalls,
-                    gearsFloor, feeder, defence, defended, teleGears, teleGearsDropped, teleLowBalls,
+                    gearsFloor, feeder, defense, defended, teleGears, teleGearsDropped, teleLowBalls,
                     teleHighBalls, hang, failHang)
             sqlCommand = 'UPDATE scout SET '
             for index, item in enumerate(data):

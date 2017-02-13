@@ -33,7 +33,7 @@ def main(scout):
         
         scout.set("Gears Floor Intake", scout.boolfield('V-11')) #8
         scout.set("Feeder Bot", scout.boolfield('V-16')) #9
-        scout.set("Defence Bot", scout.boolfield('V-17')) #10
+        scout.set("Defense Bot", scout.boolfield('V-17')) #10
         scout.set("Defended", scout.boolfield('AB-17')) #11
         scout.set("Teleop: Gears", scout.rangefield('AB-10', 1, 9)) #12
         scout.set("Teleop: Gear Drops", scout.rangefield('AB-11', 1, 9)) #13
