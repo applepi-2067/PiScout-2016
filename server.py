@@ -594,6 +594,8 @@ class ScoutServer(object):
                 o += 'defense, ' if e[11] else ''
                 o += 'feeder, ' if e[10] else ''
                 o += 'defended, ' if e[12] else ''
+                for key,val in dp.items():
+                    dp[key] = round(val, 2)
                 if not e[19]:
                     if len(dataset) < (index + 1):
                         if stat2:
@@ -992,7 +994,18 @@ class ScoutServer(object):
                 s[key] = round(val/len(entries), 2)
 
             # formula for calculating APR (point contribution)
-            apr = int(s['autogears'] + s['teleopgears'] + s['autoballs'] + s['teleopballs'] + s['end'] + 0.5)
+            apr = s['autoballs'] + s['teleopballs'] + s['end']
+            if s['autogears']:
+                apr += 60
+            if s['autogears'] > 1:
+                apr += (s['autogears'] - 1) * 30   
+                
+            apr += min(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
+            if s['autogears'] + s['teleopgears'] > 2:
+                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
+            if s['autogears'] + s['teleopgears'] > 6:
+                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
+            apr = int(apr)
 
         #replace the data entry with a new one
         cursor.execute('DELETE FROM averages WHERE team=?',(n,))
@@ -1018,7 +1031,18 @@ class ScoutServer(object):
                 s['teleopballs'] = max(s['teleopballs'], (e[14]/9 + e[15]/3))
                 s['geardrop'] = max(s['geardrop'], e[13])
                 s['end'] = max(s['end'], e[16]*50)
-                s['apr'] = max(s['apr'], (int(s['autogears'] + s['teleopgears'] + s['autoballs'] + s['teleopballs'] + s['end'] + 0.5)))
+                apr = (e[6]/3 + e[7]) + (e[14]/9 + e[15]/3) + e[16]*50
+                if e[4]:
+                    apr += 60
+                if e[4] > 1:
+                    apr += (e[4] - 1) * 30   
+                    
+                apr += min(min(e[12], 2 - e[4]) * 20, 0)
+                if e[4] + e[12] > 2:
+                    apr += min(e[12] + e[4] - 2, 4) * 10
+                if e[4] + e[12] > 6:
+                    apr += min(e[12] + e[4] - 6, 6) * 7
+                s['apr'] = max(s['apr'], (int(apr)))
 
         for key,val in s.items():
             s[key] = round(val, 2)
