@@ -10,7 +10,7 @@ from statistics import mode
 # Update this value before every event
 # Use the event codes given by thebluealliance
 CURRENT_EVENT = '2017wkzro'
-DEFAULT_MODE = 'maxes'
+DEFAULT_MODE = 'averages'
 
 class ScoutServer(object):
     @cherrypy.expose
@@ -466,6 +466,7 @@ class ScoutServer(object):
         conn.commit()
         conn.close()
         self.calcavg(num, self.getevent())
+        self.calcmaxes(num, self.getevent())
         return ''
 
     # Input interface to compare teams or alliances
