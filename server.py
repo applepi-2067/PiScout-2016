@@ -465,7 +465,7 @@ class ScoutServer(object):
         cursor.execute('UPDATE scout SET flag=? WHERE d0=? AND d1=?', (int(not int(flagval)),num,match))
         conn.commit()
         conn.close()
-        self.calcavg(num)
+        self.calcavg(num, self.getevent())
         return ''
 
     # Input interface to compare teams or alliances
