@@ -1218,7 +1218,12 @@ class ScoutServer(object):
                 sqlCommand+='flag=0 '
             sqlCommand+='WHERE key=' + str(key)
             cursor.execute(sqlCommand)
-        conn.commit()
+            conn.commit()
+            conn.close()
+            self.calcavg(team, self.getevent())
+            self.calcmaxes(team, self.getevent())
+        conn = sql.connect(datapath)
+        cursor= conn.cursor()
         entries = cursor.execute('SELECT * from scout ORDER BY flag DESC, d0 ASC, d1 ASC').fetchall()
                 
         if key == '':
