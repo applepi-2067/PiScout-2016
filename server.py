@@ -991,6 +991,9 @@ class ScoutServer(object):
             teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
             if not 'frc' + str(d[0]) in teams:
                 flag = 1   
+                
+        if d[4]:    #if auto gear, set baseline
+            d[5] = 1
             
         if d[18]:   #replay
             cursor.execute('DELETE from scout WHERE d0=? AND d1=?', (str(d[0]),str(d[1])))
