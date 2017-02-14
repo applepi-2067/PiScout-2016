@@ -839,9 +839,9 @@ class ScoutServer(object):
             blue_score += 40
         if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
             blue_score += 40
-            if mode == 'playoffs':
+            if level == 'playoffs':
                 blue_score += 100
-        if mode == 'playoffs' and sum(ballScore[0:3]) > 40:
+        if level == 'playoffs' and sum(ballScore[0:3]) >= 40:
             blue_score += 20
         red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
         if sum(autoGears[3:6]):
@@ -856,9 +856,9 @@ class ScoutServer(object):
             red_score += 40
         if sum(autoGears[3:6] + teleopGears[3:6]) >= 12:
             red_score += 40
-            if mode == 'playoffs':
+            if level == 'playoffs':
                 red_score += 100
-        if mode == 'playoffs' and sum(ballScore[3:6]) > 40:
+        if level == 'playoffs' and sum(ballScore[3:6]) >= 40:
             red_score += 20
         blue_score = int(blue_score)
         red_score = int(red_score)
