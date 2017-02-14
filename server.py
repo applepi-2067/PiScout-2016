@@ -1079,7 +1079,7 @@ class ScoutServer(object):
             if s['autogears'] > 1:
                 apr += (s['autogears'] - 1) * 30   
                 
-            apr += min(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
+            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
             if s['autogears'] + s['teleopgears'] > 2:
                 apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
             if s['autogears'] + s['teleopgears'] > 6:
