@@ -755,7 +755,11 @@ class ScoutServer(object):
 
     # Output for alliance comparison
     @cherrypy.expose()
-    def alliances(self, b1='', b2='', b3='', r1='', r2='', r3=''):
+    def alliances(self, b1='', b2='', b3='', r1='', r2='', r3='', mode='', level=''):
+        if mode == '':
+            mode = 'averages'
+        if level == '':
+            level = 'quals'
         nums = [b1, b2, b3, r1, r2, r3]
         averages = []
         conn = sql.connect(self.datapath())
@@ -790,7 +794,10 @@ class ScoutServer(object):
                         </div>'''
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
-            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            if mode == 'averages':
+                average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            else:
+                average = cursor.execute('SELECT * FROM maxes WHERE team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
                 entry = average[0]
@@ -830,6 +837,10 @@ class ScoutServer(object):
             blue_score += 40
         if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
             blue_score += 40
+            if mode == 'playoffs':
+                blue_score += 100
+        if mode == 'playoffs' and sum(ballScore[0:3]) > 40:
+            blue_score += 20
         red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
         if sum(autoGears[3:6]):
             red_score += 60
@@ -843,6 +854,10 @@ class ScoutServer(object):
             red_score += 40
         if sum(autoGears[3:6] + teleopGears[3:6]) >= 12:
             red_score += 40
+            if mode == 'playoffs':
+                red_score += 100
+        if mode == 'playoffs' and sum(ballScore[3:6]) > 40:
+            red_score += 20
         blue_score = int(blue_score)
         red_score = int(red_score)
         prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score))) #calculates win probability from 2016 data
@@ -855,17 +870,44 @@ class ScoutServer(object):
                 <title>PiScout</title>
                 <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
                 <link href="/static/css/style.css" rel="stylesheet">
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+                <script>
+                if (typeof jQuery === 'undefined')
+                  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+                </script>
+                <script>
+                    $(document).ready(function() {{
+                        $("#{1}").attr("selected", "selected");
+                        $("#{2}").attr("selected", "selected");
+                    }});
+                </script>
             </head>
             <body>
                 <h1 class="big">Compare Alliances</h1>
                 <h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
                 <br><br>
+                <div id="statSelect" class="no-print" style="width:600px; margin:auto;">
+                    <form method="post" action="" style="float:left">
+                            <select class="fieldsm" name="mode">
+                              <option id="averages" value="averages">Averages</option>
+                              <option id="maxes" value="maxes">Maxes</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                    <form method="post" action="" style="float:right">
+                            <select class="fieldsm" name="level">
+                                <option id="quals" value="quals">Qualifications</option>
+                                <option id="playoffs" value="playoffs">Playoffs</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                </div>
                 <div style="margin: 0 auto; text-align: center; max-width: 1000px;">
                 {0}
                 <br><br><br>
                 </div>
             </body>
-        </html>'''.format(output)
+        </html>'''.format(output, mode, level)
 
     # Lists schedule data from TBA
     @cherrypy.expose()
