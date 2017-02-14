@@ -780,6 +780,7 @@ class ScoutServer(object):
         autoGears = []
         teleopGears = []
         #iterate through all six teams
+        color = "#0000B8"
         for i,n in enumerate(nums):
             #at halfway pointm switch to the second row
             if i == 3:
@@ -792,6 +793,7 @@ class ScoutServer(object):
                             <p style="font-size: 400%; line-height: 0em">{1}</p>
                             <br>
                         </div>'''
+                color = "#B20000"
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
             if mode == 'averages':
@@ -808,7 +810,7 @@ class ScoutServer(object):
             ballScore.append((entry[5]+entry[6]))
             endGame.append((entry[7]))
             output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
-                            <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
+                            <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em; color: {8} !important">Team {0}</a></p>
                             <div id="apr">
                                 <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
                                 <p style="font-size: 400%; line-height: 0em">{1}</p>
@@ -822,7 +824,7 @@ class ScoutServer(object):
                                 <p class="statbox">Teleop Shoot Points: {6}</p>
                                 <p class="statbox">Endgame Points: {7}</p>
                             </div>
-                        </div>'''.format(n, *entry[1:]) #unpack the elements
+                        </div>'''.format(n, *entry[1:], color) #unpack the elements
         output += "</div></div>"
         blue_score = sum(ballScore[0:3]) + sum(endGame[0:3])
         if sum(autoGears[0:3]):
@@ -885,7 +887,6 @@ class ScoutServer(object):
             <body>
                 <h1 class="big">Compare Alliances</h1>
                 <h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
-                <br><br>
                 <div id="statSelect" class="no-print" style="width:600px; margin:auto;">
                     <form method="post" action="" style="float:left">
                             <select class="fieldsm" name="mode">
@@ -904,7 +905,6 @@ class ScoutServer(object):
                 </div>
                 <div style="margin: 0 auto; text-align: center; max-width: 1000px;">
                 {0}
-                <br><br><br>
                 </div>
             </body>
         </html>'''.format(output, mode, level)
