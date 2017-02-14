@@ -766,8 +766,8 @@ class ScoutServer(object):
                         <div style="display: table-cell;">
                         <p style="font-size: 36px; color: #0000B8; line-height: 0;">Blue Alliance</p>
                     <p style="font-size: 24px; color: #0000B8; line-height: 0.2;">{2}% chance of win</p>
-                        <div id="apr">
-                            <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+                        <div id="apr" style="width:185px">
+                            <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">Proj. Score</p>
                             <p style="font-size: 400%; line-height: 0em">{0}</p>
                             <br>
                         </div>'''
@@ -783,8 +783,8 @@ class ScoutServer(object):
                         <div style="display: table-cell;">
                         <p style="font-size: 36px; color: #B20000; line-height: 0;">Red Alliance</p>
                         <p style="font-size: 24px; color: #B20000; line-height: 0.2;">{3}% chance of win</p>
-                        <div id="apr">
-                            <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">APR</p>
+                        <div id="apr" style="width:185px">
+                            <p style="font-size: 200%; margin: 0.65em; line-height: 0.1em">Proj. Score</p>
                             <p style="font-size: 400%; line-height: 0em">{1}</p>
                             <br>
                         </div>'''
@@ -795,7 +795,7 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*7
+                entry = [0]*8
             autoGears.append(entry[2])
             teleopGears.append(entry[3])
             ballScore.append((entry[5]+entry[6]))
@@ -832,21 +832,22 @@ class ScoutServer(object):
             blue_score += 40
         red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
         if sum(autoGears[3:6]):
-            blue_score += 60
+            red_score += 60
         elif sum(teleopGears[3:6]):
-            blue_score += 40
+            red_score += 40
         if sum(autoGears[3:6]) >= 3:
-            blue_score += 60
+            red_score += 60
         elif sum(autoGears[3:6] + teleopGears[3:6]) >= 2:
-            blue_score += 40
+            red_score += 40
         if sum(autoGears[3:6] + teleopGears[3:6]) >= 6:
-            blue_score += 40
+            red_score += 40
         if sum(autoGears[3:6] + teleopGears[3:6]) >= 12:
-            blue_score += 40
+            red_score += 40
+        blue_score = int(blue_score)
+        red_score = int(red_score)
         prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score))) #calculates win probability from 2016 data
         output = output.format(blue_score, red_score, round((1-prob_red)*100,1), round(prob_red*100,1))
         conn.close()
-
 
         return '''
         <html>
@@ -1188,7 +1189,7 @@ class ScoutServer(object):
                     </form>
                     <br><br>'''
         
-        entry = cursor.execute('SELECT * from scout WHERE key=?', str(key)).fetchone()
+        entry = cursor.execute('SELECT * from scout WHERE key=?', (key,)).fetchone()
         conn.close()
         mainEditor = '''<h1>Editing Team {0[1]}: Match {0[2]}</h1>
                         <br>
