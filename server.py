@@ -829,7 +829,7 @@ class ScoutServer(object):
         blue_score = sum(ballScore[0:3]) + sum(endGame[0:3])
         if sum(autoGears[0:3]):
             blue_score += 60
-        elif sum(teleopGears[0:3]):
+        else:
             blue_score += 40
         if sum(autoGears[0:3]) >= 3:
             blue_score += 60
@@ -846,7 +846,7 @@ class ScoutServer(object):
         red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
         if sum(autoGears[3:6]):
             red_score += 60
-        elif sum(teleopGears[3:6]):
+        else:
             red_score += 40
         if sum(autoGears[3:6]) >= 3:
             red_score += 60
