@@ -37,8 +37,9 @@ class PiScout:
             f = files #will hold onto this value for the next iteration
             for file in added:
                 if '.jpg' in file or '.png' in file:
-                    self.loadsheet("Sheets/" + file)
-                    main(self) #call the main loop with this PiScout object as an argument
+                    retVal = self.loadsheet("Sheets/" + file)
+                    if retVal:
+                        main(self) #call the main loop with this PiScout object as an argument
 
 
     # Loads a new scout sheet from an image
@@ -85,6 +86,7 @@ class PiScout:
                 ind = np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])
             except:
                 print("No markers found. Is this an empty image?")
+                return 0
             marks.append(sq[ind])
             marksize.append(sqsize[ind])
 
@@ -127,6 +129,7 @@ class PiScout:
         self.display = img.copy()
         self.sheet = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         print("Loading complete")
+        return 1
 
     # Shifts all fields down by amount
     # Useful for when there are two (or more) matches on one sheet of paper
