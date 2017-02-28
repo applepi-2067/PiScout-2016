@@ -34,13 +34,14 @@ class PiScout:
             sleep(0.25)
             files = set(os.listdir("Sheets")) #grabs all file names as a set
             added = files - f #check if any files were added (if first iteration, added = files)
-            f = files #will hold onto this value for the next iteration
             for file in added:
                 if '.jpg' in file or '.png' in file:
                     retVal = self.loadsheet("Sheets/" + file)
-                    if retVal:
-                        main(self) #call the main loop with this PiScout object as an argument
-
+                        if retval == 1:
+                            main(self) #call the main loop with this PiScout object as an argument
+                            f.add(file)
+                        elif retval == -1:
+                            f.add(file)
 
     # Loads a new scout sheet from an image
     # Processes the image and stores the result in self.sheet
@@ -49,7 +50,10 @@ class PiScout:
         self.labels = []
         print('Loading a new sheet: ' + imgpath)
         img = cv2.imread(imgpath)
-        img = cv2.resize(img, (3400,4400))
+        try:
+            img = cv2.resize(img, (3400,4400))
+        except:
+            return 0
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # The first step is to figure out the four markers on the corners of the page
@@ -86,7 +90,7 @@ class PiScout:
                 ind = np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])
             except:
                 print("No markers found. Is this an empty image?")
-                return 0
+                return -1
             marks.append(sq[ind])
             marksize.append(sqsize[ind])
 
@@ -100,16 +104,13 @@ class PiScout:
                 print("Damaged marker detected, attempting fix")
                 if b < 13 and b != 1 and not guess:
                     print("Increasing gaussian blur to " + str(b+2))
-                    self.loadsheet(imgpath, b=b+2)
-                    return
+                    return self.loadsheet(imgpath, b=b+2)
                 if b != 1 and not guess:
                     print("Trying a really small blur")
-                    self.loadsheet(imgpath, b=1)
-                    return
+                    return self.loadsheet(imgpath, b=1)
                 if not guess:
                     print("Attempting to guess the location of the last one")
-                    self.loadsheet(imgpath, b=3, guess=True)
-                    return
+                    return self.loadsheet(imgpath, b=3, guess=True)
                 if i == 0: #geometry to calculate approximate position of damaged marker
                     marks[0] = (marks[1][0] - (marks[3][0]-marks[2][0]), marks[2][1] + (marks[1][1]-marks[3][1]))
                 elif i == 1:
