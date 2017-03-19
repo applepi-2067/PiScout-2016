@@ -36,12 +36,12 @@ class PiScout:
             added = files - f #check if any files were added (if first iteration, added = files)
             for file in added:
                 if '.jpg' in file or '.png' in file:
-                    retVal = self.loadsheet("Sheets/" + file)
-                        if retval == 1:
-                            main(self) #call the main loop with this PiScout object as an argument
-                            f.add(file)
-                        elif retval == -1:
-                            f.add(file)
+                    retval = self.loadsheet("Sheets/" + file)
+                    if retval == 1:
+                        main(self) #call the main loop with this PiScout object as an argument
+                        f.add(file)
+                    elif retval == -1:
+                        f.add(file)
 
     # Loads a new scout sheet from an image
     # Processes the image and stores the result in self.sheet
