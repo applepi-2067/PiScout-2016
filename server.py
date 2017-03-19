@@ -827,7 +827,7 @@ class ScoutServer(object):
                         </div>'''.format(n, *entry[1:], color) #unpack the elements
         output += "</div></div>"
         blue_score = sum(ballScore[0:3]) + sum(endGame[0:3])
-        if sum(autoGears[0:3]):
+        if sum(autoGears[0:3] >= 1):
             blue_score += 60
         else:
             blue_score += 40
@@ -1075,7 +1075,7 @@ class ScoutServer(object):
             # formula for calculating APR (point contribution)
             apr = s['autoballs'] + s['teleopballs'] + s['end']
             if s['autogears']:
-                apr += 60
+                apr += 60 * max(s['autogears'], 1)
             if s['autogears'] > 1:
                 apr += (s['autogears'] - 1) * 30   
                 
