@@ -401,9 +401,9 @@ class ScoutServer(object):
                     {{
                         $.post(
                             "flag",
-                            {{num: {0}, match: m, flagval: f}}
+                            {{num: {0}, match: m, flagval: f}},
+                            function(data) {{window.location.reload(true);}}
                         );
-                        window.location.reload(true);
                     }}
                 </script>
             </head>
