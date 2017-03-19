@@ -6,10 +6,9 @@ from matplotlib.widgets import Button
 from time import sleep
 import ctypes
 import requests
-import server
 from threading import Thread
-from server import CURRENT_EVENT
 import sqlite3 as sql
+from event import CURRENT_EVENT
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -28,7 +27,6 @@ class PiScout:
         self.labels = []
         self.shift = 0
 
-        Thread(target=server.start).start() # local database server
         f = set(os.listdir("Sheets"))
         while True:
             sleep(0.25)
@@ -244,7 +242,7 @@ class PiScout:
         with open("queue.txt", "a+") as file:
             file.write(str(self.data) + '\n')
         plt.close()
-        requests.post("http://127.0.0.1:8000/submit", data={'event':server.CURRENT_EVENT, 'data': str(self.data)})
+        requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
 
     # Invoked by the "Upload Data" button
     # Uploads all data (including queue) to the online database
@@ -254,15 +252,15 @@ class PiScout:
         print("Attempting upload to server")
 
         try: #post it to piscout's ip address
-            requests.post("http://34.199.157.169/submit", data={'event':server.CURRENT_EVENT, 'data': str(self.data)})
+            requests.post("http://34.199.157.169/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
             print("Uploading this match was successful")
             if os.path.isfile('queue.txt'):
                 with open("queue.txt", "r") as file:
                     for line in file:
-                        requests.post("http://34.199.157.169/submit", data={'event':server.CURRENT_EVENT, 'data': line})
+                        requests.post("http://34.199.157.169/submit", data={'event':CURRENT_EVENT, 'data': line})
                         print("Uploaded an entry from the queue")
                 os.remove('queue.txt')
-            requests.post("http://127.0.0.1:8000/submit", data={'event':server.CURRENT_EVENT, 'data': str(self.data)})
+            requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
         except:
             print("Failed miserably")
             r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)

@@ -7,10 +7,10 @@ import requests
 import math
 from statistics import mode
 from ipaddress import IPV6LENGTH
+from event import CURRENT_EVENT
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
-CURRENT_EVENT = '2017wkzro'
 DEFAULT_MODE = 'averages'
 
 class ScoutServer(object):
@@ -1379,8 +1379,8 @@ conf = {
 }
 
 #start method only to be used on the local version
-def start():
-    cherrypy.quickstart(ScoutServer(), '/', conf)
+#def start():
+#    cherrypy.quickstart(ScoutServer(), '/', conf)
 
 #the following is run on the real server
 '''
@@ -1399,6 +1399,6 @@ conf = {
                 'server.socket_port': 80
         }
 }
-
-cherrypy.quickstart(ScoutServer(), '/', conf)
 '''
+cherrypy.quickstart(ScoutServer(), '/', conf)
+
