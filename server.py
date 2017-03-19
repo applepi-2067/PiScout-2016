@@ -130,6 +130,9 @@ class ScoutServer(object):
                         </select>
                         <button class="submit" type="submit">Submit</button>
                     </form>
+                    <form method="get" action="rankings">
+                        <button class="submit" type="submit">Predict Rankings</button>
+                    </form>
                 </div>
 
                 <div style="vertical-align:top; border 1px solid black; overflow: hidden">
@@ -229,7 +232,7 @@ class ScoutServer(object):
 
         #Grab the image from the blue alliance
         imcode = ''
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
+        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
         m = []
         try:
             #get the picture for a given team
@@ -805,10 +808,6 @@ class ScoutServer(object):
                 entry = average[0]
             else:
                 entry = [0]*8
-            autoGears.append(entry[2])
-            teleopGears.append(entry[3])
-            ballScore.append((entry[5]+entry[6]))
-            endGame.append((entry[7]))
             output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
                             <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em; color: {8} !important">Team {0}</a></p>
                             <div id="apr">
@@ -826,42 +825,12 @@ class ScoutServer(object):
                             </div>
                         </div>'''.format(n, *entry[1:], color) #unpack the elements
         output += "</div></div>"
-        blue_score = sum(ballScore[0:3]) + sum(endGame[0:3])
-        if sum(autoGears[0:3] >= 1):
-            blue_score += 60
-        else:
-            blue_score += 40
-        if sum(autoGears[0:3]) >= 3:
-            blue_score += 60
-        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
-            blue_score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
-            blue_score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
-            blue_score += 40
-            if level == 'playoffs':
-                blue_score += 100
-        if level == 'playoffs' and sum(ballScore[0:3]) >= 40:
-            blue_score += 20
-        red_score = sum(ballScore[3:6]) + sum(endGame[3:6])
-        if sum(autoGears[3:6]):
-            red_score += 60
-        else:
-            red_score += 40
-        if sum(autoGears[3:6]) >= 3:
-            red_score += 60
-        elif sum(autoGears[3:6] + teleopGears[3:6]) >= 2:
-            red_score += 40
-        if sum(autoGears[3:6] + teleopGears[3:6]) >= 6:
-            red_score += 40
-        if sum(autoGears[3:6] + teleopGears[3:6]) >= 12:
-            red_score += 40
-            if level == 'playoffs':
-                red_score += 100
-        if level == 'playoffs' and sum(ballScore[3:6]) >= 40:
-            red_score += 20
+        
+        blue_score = self.predictScore(nums[0:3], level)['score']
+        red_score = self.predictScore(nums[3:], level)['score']
         blue_score = int(blue_score)
         red_score = int(red_score)
+        
         prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score))) #calculates win probability from 2016 data
         output = output.format(blue_score, red_score, round((1-prob_red)*100,1), round(prob_red*100,1))
         conn.close()
@@ -1145,7 +1114,7 @@ class ScoutServer(object):
         return cherrypy.session['event']
     
     def getMatches(self, event, team=''):
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v01"}
+        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
         try:
             if team:
                 #request a specific team
@@ -1350,11 +1319,163 @@ class ScoutServer(object):
                 <h2><syle="colorL #B20000">Match Editor</h2>
                 <br><br>
             '''.format(str(key)) + combobox + mainEditor + '''</body>'''
+            
+    @cherrypy.expose()
+    def rankings(self):
+        event = self.getevent()
+        datapath = 'data_' + event + '.db'
+        self.database_exists(event)
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        
+        rankings = {}
+        
+        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
+        m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+        r = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/rankings".format(event), params=headers)
+        if 'feed' in m:
+            raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
+        if r.text != '[]':
+            r = r.json()
+        else:
+            raise cherrypy.HTTPError(503, "Unable to retrieve rankings data for this event.")
+        if m.text != '[]':
+            m = m.json()
+        else:
+            raise cherrypy.HTTPError(503, "Unable to retrieve match data for this event.")
+ 
+        del r[0]
+        for item in r:
+            rankings[str(item[1])] = {'rp': round(item[2]*item[9],0), 'matchScore': item[3], 'currentRP': round(item[2]*item[9],0), 'currentMatchScore': item[3]}
+            
+        for match in m:
+            if match['comp_level'] == 'qm':
+                if match['alliances']['blue']['score'] == -1:
+                    blueTeams = [match['alliances']['blue']['teams'][0][3:], match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:]]
+                    blueResult = self.predictScore(blueTeams)
+                    blueRP = blueResult['fuelRP'] + blueResult['gearRP']
+                    redTeams = [match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:], match['alliances']['red']['teams'][2][3:]]
+                    redResult = self.predictScore(redTeams)
+                    redRP = redResult['fuelRP'] + redResult['gearRP']
+                    if blueResult['score'] > redResult['score']:
+                        blueRP += 2
+                    elif redResult['score'] > blueResult['score']:
+                        redRP += 2
+                    else:
+                        redRP += 1
+                        blueRP += 1
+                    for team in blueTeams:
+                        rankings[team]['rp'] += blueRP
+                        rankings[team]['matchScore'] += blueResult['score']
+                    for team in redTeams:
+                        rankings[team]['rp'] += redRP
+                        rankings[team]['matchScore'] += redResult['score']
+
+        output = ''
+        for index,out in enumerate(sorted(rankings.items(), key=keyFromItem(lambda k,v: (v['rp'], v['matchScore'])), reverse=True)):
+            output += '''
+            <tr>
+                <td>{0}</td>
+                <td><a href="team?n={1}">{1}</a></td>
+                <td>{2}</td>
+                <td>{3}</td>
+                <td>{4}</td>
+                <td>{5}</td>
+            </tr>
+            '''.format(index + 1, out[0], (int)(out[1]['rp']), (int)(out[1]['matchScore']), (int)(out[1]['currentRP']), (int)(out[1]['currentMatchScore']))
+        return '''
+            <html>
+            <head>
+                <title>PiScout</title>
+                <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+                <link href="/static/css/style.css" rel="stylesheet">
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+                <script>
+                if (typeof jQuery === 'undefined')
+                  document.write(unescape('%3Cscript%20src%3D%22/static/js/jquery.js%22%3E%3C/script%3E'));
+                </script>
+                <script type="text/javascript" src="./static/js/jquery.tablesorter.js"></script>
+                <script>
+                $(document).ready(function() {{
+                    $("table").tablesorter();
+                }});
+                </script>
+            </head>
+            <body>
+                <h1>Rankings</h1>
+                <h2><a style="color: #B20000" href='/'>PiScout Database</a></h2>
+                <br><br>
+                <table class="tablesorter">
+                <thead><tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>RP</th>
+                    <th>Match Score</th>
+                    <th>Current RP</th>
+                    <th>Current Match Score</th>
+                </tr></thead>
+                <tbody>
+                {0}
+                </tbody>
+                </table>
+            </body>
+            </html>
+        '''.format(output)
+
+        
+    
+    def predictScore(self, teams, level='quals'):
+        conn = sql.connect(self.datapath())
+        cursor = conn.cursor()
+        ballScore = []
+        endGame = []
+        autoGears = []
+        teleopGears = []
+        for n in teams:
+            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            assert len(average) < 2
+            if len(average):
+                entry = average[0]
+            else:
+                entry = [0]*8
+            autoGears.append(entry[2])
+            teleopGears.append(entry[3])
+            ballScore.append((entry[5]+entry[6]))
+            endGame.append((entry[7]))
+        retVal = {'score': 0, 'gearRP': 0, 'fuelRP': 0}
+        score = sum(ballScore[0:3]) + sum(endGame[0:3])
+        if sum(autoGears[0:3]) >= 1:
+            score += 60
+        else:
+            score += 40
+        if sum(autoGears[0:3]) >= 3:
+            score += 60
+        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
+            score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
+            score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
+            score += 40
+            if level == 'playoffs':
+                score += 100
+            else:
+                retVal['gearRP'] == 1
+        if sum(ballScore[0:3]) >= 40:
+            if level == 'playoffs':
+                score += 20
+            else:
+                retVal['fuelRP'] == 1
+        retVal['score'] = score
+        return retVal
+            
     #END OF CLASS
 
 # Execution starts here
 datapath = 'data_' + CURRENT_EVENT + '.db'
 
+def keyFromItem(func):
+    return lambda item: func(*item)
+    
 if not os.path.isfile(datapath):
     # Generate a new database with the three tables
     conn = sql.connect(datapath)
