@@ -1053,6 +1053,8 @@ class ScoutServer(object):
         datapath = 'data_' + event + '.db'
         conn = sql.connect(datapath)
         cursor = conn.cursor()
+        #delete the existing entry, if a team has no matches they will be removed
+        cursor.execute('DELETE FROM averages WHERE team=?',(n,))
         #d0 is the identifier for team, d1 is the identifier for match
         entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
         s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0}
@@ -1086,9 +1088,8 @@ class ScoutServer(object):
                 apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
             apr = int(apr)
 
-        #replace the data entry with a new one
-        cursor.execute('DELETE FROM averages WHERE team=?',(n,))
-        cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end']))
+            #replace the data entry with a new one
+            cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end']))
         conn.commit()
         conn.close()
         
@@ -1097,6 +1098,8 @@ class ScoutServer(object):
         conn = sql.connect(datapath)
         cursor = conn.cursor()
         
+        #delete entry, if the team has match records left it will be replaced later
+        cursor.execute('DELETE FROM maxes WHERE team=?',(n,))
         entries = cursor.execute('SELECT * FROM scout WHERE d0 = ? AND flag=0 ORDER BY d1 DESC',(n,)).fetchall()
         s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'apr':0 }
         apr = 0
@@ -1126,7 +1129,7 @@ class ScoutServer(object):
         for key,val in s.items():
             s[key] = round(val, 2)
         #replace the data entry with a new one
-        cursor.execute('DELETE FROM maxes WHERE team=?',(n,))
+
         cursor.execute('INSERT INTO maxes VALUES (?,?,?,?,?,?,?,?)',(n, s['apr'], s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end']))
         conn.commit()
         conn.close()
