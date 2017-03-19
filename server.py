@@ -1187,7 +1187,7 @@ class ScoutServer(object):
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
             cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
-            cursor.execute('''CREATE TABLE averages (team integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
