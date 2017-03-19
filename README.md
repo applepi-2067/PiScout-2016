@@ -17,6 +17,6 @@ To run the program, make sure you have these modules:
 
 For Windows users, you can use the .whl files provided in the zip to install these libraries. (using `pip install`)
 
-To start the program/local server, run main.py
+To run the program first start the local server by running server.py (you must leave this running). If you would like to scan files, run main.py
 
 Running upload.py uploads any matches that are stored locally in the queue.
