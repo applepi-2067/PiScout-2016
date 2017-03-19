@@ -1077,9 +1077,9 @@ class ScoutServer(object):
             # formula for calculating APR (point contribution)
             apr = s['autoballs'] + s['teleopballs'] + s['end']
             if s['autogears']:
-                apr += 60 * max(s['autogears'], 1)
+                apr += 20 * min(s['autogears'], 1)
             if s['autogears'] > 1:
-                apr += (s['autogears'] - 1) * 30   
+                apr += (s['autogears'] - 1) * 10   
                 
             apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
             if s['autogears'] + s['teleopgears'] > 2:
