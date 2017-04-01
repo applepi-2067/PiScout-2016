@@ -50,8 +50,9 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td>{5}</td>
                 <td>{6}</td>
+                <td>{7}</td>
             </tr>
-            '''.format(team[0], team[1], team[2], team[3], team[5], team[6], team[7])
+            '''.format(team[0], team[1], team[2], team[3], round(team[2] + team[3], 2), team[5], team[6], team[7])
         #in this next block, update the event list and the column titles
         return '''
         <html>
@@ -142,6 +143,7 @@ class ScoutServer(object):
                         <th>APR</th>
                         <th>Auto Gears</th>
                         <th>Tele Gears</th>
+                        <th>Total Gears</th>
                         <th>Auto Balls</th>
                         <th>Teleop Balls</th>
                         <th>Endgame</th>
