@@ -51,8 +51,9 @@ class ScoutServer(object):
                 <td>{5}</td>
                 <td>{6}</td>
                 <td>{7}</td>
+                <td>{8}</td>
             </tr>
-            '''.format(team[0], team[1], team[2], team[3], round(team[2] + team[3], 2), team[5], team[6], team[7])
+            '''.format(team[0], team[1], team[2], team[3], round(team[2] + team[3], 2), team[5], team[6], team[7], team[8])
         #in this next block, update the event list and the column titles
         return '''
         <html>
@@ -144,9 +145,10 @@ class ScoutServer(object):
                         <th>Auto Gears</th>
                         <th>Tele Gears</th>
                         <th>Total Gears</th>
-                        <th>Auto Balls</th>
-                        <th>Teleop Balls</th>
-                        <th>Endgame</th>
+                        <th>Auto kPa</th>
+                        <th>Tele kPa</th>
+                        <th>Climb</th>
+                        <th>Defense</th>
                     </tr></thead>
                     <tbody>{0}</tbody>
                 </table>
@@ -810,7 +812,7 @@ class ScoutServer(object):
         #iterate through all six teams
         color = "#0000B8"
         for i,n in enumerate(nums):
-            #at halfway pointm switch to the second row
+            #at halfway point switch to the second row
             if i == 3:
                 output+='''</div>
                         <div style="display: table-cell;">
@@ -1051,7 +1053,7 @@ class ScoutServer(object):
         cursor.execute('DELETE FROM averages WHERE team=?',(n,))
         #d0 is the identifier for team, d1 is the identifier for match
         entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0}
+        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
         apr = 0
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
@@ -1063,6 +1065,7 @@ class ScoutServer(object):
                 s['teleopballs'] += e[14]/9 + e[15]/3
                 s['geardrop'] += e[13]
                 s['end'] += e[16]*50
+                s['defense'] += e[10]
 
             # take the average (divide by number of entries)
             for key,val in s.items():
@@ -1083,7 +1086,7 @@ class ScoutServer(object):
             apr = int(apr)
 
             #replace the data entry with a new one
-            cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end']))
+            cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
         conn.commit()
         conn.close()
         
@@ -1095,7 +1098,7 @@ class ScoutServer(object):
         #delete entry, if the team has match records left it will be replaced later
         cursor.execute('DELETE FROM maxes WHERE team=?',(n,))
         entries = cursor.execute('SELECT * FROM scout WHERE d0 = ? AND flag=0 ORDER BY d1 DESC',(n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'apr':0 }
+        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'apr':0, 'defense': 0 }
         apr = 0
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
@@ -1107,6 +1110,7 @@ class ScoutServer(object):
                 s['teleopballs'] = max(s['teleopballs'], (e[14]/9 + e[15]/3))
                 s['geardrop'] = max(s['geardrop'], e[13])
                 s['end'] = max(s['end'], e[16]*50)
+                s['defense'] = max(s['defense'], e[11])
                 apr = (e[6]/3 + e[7]) + (e[14]/9 + e[15]/3) + e[16]*50
                 if e[4]:
                     apr += 60
@@ -1124,7 +1128,7 @@ class ScoutServer(object):
             s[key] = round(val, 2)
         #replace the data entry with a new one
 
-        cursor.execute('INSERT INTO maxes VALUES (?,?,?,?,?,?,?,?)',(n, s['apr'], s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end']))
+        cursor.execute('INSERT INTO maxes VALUES (?,?,?,?,?,?,?,?,?)',(n, s['apr'], s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
         conn.commit()
         conn.close()
 
@@ -1507,10 +1511,9 @@ if not os.path.isfile(datapath):
     cursor = conn.cursor()
     # Replace 36 with the number of entries in main.py
     cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
-    cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
-    cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+    cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+    cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
     cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
-    cursor.execute('''CREATE TABLE matches (match_number integer, comp_level text, red1 integer, red2 integer, red3 integer, blue1 integer, blue2 integer, blue3 integer, red_score integer, blue_score integer)''')
     conn.close()
 
 conf = {
