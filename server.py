@@ -474,6 +474,29 @@ class ScoutServer(object):
         self.calcavg(num, self.getevent())
         self.calcmaxes(num, self.getevent())
         return ''
+    
+    #Called to recalculate all averages/maxes
+    @cherrypy.expose()
+    def recalculate(self):
+        conn = sql.connect(self.datapath())
+        cursor = conn.cursor()
+        data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
+        for team in data:
+            self.calcavg(team[0], self.getevent())
+            self.calcmaxes(team[0], self.getevent())
+        return '''
+        <html>
+            <head>
+                <title>PiScout</title>
+                <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
+                <link href="/static/css/style.css" rel="stylesheet">
+            </head>
+            <body>
+                <h1><a style="color: #B20000" href='/'>PiScout Database</a></h1>
+                Recalc Complete
+            </body>
+        </html>'''
+        
 
     # Input interface to compare teams or alliances
     # This probably won't ever need to be modified
