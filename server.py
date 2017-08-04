@@ -37,8 +37,12 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         if(cherrypy.session['mode'] == "averages"):
             data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
-        else:
+        elif (cherrypy.session['mode'] == "maxes"):
             data = conn.cursor().execute('SELECT * FROM maxes ORDER BY apr DESC').fetchall()
+        elif (cherrypy.session['mode'] == "noD"):
+            data = conn.cursor().execute('SELECT * FROM noDefense ORDER BY apr DESC').fetchall()
+        else:
+            data = conn.cursor().execute('SELECT * from lastThree ORDER BY apr DESC').fetchall()
         conn.close()
         for team in data: #this table will need to change based on the number of columns on the main page
             table += '''
@@ -95,6 +99,8 @@ class ScoutServer(object):
                         <select class="fieldsm" name="m">
                             <option id="maxes" value="maxes">Maxes</option>
                             <option id="averages" value="averages">Averages</option>
+                            <option id="noD" value="noD">No Defense</option>
+                            <option id="lastThree" value="lastThree">Last 3</option>
                         </select>
                         <button class="submit" type="submit">Submit</button>
                     </form>
@@ -193,7 +199,10 @@ class ScoutServer(object):
             dp = {"match": e[2], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
             a += 'baseline, ' if e[6] else ''
-            a += str(e[5]) + 'x gears, ' if e[5] else ''
+            a += 'side try, ' if e[19] else ''
+            a += 'center try, ' if e[20] else ''
+            a += 'side peg, ' if e[21] else ''
+            a += 'center peg, ' if e[22] else ''
             dp['autogears'] += e[5]
             a += str(e[7]) + 'x low goal, ' if e[7] else ''
             a += str(e[8]) + 'x high goal, ' if e[8] else ''
@@ -227,7 +236,7 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
                 <td><a class="edit" href="/edit?key={8}">E</a></td>
-            </tr>'''.format(e[2], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[19] else '', e[2], e[19], e[0])
+            </tr>'''.format(e[2], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[23] else '', e[2], e[23], e[0])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
             if not e[19]: #if flagged
@@ -475,6 +484,8 @@ class ScoutServer(object):
         conn.close()
         self.calcavg(num, self.getevent())
         self.calcmaxes(num, self.getevent())
+        self.calcavgNoD(num, self.getevent())
+        self.calcavgLastThree(num, self.getevent())
         return ''
     
     #Called to recalculate all averages/maxes
@@ -486,6 +497,8 @@ class ScoutServer(object):
         for team in data:
             self.calcavg(team[0], self.getevent())
             self.calcmaxes(team[0], self.getevent())
+            self.calcavgNoD(team[0], self.getevent())
+            self.calcavgLastThree(team[0], self.getevent())
         return '''
         <html>
             <head>
@@ -1035,13 +1048,15 @@ class ScoutServer(object):
             
         if d[18]:   #replay
             cursor.execute('DELETE from scout WHERE d0=? AND d1=?', (str(d[0]),str(d[1])))
-        d = d[:-1]
+        d = d[:18] + d[19:]
         cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',' + str(flag) + ')')
         conn.commit()
         conn.close()
 
         self.calcavg(d[0], event)
         self.calcmaxes(d[0], event)
+        self.calcavgNoD(d[0], event)
+        self.calcavgLastThree(d[0], event)
         return ''
 
     # Calculates average scores for a team
@@ -1087,6 +1102,99 @@ class ScoutServer(object):
 
             #replace the data entry with a new one
             cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
+        conn.commit()
+        conn.close()
+        
+        # Calculates average scores for a team
+    def calcavgNoD(self, n, event):
+        datapath = 'data_' + event + '.db'
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        #delete the existing entry, if a team has no matches they will be removed
+        cursor.execute('DELETE FROM noDefense WHERE team=?',(n,))
+        #d0 is the identifier for team, d1 is the identifier for match
+        entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 AND d10=0 ORDER BY d1 DESC', (n,)).fetchall()
+        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
+        apr = 0
+        # Iterate through all entries (if any exist) and sum all categories
+        if entries:
+            for e in entries:
+                e = e[1:]
+                s['autogears'] += e[4]
+                s['teleopgears'] += e[12]
+                s['autoballs'] += e[6]/3 + e[7]
+                s['teleopballs'] += e[14]/9 + e[15]/3
+                s['geardrop'] += e[13]
+                s['end'] += e[16]*50
+                s['defense'] += e[10]
+
+            # take the average (divide by number of entries)
+            for key,val in s.items():
+                s[key] = round(val/len(entries), 2)
+
+            # formula for calculating APR (point contribution)
+            apr = s['autoballs'] + s['teleopballs'] + s['end']
+            if s['autogears']:
+                apr += 20 * min(s['autogears'], 1)
+            if s['autogears'] > 1:
+                apr += (s['autogears'] - 1) * 10   
+                
+            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
+            if s['autogears'] + s['teleopgears'] > 2:
+                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
+            if s['autogears'] + s['teleopgears'] > 6:
+                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
+            apr = int(apr)
+
+            #replace the data entry with a new one
+            cursor.execute('INSERT INTO noDefense VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
+        conn.commit()
+        conn.close()
+        
+    # Calculates average scores for a team
+    def calcavgLastThree(self, n, event):
+        datapath = 'data_' + event + '.db'
+        conn = sql.connect(datapath)
+        cursor = conn.cursor()
+        #delete the existing entry, if a team has no matches they will be removed
+        cursor.execute('DELETE FROM lastThree WHERE team=?',(n,))
+        #d0 is the identifier for team, d1 is the identifier for match
+        entries = cursor.execute('SELECT * FROM scout WHERE d0=? AND flag=0 ORDER BY d1 DESC', (n,)).fetchall()
+        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
+        apr = 0
+        # Iterate through all entries (if any exist) and sum all categories
+        if entries:
+            entries = entries[0:3]
+            for e in entries:
+                e = e[1:]
+                s['autogears'] += e[4]
+                s['teleopgears'] += e[12]
+                s['autoballs'] += e[6]/3 + e[7]
+                s['teleopballs'] += e[14]/9 + e[15]/3
+                s['geardrop'] += e[13]
+                s['end'] += e[16]*50
+                s['defense'] += e[10]
+
+            # take the average (divide by number of entries)
+            for key,val in s.items():
+                s[key] = round(val/len(entries), 2)
+
+            # formula for calculating APR (point contribution)
+            apr = s['autoballs'] + s['teleopballs'] + s['end']
+            if s['autogears']:
+                apr += 20 * min(s['autogears'], 1)
+            if s['autogears'] > 1:
+                apr += (s['autogears'] - 1) * 10   
+                
+            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
+            if s['autogears'] + s['teleopgears'] > 2:
+                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
+            if s['autogears'] + s['teleopgears'] > 6:
+                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
+            apr = int(apr)
+
+            #replace the data entry with a new one
+            cursor.execute('INSERT INTO lastThree VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
         conn.commit()
         conn.close()
         
@@ -1187,7 +1295,7 @@ class ScoutServer(object):
             conn = sql.connect(datapath)
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
-            cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
+            cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (22)]) + ',flag integer' + ')')
             cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
@@ -1223,6 +1331,8 @@ class ScoutServer(object):
             conn.close()
             self.calcavg(team, self.getevent())
             self.calcmaxes(team, self.getevent())
+            self.calcavgNoD(team, self.getevent())
+            self.calcavgLastThree(team, self.getevent())
         conn = sql.connect(datapath)
         cursor= conn.cursor()
         entries = cursor.execute('SELECT * from scout ORDER BY flag DESC, d0 ASC, d1 ASC').fetchall()
@@ -1510,9 +1620,11 @@ if not os.path.isfile(datapath):
     conn = sql.connect(datapath)
     cursor = conn.cursor()
     # Replace 36 with the number of entries in main.py
-    cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (18)]) + ',flag integer' + ')')
+    cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (22)]) + ',flag integer' + ')')
     cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
     cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+    cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+    cursor.execute('''CREATE TABLE noDefense (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
     cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
     conn.close()
 
