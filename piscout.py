@@ -49,15 +49,20 @@ class PiScout:
         print('Loading a new sheet: ' + imgpath)
         img = cv2.imread(imgpath)
         try:
-            img = cv2.resize(img, (3400,4400))
+            img = cv2.resize(img, (2456,3260))
         except:
             return 0
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # The first step is to figure out the four markers on the corners of the page
         # The next two lines will blur the image and extract the edges from the shapes
-        blur = cv2.GaussianBlur(imgray,(b,b),0)
-        edges = cv2.Canny(blur,150,300)
+        #blur = cv2.GaussianBlur(imgray,(b,b),0)
+        blur = cv2.medianBlur(imgray, 2*b + 1)
+        #DEBUGGING
+        #cv2.imwrite('Output/' + imgpath[7:] + '.b' + str(b) + '.jpg', blur)
+        #edges = cv2.Canny(blur,150,300)
+        retVal, edges = cv2.threshold(blur,200,255, cv2.THRESH_BINARY)
+        #cv2.imwrite('Output/' + imgpath[7:] + '.thresh.jpg', edges)
 
         # Next, we use the edges to find the contours of the shapes
         # Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
@@ -68,7 +73,7 @@ class PiScout:
         sqsize = []
         for cont in contours:
                 poly = cv2.approxPolyDP(np.array(cont), 64, True)
-                if len(poly) == 4 and cv2.contourArea(cont) > 8192:
+                if len(poly) == 4 and cv2.contourArea(cont) > 4000:
                     xpos = 0; ypos = 0
                     for a in poly:
                         xpos += a[0][0]
@@ -91,6 +96,7 @@ class PiScout:
                 return -1
             marks.append(sq[ind])
             marksize.append(sqsize[ind])
+            print('Corner: ' + str(corner) + "  Size:" + str(sqsize[ind]))
 
         u_marksize = marksize[:] #clone the list
         marksize.sort()
@@ -98,8 +104,8 @@ class PiScout:
 
         #this block contains illegal inefficient recursive nonsense to salvage crappy sheets
         for i,m in enumerate(u_marksize):
-            if abs(1 - m/median) > 0.04: #if there is a size anomoly in markers, try some things
-                print("Damaged marker detected, attempting fix")
+            if abs(1 - m/median) > 0.1: #if there is a size anomoly in markers, try some things
+                print("Damaged marker detected, attempting fix: " + str(abs(1-m/median)))
                 if b < 13 and b != 1 and not guess:
                     print("Increasing gaussian blur to " + str(b+2))
                     return self.loadsheet(imgpath, b=b+2)
@@ -111,12 +117,16 @@ class PiScout:
                     return self.loadsheet(imgpath, b=3, guess=True)
                 if i == 0: #geometry to calculate approximate position of damaged marker
                     marks[0] = (marks[1][0] - (marks[3][0]-marks[2][0]), marks[2][1] + (marks[1][1]-marks[3][1]))
+                    print('Guessing top left corner')
                 elif i == 1:
                     marks[1] = (marks[0][0] + (marks[3][0]-marks[2][0]), marks[3][1] + (marks[0][1]-marks[2][1]))
+                    print('Guessing Bottom left corner')
                 elif i == 2:
                     marks[2] = (marks[3][0] - (marks[1][0]-marks[0][0]), marks[0][1] - (marks[1][1]-marks[3][1]))
+                    print('Guessing top right corner')
                 elif i == 3:
                     marks[3] = (marks[2][0] + (marks[1][0]-marks[0][0]), marks[1][1] - (marks[0][1]-marks[2][1]))
+                    print('Guessing bottom right corner')
 
 
         # Now, we fit apply a perspective transform
