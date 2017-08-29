@@ -206,6 +206,7 @@ class PiScout:
         
         datapath = 'data_' + CURRENT_EVENT + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         history = cursor.execute('SELECT * FROM scout WHERE d0=? AND d1=?', (str(self.data[0]),str(self.data[1]))).fetchall()
         if history and not self.data[18]:

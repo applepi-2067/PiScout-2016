@@ -35,6 +35,7 @@ class ScoutServer(object):
         #This section generates the table of averages
         table = ''
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         if(cherrypy.session['mode'] == "averages"):
             data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
         elif (cherrypy.session['mode'] == "maxes"):
@@ -57,7 +58,7 @@ class ScoutServer(object):
                 <td>{7}</td>
                 <td>{8}</td>
             </tr>
-            '''.format(team[0], team[1], team[2], team[3], round(team[2] + team[3], 2), team[5], team[6], team[7], team[8])
+            '''.format(team['team'], team['apr'], team['autogear'], team['teleopgear'], round(team['autogear'] + team['teleopgear'], 2), team['autoballs'], team['teleopballs'], team['end'], team['defense'])
         #in this next block, update the event list and the column titles
         return '''
         <html>
@@ -172,6 +173,7 @@ class ScoutServer(object):
         if int(n)==666:
             raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 DESC', (n,)).fetchall()
         averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
@@ -478,6 +480,7 @@ class ScoutServer(object):
         if not (num.isdigit() and match.isdigit()):
             return '<img src="http://goo.gl/eAs7JZ" style="width: 1200px"></img>'
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         cursor.execute('UPDATE scout SET flag=? WHERE d0=? AND d1=?', (int(not int(flagval)),num,match))
         conn.commit()
@@ -492,6 +495,7 @@ class ScoutServer(object):
     @cherrypy.expose()
     def recalculate(self):
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
         for team in data:
@@ -570,6 +574,7 @@ class ScoutServer(object):
             
         averages = []
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         output = ''
         for n in nums:
@@ -806,6 +811,7 @@ class ScoutServer(object):
         nums = [b1, b2, b3, r1, r2, r3]
         averages = []
         conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         #start a div table for the comparison
         #to later be formatted with sum APR
@@ -926,6 +932,7 @@ class ScoutServer(object):
         datapath = 'data_' + event + '.db'
         self.database_exists(event)
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         
         m = self.getMatches(event, n)
@@ -1017,6 +1024,7 @@ class ScoutServer(object):
         datapath = 'data_' + event + '.db'
         self.database_exists(event)
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
 
         if team:
@@ -1063,6 +1071,7 @@ class ScoutServer(object):
     def calcavg(self, n, event):
         datapath = 'data_' + event + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         #delete the existing entry, if a team has no matches they will be removed
         cursor.execute('DELETE FROM averages WHERE team=?',(n,))
@@ -1109,6 +1118,7 @@ class ScoutServer(object):
     def calcavgNoD(self, n, event):
         datapath = 'data_' + event + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         #delete the existing entry, if a team has no matches they will be removed
         cursor.execute('DELETE FROM noDefense WHERE team=?',(n,))
@@ -1155,6 +1165,7 @@ class ScoutServer(object):
     def calcavgLastThree(self, n, event):
         datapath = 'data_' + event + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         #delete the existing entry, if a team has no matches they will be removed
         cursor.execute('DELETE FROM lastThree WHERE team=?',(n,))
@@ -1201,6 +1212,7 @@ class ScoutServer(object):
     def calcmaxes(self, n, event):
         datapath = 'data_' + event + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         
         #delete entry, if the team has match records left it will be replaced later
@@ -1293,6 +1305,7 @@ class ScoutServer(object):
         if not os.path.isfile(datapath):
             # Generate a new database with the three tables
             conn = sql.connect(datapath)
+            conn.row_factory = sql.Rw
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
             cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (22)]) + ',flag integer' + ')')
@@ -1307,6 +1320,7 @@ class ScoutServer(object):
              teleGears='', teleGearsDropped='', teleLowBalls='', teleHighBalls='', hang='', failHang='', flag=''):
         datapath = 'data_' + self.getevent() + '.db'
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         if team:
             data = (team, match, fouls, techFouls, autoGears, autoBaseline, autoLowBalls, autoHighBalls,
@@ -1334,6 +1348,7 @@ class ScoutServer(object):
             self.calcavgNoD(team, self.getevent())
             self.calcavgLastThree(team, self.getevent())
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor= conn.cursor()
         entries = cursor.execute('SELECT * from scout ORDER BY flag DESC, d0 ASC, d1 ASC').fetchall()
                 
@@ -1465,6 +1480,7 @@ class ScoutServer(object):
         datapath = 'data_' + event + '.db'
         self.database_exists(event)
         conn = sql.connect(datapath)
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         
         rankings = {}
@@ -1565,6 +1581,7 @@ class ScoutServer(object):
     
     def predictScore(self, teams, level='quals'):
         conn = sql.connect(self.datapath())
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         ballScore = []
         endGame = []
