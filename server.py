@@ -8,6 +8,7 @@ import math
 from statistics import mode
 from ipaddress import IPV6LENGTH
 from event import CURRENT_EVENT
+from piscout import SCOUT_FIELDS
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
@@ -198,35 +199,35 @@ class ScoutServer(object):
         for e in entries:
             # Important: the index of e refers to the number of the field set in main.py
             # For example e[1] gets value #1 from main.py
-            dp = {"match": e[2], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+            dp = {"match": e['Match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
-            a += 'baseline, ' if e[6] else ''
-            a += 'side try, ' if e[19] else ''
-            a += 'center try, ' if e[20] else ''
-            a += 'side peg, ' if e[21] else ''
-            a += 'center peg, ' if e[22] else ''
-            dp['autogears'] += e[5]
-            a += str(e[7]) + 'x low goal, ' if e[7] else ''
-            a += str(e[8]) + 'x high goal, ' if e[8] else ''
-            dp['autoshoot'] += e[7]/3 + e[8]
+            a += 'baseline, ' if e['AutoBaseline'] else ''
+            a += 'side try, ' if e['AutoSideAttempt'] else ''
+            a += 'center try, ' if e['AutoCenterAttempt'] else ''
+            a += 'side peg, ' if e['AutoSideSuccess'] else ''
+            a += 'center peg, ' if e['AutoCenterSuccess'] else ''
+            dp['autogears'] += e['AutoGears']
+            a += str(e['AutoLowBalls']) + 'x low goal, ' if e['AutoLowBalls'] else ''
+            a += str(e['AutoHighBalls']) + 'x high goal, ' if e['AutoHighBalls'] else ''
+            dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
 
             d = ''
-            d += str(e[13]) + 'x gears, ' if e[13] else ''
-            d += str(e[14]) + 'x gears dropped, ' if e[14] else ''
-            dp['gears'] += e[13]
-            dp['geardrop'] += e[14]
+            d += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
+            d += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
+            dp['gears'] += e['TeleopGears']
+            dp['geardrop'] += e['TeleopGearDrops']
 
             sh = ''
-            sh += str(e[15]) + 'x low goal, ' if e[15] else ''
-            sh += str(e[16]) + 'x high goal, ' if e[16] else ''
-            dp['shoot'] += e[15]/9 + e[16]/3
+            sh += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopHighBalls'] else ''
+            sh += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
+            dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
 
-            o = 'hang, ' if e[17] else 'failed hang, ' if e[18] else ''
-            o += str(e[3]) + 'x foul, ' if e[3] else ''
-            o += str(e[4]) + 'x tech foul, ' if e[4] else ''
-            o += 'defense, ' if e[11] else ''
-            o += 'feeder, ' if e[10] else ''
-            o += 'defended, ' if e[12] else ''
+            o = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
+            o += str(e['Foul']) + 'x foul, ' if e['Foul'] else ''
+            o += str(e['TechFoul']) + 'x tech foul, ' if e['TechFoul'] else ''
+            o += 'defense, ' if e['Defense'] else ''
+            o += 'feeder, ' if e['Feeder'] else ''
+            o += 'defended, ' if e['Defended'] else ''
 
             #Generate a row in the table for each match
             output += '''
@@ -238,10 +239,10 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
                 <td><a class="edit" href="/edit?key={8}">E</a></td>
-            </tr>'''.format(e[2], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e[23] else '', e[2], e[23], e[0])
+            </tr>'''.format(e['Match'], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Team'])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
-            if not e[19]: #if flagged
+            if not e['Flag']: #if flagged
                 dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
         dataset.reverse() #reverse so that graph is in the correct order
 
@@ -619,33 +620,33 @@ class ScoutServer(object):
                 # For example e[1] gets value #1 from main.py
                 dp = {"autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
                 a = ''
-                a += 'baseline, ' if e[6] else ''
-                a += str(e[5]) + 'x gears, ' if e[5] else ''
-                dp['autogears'] += e[5]
-                a += str(e[7]) + 'x low goal, ' if e[7] else ''
-                a += str(e[8]) + 'x high goal, ' if e[8] else ''
-                dp['autoshoot'] += e[7]/3 + e[8]
+                a += 'baseline, ' if e['AutoBaseline'] else ''
+                a += str(e[5]) + 'x gears, ' if e['AutoGears'] else ''
+                dp['autogears'] += e['AutoGears']
+                a += str(e[7]) + 'x low goal, ' if e['AutoLowGoal'] else ''
+                a += str(e[8]) + 'x high goal, ' if e['AutoHighGoal'] else ''
+                dp['autoshoot'] += e['AutoLowGoal']/3 + e['AutoLowGoal']
     
                 d = ''
-                d += str(e[13]) + 'x gears, ' if e[13] else ''
-                d += str(e[14]) + 'x gears dropped, ' if e[14] else ''
-                dp['gears'] += e[13]
-                dp['geardrop'] += e[14]
+                d += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
+                d += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
+                dp['gears'] += e['TeleopGears']
+                dp['geardrop'] += e['TeleopGearDrops']
     
                 sh = ''
-                sh += str(e[15]) + 'x low goal, ' if e[15] else ''
-                sh += str(e[16]) + 'x high goal, ' if e[16] else ''
-                dp['shoot'] += e[15]/9 + e[16]/3
+                sh += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopLowBallls'] else ''
+                sh += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
+                dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
     
-                o = 'hang, ' if e[17] else 'failed hang, ' if e[18] else ''
-                o += str(e[3]) + 'x foul, ' if e[3] else ''
-                o += str(e[4]) + 'x tech foul, ' if e[4] else ''
-                o += 'defense, ' if e[11] else ''
-                o += 'feeder, ' if e[10] else ''
-                o += 'defended, ' if e[12] else ''
+                o = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
+                o += str(e['Foul']) + 'x foul, ' if e['Foul'] else ''
+                o += str(e['TechFoul']) + 'x tech foul, ' if e['TechFoul'] else ''
+                o += 'defense, ' if e['Defense'] else ''
+                o += 'feeder, ' if e['Feeder'] else ''
+                o += 'defended, ' if e['Defended'] else ''
                 for key,val in dp.items():
                     dp[key] = round(val, 2)
-                if not e[19]:
+                if not e['Flag']:
                     if len(dataset) < (index + 1):
                         if stat2:
                             dataPoint = {"match":(index+1), "team" + n + "stat1":dp[stat1], "team" + n + "stat2":dp[stat2]}
@@ -1038,33 +1039,32 @@ class ScoutServer(object):
 
         d = literal_eval(data)
         flag = 0
-        if (d[6] or d[14]) and (d[7] or d[15]): #high and low balls
+        if (d['AutoHighBalls'] or d['TeleopHighBalls']) and (d['AutoLowBalls'] or d['AutoHighBalls']): 
             flag = 1
-        if d[16] and d[17]:
+        if d['Hang'] and d['FailedHang']:
             flag = 1
             
         m = self.getMatches(event)
                 
         if m:
-            match = next((item for item in m if (item['match_number'] == d[1]) and (item['comp_level'] == 'qm')))
+            match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
             teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
-            if not 'frc' + str(d[0]) in teams:
+            if not 'frc' + str(d['Team']) in teams:
                 flag = 1   
                 
-        if d[4]:    #if auto gear, set baseline
-            d[5] = 1
+        if d['AutoGears']:    #if auto gear, set baseline
+            d['AutoBaseline'] = 1
             
-        if d[18]:   #replay
+        if d['Replay']:   #replay
             cursor.execute('DELETE from scout WHERE d0=? AND d1=?', (str(d[0]),str(d[1])))
-        d = d[:18] + d[19:]
-        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d])  + ',' + str(flag) + ')')
+        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d]) + ')')
         conn.commit()
         conn.close()
 
-        self.calcavg(d[0], event)
-        self.calcmaxes(d[0], event)
-        self.calcavgNoD(d[0], event)
-        self.calcavgLastThree(d[0], event)
+        self.calcavg(d['Team'], event)
+        self.calcmaxes(d['Team'], event)
+        self.calcavgNoD(d['Team'], event)
+        self.calcavgLastThree(d['Team'], event)
         return ''
 
     # Calculates average scores for a team
@@ -1082,14 +1082,13 @@ class ScoutServer(object):
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
             for e in entries:
-                e = e[1:]
-                s['autogears'] += e[4]
-                s['teleopgears'] += e[12]
-                s['autoballs'] += e[6]/3 + e[7]
-                s['teleopballs'] += e[14]/9 + e[15]/3
-                s['geardrop'] += e[13]
-                s['end'] += e[16]*50
-                s['defense'] += e[10]
+                s['autogears'] += e['AutoGears']
+                s['teleopgears'] += e['TeleopGears']
+                s['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+                s['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+                s['geardrop'] += e['TeleopGearDrops']
+                s['end'] += e['Hang']*50
+                s['defense'] += e['Defense']
 
             # take the average (divide by number of entries)
             for key,val in s.items():
@@ -1130,13 +1129,13 @@ class ScoutServer(object):
         if entries:
             for e in entries:
                 e = e[1:]
-                s['autogears'] += e[4]
-                s['teleopgears'] += e[12]
-                s['autoballs'] += e[6]/3 + e[7]
-                s['teleopballs'] += e[14]/9 + e[15]/3
-                s['geardrop'] += e[13]
-                s['end'] += e[16]*50
-                s['defense'] += e[10]
+                s['autogears'] += e['AutoGears']
+                s['teleopgears'] += e['TeleopGears']
+                s['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+                s['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+                s['geardrop'] += e['TeleopGearDrops']
+                s['end'] += e['Hang']*50
+                s['defense'] += e['Defense']
 
             # take the average (divide by number of entries)
             for key,val in s.items():
@@ -1177,14 +1176,13 @@ class ScoutServer(object):
         if entries:
             entries = entries[0:3]
             for e in entries:
-                e = e[1:]
-                s['autogears'] += e[4]
-                s['teleopgears'] += e[12]
-                s['autoballs'] += e[6]/3 + e[7]
-                s['teleopballs'] += e[14]/9 + e[15]/3
-                s['geardrop'] += e[13]
-                s['end'] += e[16]*50
-                s['defense'] += e[10]
+                s['autogears'] += e['AutoGears']
+                s['teleopgears'] += e['TeleopGears']
+                s['autoballs'] += e['AutoBallsLow']/3 + e['AutoBallsHigh']
+                s['teleopballs'] += e['TeleopBallsLow']/9 + e['TeleopBallsHigh']/3
+                s['geardrop'] += e['TeleopGearDrops']
+                s['end'] += e['Hang']*50
+                s['defense'] += e['Defense']
 
             # take the average (divide by number of entries)
             for key,val in s.items():
@@ -1224,24 +1222,24 @@ class ScoutServer(object):
         if entries:
             for e in entries:
                 e = e[1:]
-                s['autogears'] = max(s['autogears'], e[4])
-                s['teleopgears'] = max(s['teleopgears'], e[12])
-                s['autoballs'] = max(s['autoballs'], (e[6]/3 + e[7]))
-                s['teleopballs'] = max(s['teleopballs'], (e[14]/9 + e[15]/3))
-                s['geardrop'] = max(s['geardrop'], e[13])
-                s['end'] = max(s['end'], e[16]*50)
-                s['defense'] = max(s['defense'], e[11])
-                apr = (e[6]/3 + e[7]) + (e[14]/9 + e[15]/3) + e[16]*50
-                if e[4]:
+                s['autogears'] = max(s['autogears'], e['AutoGears'])
+                s['teleopgears'] = max(s['teleopgears'], e['TeleopGears'])
+                s['autoballs'] = max(s['autoballs'], (e['AutoLowBalls']/3 + e['AutoHighBalls']))
+                s['teleopballs'] = max(s['teleopballs'], (e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3))
+                s['geardrop'] = max(s['geardrop'], e['TeleopGearDrops'])
+                s['end'] = max(s['end'], e['Hang']*50)
+                s['defense'] = max(s['defense'], e['Defense'])
+                apr = (e['AutoLowBalls']/3 + e['AutoHighBalls']) + (e['TeleopLowBalls']/9 + e['AutoHighBalls']/3) + e['Hang']*50
+                if e['AutoGears']:
                     apr += 60
-                if e[4] > 1:
-                    apr += (e[4] - 1) * 30   
+                if e['AutoGears'] > 1:
+                    apr += (e['AutoGears'] - 1) * 30   
                     
-                apr += min(min(e[12], 2 - e[4]) * 20, 0)
-                if e[4] + e[12] > 2:
-                    apr += min(e[12] + e[4] - 2, 4) * 10
-                if e[4] + e[12] > 6:
-                    apr += min(e[12] + e[4] - 6, 6) * 7
+                apr += min(min(e['TeleopGears'], 2 - e['AutoGears']) * 20, 0)
+                if e['AutoGears'] + e['TeleopGears'] > 2:
+                    apr += min(e['TeleopGears'] + e['AutoGears'] - 2, 4) * 10
+                if e['AutoGears'] + e['TeleopGears'] > 6:
+                    apr += min(e['TeleopGears'] + e['AutoGears'] - 6, 6) * 7
                 s['apr'] = max(s['apr'], (int(apr)))
 
         for key,val in s.items():
@@ -1305,10 +1303,15 @@ class ScoutServer(object):
         if not os.path.isfile(datapath):
             # Generate a new database with the three tables
             conn = sql.connect(datapath)
-            conn.row_factory = sql.Rw
+            conn.row_factory = sql.Row
             cursor = conn.cursor()
             # Replace 36 with the number of entries in main.py
-            cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (22)]) + ',flag integer' + ')')
+            tableCreate = "CREATE TABLE scout (key INTEGER PRIMARY KEY, "
+            for key in SCOUT_FIELDS:
+                tableCreate += key + " integer , "
+            tableCreate += ")"
+            print(tableCreate)
+            cursor.execute(tableCreate)
             cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
@@ -1581,7 +1584,7 @@ class ScoutServer(object):
     
     def predictScore(self, teams, level='quals'):
         conn = sql.connect(self.datapath())
-        conn.row_factory = sqlite3.Row
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
         ballScore = []
         endGame = []
@@ -1637,7 +1640,13 @@ if not os.path.isfile(datapath):
     conn = sql.connect(datapath)
     cursor = conn.cursor()
     # Replace 36 with the number of entries in main.py
-    cursor.execute('CREATE TABLE scout (key INTEGER PRIMARY KEY,' + ','.join([('d' + str(a) + ' integer') for a in range (22)]) + ',flag integer' + ')')
+    tableCreate = "CREATE TABLE scout (key INTEGER PRIMARY KEY, "
+    for key in SCOUT_FIELDS:
+        tableCreate += key + " integer, "
+    tableCreate = tableCreate[:-2]
+    tableCreate += ")"
+    print(tableCreate)
+    cursor.execute(tableCreate)
     cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
     cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
     cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')

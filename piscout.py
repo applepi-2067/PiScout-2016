@@ -14,6 +14,12 @@ from event import CURRENT_EVENT
 # This program was designed to be easily configurable, and new sheets can be made rapidly
 # The configuration for the sheets is done in a separate file (main.py)
 # Cory Lynch 2015
+
+SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
+        "AutoLowBalls":0, "AutoHighBalls":0, "FloorIntake":0, "Feeder":0, "Defense":0, "Defended":0,
+        "TeleopGears":0, "TeleopGearDrops":0, "TeleopLowBalls":0, "TeleopHighBalls":0, "Hang":0,
+        "FailedHang":0, "Replay":0, "AutoSideAttempt":0, "AutoSideSuccess":0, "AutoCenterAttempt":0,
+        "AutoCenterSuccess":0, "Flag":0}
 class PiScout:
     # Firstly, initializes the fields of a PiScout object
     # Then it starts the main loop of PiScout
@@ -21,9 +27,9 @@ class PiScout:
     # Loops indefinitely and triggers a response whenever a new sheet is added
     def __init__(self, main):
         print('PiScout Starting')
-        self.sheet = None;
-        self.display = None;
-        self.data = []
+        self.sheet = None
+        self.display = None
+        self.data = dict(SCOUT_FIELDS)
         self.labels = []
         self.shift = 0
 
@@ -44,8 +50,7 @@ class PiScout:
     # Loads a new scout sheet from an image
     # Processes the image and stores the result in self.sheet
     def loadsheet(self, imgpath, b=3, guess=False):
-        self.data = []
-        self.labels = []
+        self.data = dict(SCOUT_FIELDS)
         print('Loading a new sheet: ' + imgpath)
         img = cv2.imread(imgpath)
         try:
@@ -193,34 +198,30 @@ class PiScout:
 
     # Adds a data entry into the data dictionary
     def set(self, name, contents):
-        self.data.append(contents)
-        self.labels.append(name)
+        self.data[name] = contents
 
     # Opens the GUI, preparing the data for submission
     def submit(self):
-        if self.data[0] == 0:
+        if self.data['Team'] == 0:
             print("Found an empty match, skipping")
-            self.data = []
-            self.labels = []
+            self.data = dict(SCOUT_FIELDS)
             return
         
         datapath = 'data_' + CURRENT_EVENT + '.db'
         conn = sql.connect(datapath)
-        conn.row_factory = sqlite3.Row
+        conn.row_factory = sql.Row
         cursor = conn.cursor()
-        history = cursor.execute('SELECT * FROM scout WHERE d0=? AND d1=?', (str(self.data[0]),str(self.data[1]))).fetchall()
-        if history and not self.data[18]:
+        history = cursor.execute('SELECT * FROM scout WHERE Team=? AND Match=?', (str(self.data['Team']),str(self.data['Match']))).fetchall()
+        if history and not self.data['Replay']:
             print("Already processed this match, skipping")
-            self.data = []
-            self.labels = []
+            self.data = dict(SCOUT_FIELDS)
             return
 
         #the following block opens the GUI for piscout, this code shouldn't need to change
         print("Found a new match, opening")
         output = ''
-        assert len(self.labels) == len(self.data)
-        for a in range(len(self.data)):
-            output += self.labels[a] + "=" + str(self.data[a]) + '\n'
+        for key, value in self.data.items():
+            output += key + "=" + str(value) + '\n'
         fig = plt.figure('PiScout')
         fig.subplots_adjust(left=0, right=0.6)
         plt.subplot(111)
@@ -241,8 +242,7 @@ class PiScout:
         except AttributeError:
             print("Window resizing exploded, oh well.")
         plt.show()
-        self.data = []
-        self.labels = []
+        self.data = dict(SCOUT_FIELDS)
         self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
     # Invoked by the "Save Data Offline" button

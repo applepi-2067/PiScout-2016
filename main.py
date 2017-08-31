@@ -19,42 +19,42 @@ def main(scout):
         scout.set("Match", 100*match1 + 10*match2 + match3) #1
 
         scout.set("Fouls", scout.rangefield('L-16', 1, 4)) #2
-        scout.set("Tech fouls", scout.rangefield('L-17', 1, 4)) #3
+        scout.set("TechFouls", scout.rangefield('L-17', 1, 4)) #3
         
-        scout.set("Auto: Gears", scout.boolfield('O-11')) #4
-        scout.set("Auto: Baseline", int(0)) #5
+        scout.set("AutoGears", scout.boolfield('O-11')) #4
+        scout.set("AutoBaseline", int(0)) #5
         
         highGoal = scout.boolfield('V-13')
         lowGoal = scout.boolfield('V-14')
         balls1 = scout.rangefield('F-12', 0, 9)
         balls2 = scout.rangefield('F-13', 0, 9)
-        scout.set("Auto: Low Balls", lowGoal * (balls1*10 + balls2)) #6
-        scout.set("Auto: High Balls", highGoal * (balls1*10 + balls2)) #7
+        scout.set("AutoLowBalls", lowGoal * (balls1*10 + balls2)) #6
+        scout.set("AutoHighBalls", highGoal * (balls1*10 + balls2)) #7
         
-        scout.set("Gears Floor Intake", scout.boolfield('V-11')) #8
-        scout.set("Feeder Bot", 0) #9
-        scout.set("Defense Bot", scout.boolfield('V-17')) #10
+        scout.set("FloorIntake", scout.boolfield('V-11')) #8
+        scout.set("Feeder", 0) #9
+        scout.set("Defense", scout.boolfield('V-17')) #10
         scout.set("Defended", scout.boolfield('AB-17')) #11
-        scout.set("Teleop: Gears", scout.rangefield('AB-10', 1, 9)) #12
-        scout.set("Teleop: Gear Drops", scout.rangefield('AB-11', 1, 9)) #13
+        scout.set("TeleopGears", scout.rangefield('AB-10', 1, 9)) #12
+        scout.set("TeleopGearDrops", scout.rangefield('AB-11', 1, 9)) #13
         balls1 = scout.rangefield('AA-13', 1, 10)
         balls2 = scout.rangefield('AA-14', 11, 20)
         balls3 = scout.rangefield('AA-15', 21, 30)
-        scout.set("Teleop: Low Balls", lowGoal * 5 * (balls1 + balls2 + balls3)) #14
-        scout.set("Teleop: High Balls", highGoal * 5 * (balls1 + balls2 + balls3)) #15
+        scout.set("TeleopLowBalls", lowGoal * 5 * (balls1 + balls2 + balls3)) #14
+        scout.set("TeleopHighBalls", highGoal * 5 * (balls1 + balls2 + balls3)) #15
         
         scout.set("Hang", scout.boolfield('G-16')) #16
-        scout.set("Failed Hang", scout.boolfield('G-17')) #17
+        scout.set("FailedHang", scout.boolfield('G-17')) #17
         
         scout.set("Replay", scout.boolfield('AK-5'))
         sideAttempt = scout.boolfield('F-11') and not scout.boolfield('O-11')
         centerAttempt = scout.boolfield('J-11') and not scout.boolfield('O-11')
         sideSuccess = scout.boolfield('F-11') and scout.boolfield('O-11')
         centerSuccess = scout.boolfield('J-11') and scout.boolfield('O-11')
-        scout.set("Side Attempt", int(sideAttempt)) #18
-        scout.set("Center Attempt", int(centerAttempt)) #19
-        scout.set("Side Success", int(sideSuccess)) #20
-        scout.set("Center Success", int(centerSuccess)) #21
+        scout.set("AutoSideAttempt", int(sideAttempt)) #18
+        scout.set("AutoCenterAttempt", int(centerAttempt)) #19
+        scout.set("AutoSideSuccess", int(sideSuccess)) #20
+        scout.set("AutoCenterSuccess", int(centerSuccess)) #21
 
         scout.submit()
 
