@@ -167,8 +167,10 @@ class PiScout:
     # Returns whether or not the grid unit is shaded
     def boolfield(self, location):
         loc = self.parse(location)
-        cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (loc[0]*16+16, loc[1]*16+16), (0,50,150),3)
-        return int(self.getvalue(loc) < 45000)
+        retval = int(self.getvalue(loc) < 45000)
+        if retval:
+            cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (loc[0]*16+16, loc[1]*16+16), (0,50,150),3)
+        return retval
 
     # Define a new range field at a given location
     # This field spans across multiple grid units
@@ -176,25 +178,31 @@ class PiScout:
     def rangefield(self, startlocation, startval, endval):
         loc = self.parse(startlocation)
         end = loc[0]-startval+endval+1 #grid coordinate where the rangefield ends
-        cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (end*16, loc[1]*16+16), (0,50,150),3)
+
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
         min = np.argmin(values)
+        retval = 0
         if values[min] < 45000:
-            return startval + min
-        return 0
+            retval = startval + min
+        if retval:
+            cv2.rectangle(self.display, ((loc[0]+min)*16, loc[1]*16), ((loc[0]+min+1)*16, (loc[1]+1)*16), (0,50,150),3) 
+        return retval
 
     # Define a new count field at a given location
     # This field spans across multiple grid units
     # Returns the highest shaded value, or 0 if none are shaded
-    def countfield(self, startlocation, endlocation):
+    def countfield(self, startlocation, endlocation, startval):
         loc = self.parse(startlocation)
         end = self.parse(endlocation)[0] + 1
-        cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (end*16, loc[1]*16+16), (0,50,150),3)
+
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
+        retval = 0
         for el,box in enumerate(values[::-1]):
             if box < 45000:
-                return len(values) - el
-        return 0
+                retval = startval + len(values) - el
+        if retval:
+           cv2.rectangle(self.display, ((loc[0] + retval)*16, loc[1]*16), ((loc[0] + retval + 1)*16, loc[1]*16+16), (0,50,150),3) 
+        return retval
 
     # Adds a data entry into the data dictionary
     def set(self, name, contents):
