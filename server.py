@@ -9,6 +9,7 @@ from statistics import mode
 from ipaddress import IPV6LENGTH
 from event import CURRENT_EVENT
 from piscout import SCOUT_FIELDS
+from piscout import AVERAGE_FIELDS
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
@@ -176,7 +177,7 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        entries = cursor.execute('SELECT * FROM scout WHERE d0=? ORDER BY d1 DESC', (n,)).fetchall()
+        entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
         averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
         assert len(averages) < 2 #ensure there aren't two entries for one team
         if len(averages):
@@ -190,16 +191,17 @@ class ScoutServer(object):
         # Generate html for comments section
         commentstr = ''
         for comment in comments:
-            commentstr += '<div class="commentbox"><p>{}</p></div>'.format(comment[1])
+            commentstr += '<div class="commentbox"><p>{0}</p></div>'.format(comment[1])
 
         #Iterate through all the data entries and generate some text to go in the main table
         #this entire section will need to change from year to year
         output = ''
         dataset = []
+        print(len(entries))
         for e in entries:
             # Important: the index of e refers to the number of the field set in main.py
             # For example e[1] gets value #1 from main.py
-            dp = {"match": e['Match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+            dp = {"match": e['match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
             a = ''
             a += 'baseline, ' if e['AutoBaseline'] else ''
             a += 'side try, ' if e['AutoSideAttempt'] else ''
@@ -223,28 +225,28 @@ class ScoutServer(object):
             dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
 
             o = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
-            o += str(e['Foul']) + 'x foul, ' if e['Foul'] else ''
-            o += str(e['TechFoul']) + 'x tech foul, ' if e['TechFoul'] else ''
+            o += str(e['Fouls']) + 'x foul, ' if e['Fouls'] else ''
+            o += str(e['TechFouls']) + 'x tech foul, ' if e['TechFouls'] else ''
             o += 'defense, ' if e['Defense'] else ''
             o += 'feeder, ' if e['Feeder'] else ''
             o += 'defended, ' if e['Defended'] else ''
 
             #Generate a row in the table for each match
             output += '''
-            <tr {5}>
+            <tr role="row" {5}>
                 <td>{0}</td>
                 <td>{1}</td>
                 <td>{2}</td>
                 <td>{3}</td>
                 <td>{4}</td>
-                <td><a class="flag" href="javascript:flag({6}, {7});">X</a></td>
-                <td><a class="edit" href="/edit?key={8}">E</a></td>
+                <td><a class="flag" href="javascript:flag({6},{7});">X</a></td>
+                <td class="hidden-xs"><a class="edit" href="/edit?key={8}">E</a></td>
             </tr>'''.format(e['Match'], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Team'])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
             if not e['Flag']: #if flagged
                 dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
-        dataset.reverse() #reverse so that graph is in the correct order
+            dataset.reverse() #reverse so that graph is in the correct order
 
         #Grab the image from the blue alliance
         imcode = ''
@@ -483,7 +485,7 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        cursor.execute('UPDATE scout SET flag=? WHERE d0=? AND d1=?', (int(not int(flagval)),num,match))
+        cursor.execute('UPDATE scout SET Flag=? WHERE Team=? AND Match=?', (int(not int(flagval)),num,match))
         conn.commit()
         conn.close()
         self.calcavg(num, self.getevent())
@@ -589,6 +591,7 @@ class ScoutServer(object):
                 entry = average[0]
             else:
                 entry = [0]*7
+                entry = [0]*8
             # Add a data entry for each team
             output += '''<div style="text-align:center; display: inline-block; margin: 16px;">
                             <p><a href="/team?n={0}" style="font-size: 32px; line-height: 0em;">Team {0}</a></p>
