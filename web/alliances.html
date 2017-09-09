@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>PiScout</title>
+        <link rel="stylesheet" type="text/css" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="./static/css/site.css" >
+        <script src="./static/js/jquery.js"></script>
+        <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div id="page_header" class="hidden-xs hidden-sm">
+            <div class="container">
+                <img src="./static/img/default-logo.png" align="left" hspace="10" vspace="5"></img>
+                    <span style="display:inline-block; padding-top:10px;">PiScout<br>
+                    FRC Team 238/2067</span>
+                <br clear="left">
+            </div>
+        </div>
+        <div id="top_menu">
+            <div class="container">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <!-- Brand and toggle get grouped for better mobile display -->
+                        <div class="navbar-header">
+                          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                          </button>
+                        </div>
+
+                         <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                          <ul class="nav navbar-nav">
+                            <li><a href="/index">Home</a></li>
+                            <li><a href="/rankings">Rankings</a></li>
+                            <li class="dropdown active">
+                              <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                              <li><a href="/compareTeams">Teams</a></li>
+                              <li class="active"><a href="/compareAlliances">Alliances</a></li>
+                              </ul>
+                            </li>
+                            <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Matches<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                                <li><a href="/matches?n=238">238 Matches</a></li>
+                                <li><a href="/matches">All Matches</a></li>
+                              </ul>
+                            </li>
+                            <li><a href="/edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
+                            <li><a href="/recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
+                          </ul>
+                         <form class="navbar-form navbar-left" method="get" action="team">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Team Number" name="n" maxlength="4">
+                                </div>
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </form>
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+        </div>
+        <div id="body_bg">
+            <div class="container clearfix" align="center">
+                <div id="page_title" align="center">Compare Alliances</div>
+                
+               <div id="alliance_compare_container">
+                    <div class="alliance_compare_cell">
+                        <p style="font-size: 36px; color: #0000B8;">Blue Alliance</p>
+                        <p style="font-size: 24px; color: #0000B8;">{0}% chance to win</p>
+                        <div class="statbox_container">
+                            <div id="apr">
+                                <p style="font-size: 20pt;">Proj. Score</p>
+                                <p style="font-size: 40pt;">{1}</p>
+                                <br>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={2}" style="font-size: 32px;">Team {2}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{3}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {4}</p>
+                                    <p class="statbox">Teleop Gears: {5}</p>
+                                    <p class="statbox">Dropped Gears: {6}</p>
+                                    <p class="statbox">Auto Shoot Points: {7}</p>
+                                    <p class="statbox">Teleop Shoot Points: {8}</p>
+                                    <p class="statbox">Endgame Points: {9}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={10}" style="font-size: 32px;">Team {10}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{11}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {12}</p>
+                                    <p class="statbox">Teleop Gears: {13}</p>
+                                    <p class="statbox">Dropped Gears: {14}</p>
+                                    <p class="statbox">Auto Shoot Points: {15}</p>
+                                    <p class="statbox">Teleop Shoot Points: {16}</p>
+                                    <p class="statbox">Endgame Points: {17}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={18}" style="font-size: 32px;">Team {18}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{19}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {20}</p>
+                                    <p class="statbox">Teleop Gears: {21}</p>
+                                    <p class="statbox">Dropped Gears: {22}</p>
+                                    <p class="statbox">Auto Shoot Points: {23}</p>
+                                    <p class="statbox">Teleop Shoot Points: {24}</p>
+                                    <p class="statbox">Endgame Points: {25}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                    
+                    <div class="alliance_compare_cell">
+                        <p style="font-size: 36px; color: #B20000;">Red Alliance</p>
+                        <p style="font-size: 24px; color: #B20000;">{26}% chance to win</p>
+                        <div class="statbox_container">
+                            <div id="apr">
+                                <p style="font-size: 20pt;">Proj. Score</p>
+                                <p style="font-size: 40pt;">{27}</p>
+                                <br>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={28}" style="font-size: 32px;">Team {28}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{29}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {30}</p>
+                                    <p class="statbox">Teleop Gears: {31}</p>
+                                    <p class="statbox">Dropped Gears: {32}</p>
+                                    <p class="statbox">Auto Shoot Points: {33}</p>
+                                    <p class="statbox">Teleop Shoot Points: {34}</p>
+                                    <p class="statbox">Endgame Points: {35}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={36}" style="font-size: 32px;">Team {36}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{37}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {38}</p>
+                                    <p class="statbox">Teleop Gears: {39}</p>
+                                    <p class="statbox">Dropped Gears: {40}</p>
+                                    <p class="statbox">Auto Shoot Points: {41}</p>
+                                    <p class="statbox">Teleop Shoot Points: {42}</p>
+                                    <p class="statbox">Endgame Points: {43}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comparebox_container">
+                            <p><a href="/team?n={44}" style="font-size: 32px;">Team {44}</a></p>
+                            <div class="statbox_container">
+                                <div id="apr">
+                                    <p style="font-size: 20pt;">APR</p>
+                                    <p style="font-size: 40pt;">{45}</p>
+                                </div>
+                                <div id="stats">
+                                    <p class="statbox" style="font-weight:bold">Average match:</p>
+                                    <p class="statbox">Auto Gears: {46}</p>
+                                    <p class="statbox">Teleop Gears: {47}</p>
+                                    <p class="statbox">Dropped Gears: {48}</p>
+                                    <p class="statbox">Auto Shoot Points: {49}</p>
+                                    <p class="statbox">Teleop Shoot Points: {50}</p>
+                                    <p class="statbox">Endgame Points: {51}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="footer" class="container hidden-sm hidden-xs">
+                <p>
+                <em>FIRST</em> Robotics Competition Team 238<br>
+                1 Crusader Way<br>
+                Manchester, NH 03103</p>
+                <p>&copy; Team 238 | <a href="http://frc238.org/legal/">Privacy and Tracking Policy</a></p>
+            </div>
+        </div>
+        <div id="bottom_border"></div>
+    </body>
+</html>

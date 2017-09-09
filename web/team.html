@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{0} - PiScout</title>
+        <link rel="stylesheet" type="text/css" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="./static/css/site.css" >
+        <script src="./static/js/jquery.js"></script>
+        <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+        <script src="./static/js/jquery.tablesorter.js"></script>
+        <script src="./static/js/amcharts.js"></script>
+        <script src="./static/js/serial.js"></script>
+        
+        <script>
+            var chart;
+            var graph;
+
+            var chartData = {9}
+            
+            //Sample data[{{"match": 9, "autoshoot": 20.0, "shoot": 40.0, "autogears": 1, "gears": 4, "geardrop": 1}}, {{"match": 22, "autoshoot": 24.0, "shoot": 23.33, "autogears": 1, "gears": 2, "geardrop": 0}}, {{"match": 40, "autoshoot": 36.0, "shoot": 25.0, "autogears": 0, "gears": 3, "geardrop": 0}}, {{"match": 51, "autoshoot": 0.0, "shoot": 45.0, "autogears": 0, "gears": 0, "geardrop": 0}}, {{"match": 71, "autoshoot": 43.0, "shoot": 23.33, "autogears": 1, "gears": 2, "geardrop": 0}}, {{"match": 91, "autoshoot": 35.0, "shoot": 30.0, "autogears": 1, "gears": 3, "geardrop": 0}}, {{"match": 96, "autoshoot": 0.0, "shoot": 0.0, "autogears": 1, "gears": 2, "geardrop": 0}}, {{"match": 107, "autoshoot": 0.0, "shoot": 60.0, "autogears": 1, "gears": 0, "geardrop": 0}}];
+
+            AmCharts.ready(function () {{
+                // SERIAL CHART
+                chart = new AmCharts.AmSerialChart();
+
+                chart.dataProvider = chartData;
+                chart.marginLeft = 10;
+                chart.categoryField = "match";
+
+                // AXES
+                // category
+                var categoryAxis = chart.categoryAxis;
+                categoryAxis.dashLength = 3;
+                categoryAxis.minorGridEnabled = true;
+                categoryAxis.minorGridAlpha = 0.1;
+
+                // value
+                var valueAxis = new AmCharts.ValueAxis();
+                valueAxis.position = "left";
+                valueAxis.axisColor = "#111111";
+                valueAxis.gridAlpha = 0;
+                valueAxis.axisThickness = 2;
+                chart.addValueAxis(valueAxis)
+
+                var valueAxis2 = new AmCharts.ValueAxis();
+                valueAxis2.position = "right";
+                valueAxis2.axisColor = "#FCD202";
+                valueAxis2.gridAlpha = 0;
+                valueAxis2.axisThickness = 2;
+                chart.addValueAxis(valueAxis2);
+
+                // GRAPH
+                graph = new AmCharts.AmGraph();
+                graph.title = "Auto Shoot Points";
+                graph.valueAxis = valueAxis;
+                graph.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph.lineColor = "#637bb6";
+                graph.bullet = "round";
+                graph.bulletSize = 8;
+                graph.bulletBorderColor = "#FFFFFF";
+                graph.bulletBorderAlpha = 1;
+                graph.bulletBorderThickness = 2;
+                graph.lineThickness = 2;
+                graph.valueField = "autoshoot";
+                graph.balloonText = "Auto Shoot Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph);
+
+                graph2 = new AmCharts.AmGraph();
+                graph2.title = "Auto Gears";
+                graph2.valueAxis = valueAxis2;
+                graph2.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph2.lineColor = "#187a2e";
+                graph2.bullet = "round";
+                graph2.bulletSize = 8;
+                graph2.bulletBorderColor = "#FFFFFF";
+                graph2.bulletBorderAlpha = 1;
+                graph2.bulletBorderThickness = 2;
+                graph2.lineThickness = 2;
+                graph2.valueField = "autogears";
+                graph2.balloonText = "Auto Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph2);
+
+                graph3 = new AmCharts.AmGraph();
+                graph3.title = "Shoot Points";
+                graph3.valueAxis = valueAxis;
+                graph3.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph3.lineColor = "#FF6600";
+                graph3.bullet = "round";
+                graph3.bulletSize = 8;
+                graph3.bulletBorderColor = "#FFFFFF";
+                graph3.bulletBorderAlpha = 1;
+                graph3.bulletBorderThickness = 2;
+                graph3.lineThickness = 2;
+                graph3.valueField = "shoot";
+                graph3.balloonText = "Shoot Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph3);
+
+                graph4 = new AmCharts.AmGraph();
+                graph4.valueAxis = valueAxis2;
+                graph4.title = "Gears";
+                graph4.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph4.lineColor = "#FCD202";
+                graph4.bullet = "round";
+                graph4.bulletSize = 8;
+                graph4.bulletBorderColor = "#FFFFFF";
+                graph4.bulletBorderAlpha = 1;
+                graph4.bulletBorderThickness = 2;
+                graph4.lineThickness = 2;
+                graph4.valueField = "gears";
+                graph4.balloonText = "Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph4);
+
+                graph5 = new AmCharts.AmGraph();
+                graph5.valueAxis = valueAxis2;
+                graph5.title = "Dropped Gears";
+                graph5.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph5.lineColor = "#FF0000";
+                graph5.bullet = "round";
+                graph5.bulletSize = 8;
+                graph5.bulletBorderColor = "#FFFFFF";
+                graph5.bulletBorderAlpha = 1;
+                graph5.bulletBorderThickness = 2;
+                graph5.lineThickness = 2;
+                graph5.valueField = "geardrop";
+                graph5.balloonText = "Dropped Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph5);
+                
+                // CURSOR
+                var chartCursor = new AmCharts.ChartCursor();
+                chartCursor.cursorAlpha = 0;
+                chartCursor.cursorPosition = "mouse";
+                chart.addChartCursor(chartCursor);
+
+                var legend = new AmCharts.AmLegend();
+                legend.marginLeft = 110;
+                legend.useGraphSettings = true;
+                chart.addLegend(legend);
+                chart.creditsPosition = "bottom-right";
+
+                // WRITE
+                chart.write("chartdiv");
+            }});
+
+            function flag(m, f)
+            {{
+                $.post(
+                    "flag",
+                    {{num: {0}, match: m, flagval: f}},
+                    function(data) {{window.location.reload(true);}}
+                );
+            }}
+        </script>
+    </head>
+    <body>
+        <div id="page_header" class="hidden-xs hidden-sm">
+            <div class="container">
+                <img src="./static/img/default-logo.png" align="left" hspace="10" vspace="5"></img>
+                    <span style="display:inline-block; padding-top:10px;">PiScout<br>
+                    FRC Team 238/2067</span>
+                <br clear="left">
+            </div>
+        </div>
+        <div id="top_menu">
+            <div class="container">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <!-- Brand and toggle get grouped for better mobile display -->
+                        <div class="navbar-header">
+                          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                          </button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                          <ul class="nav navbar-nav">
+                            <li><a href="/index">Home</a></li>
+                            <li><a href="/rankings">Rankings</a></li>
+                            <li class="dropdown">
+                              <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                                <li><a href="/compareTeams">Teams</a></li>
+                                <li><a href="/compareAlliances">Alliances</a></li>
+                              </ul>
+                            </li>
+                            <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Matches<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                                <li><a href="/matches?n=238">238 Matches</a></li>
+                                <li><a href="/matches">All Matches</a></li>
+                              </ul>
+                            </li>
+                            <li><a href="/edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
+                            <li><a href="/recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
+                          </ul>
+                         <form class="navbar-form navbar-left" method="get" action="team">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Team Number" name="n" maxlength="4">
+                                </div>
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </form>
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+        </div>
+        <div id="body_bg">
+            <div class="container clearfix">
+                <div id="page_title" align="center">Team - {0}</div>
+                <div class="statbox_container">
+                    <div id="apr">
+                        <p style="font-size: 20pt;">APR</p>
+                        <p style="font-size: 40pt">{2}</p>
+                    </div>
+                    <div id="stats">
+                        <p class="statbox" style="font-weight:bold">Average match:</p>
+                        <p class="statbox">Auto Gears: {3}</p>
+                        <p class="statbox">Teleop Gears: {4}</p>
+                        <p class="statbox">Dropped Gears: {5}</p>
+                        <p class="statbox">Auto Shoot Points: {6}</p>
+                        <p class="statbox">Teleop Shoot Points: {7}</p>
+                        <p class="statbox">Endgame Points: {8}</p>
+                    </div>
+                </div>
+                <div id="chartdiv" style="height:400px; margin: 0 auto;"></div>
+                <div id="table_container" class="team_table">                
+                    <table class="table table-striped table-hover text-center" role="grid">
+                        <thead>
+                            <tr role="row">
+                                <th class="hidden-xs col-sm-1 text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div class="tablesorter-header-inner">Match</div></th>
+                                <th class="col-xs-3 hidden-sm hidden-md hidden-lg hidden-xl text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div class="tablesorter-header-inner">M</div></th>
+                                
+                                
+                                <th class="col-xs-3 col-sm-1 text-center" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Auto"><div class="tablesorter-header-inner">Auto</div></th>
+                                <th class="col-xs-3 col-sm-1 text-center" data-column="2" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Gears"><div class="tablesorter-header-inner">Gears</div></th>
+                                <th class="hidden-xs col-sm-1 text-center" data-column="3" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Shooting"><div class="tablesorter-header-inner">Shooting</div></th>
+                                <th class="col-xs-3 hidden-sm hidden-md hidden-lg hidden-xl text-center" data-column="3" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Shooting"><div class="tablesorter-header-inner">Shoot</div></th>
+                                
+                                
+                                <th class="col-xs-3 col-sm-1 text-center" data-column="4" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div class="tablesorter-header-inner">Other</div></th>
+                                <th class="col-xs-3 col-sm-1 text-center" data-column="5" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div class="tablesorter-header-inner">Flag</div></th>
+                                <th class="hidden-xs col-sm-1 text-center" data-column="6" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div class="tablesorter-header-inner">Edit</div></th>
+                            </tr>
+                        </thead>
+                        <tbody aria-live="polite" aria-relevant="all">
+                            <!--Sample data
+                            <tr role="row">
+                                <td>107</td>
+                                <td>baseline, side peg</td>
+                                <td>1x gears, 3x gears dropped</td>
+                                <td>180x high goal</td>
+                                <td>hang</td>
+                                <td><a class="flag" href="javascript:flag(107, 0);">X</a></td>
+                                <td class="hidden-xs"><a class="edit" href="/edit?key=578">E</a></td>
+                            </tr>
+                            -->
+                            {1}
+                        </tbody>
+                    </table>
+                </div>
+                {10}
+                <br>
+                <div style="text-align: center; margin: 0 auto;">
+                    <p style="font-size: 32px; font-weight: bold">Comments</p>
+                    {11}
+                    <form style="width: 100%;" method="post" action="submit">
+                        <input name="team" value="{0}" hidden/>
+                        <div>
+                            <textarea name="comment" rows="3" style="width: 50%"></textarea>
+                        </div>
+                        <button class="submit" type="submit">Submit</button>
+                    </form>
+                </div>
+                <br>
+                <p style="text-align: center; font-size: 24px"><a href="/matches?n={0}">View this team's match schedule</a></p>
+            </div>
+            <div id="footer" class="container hidden-sm hidden-xs">
+                <p>
+                <em>FIRST</em> Robotics Competition Team 238<br>
+                1 Crusader Way<br>
+                Manchester, NH 03103</p>
+                <p>&copy; Team 238 | <a href="http://frc238.org/legal/">Privacy and Tracking Policy</a></p>
+            </div>
+        </div>
+        <div id="bottom_border"></div>
+    </body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>PiScout</title>
+        <link rel="stylesheet" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
+        <link href="./static/css/site.css" rel="stylesheet" type="text/css">
+        <script src="./static/js/jquery.js"></script>
+        <script>
+            $( document ).ready(function() {{
+                try{{
+                    document.getElementById("{1}").setAttribute("class", "active");
+                }}
+                catch(err){{}}
+                try{{
+                    document.getElementById("{2}").setAttribute("class", "active");
+                }}
+                catch (err){{}}
+                $('table').tablesorter({{
+                    sortList: [[1, 1]]
+                }});
+            }});
+        </script>
+        <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+        <script src="./static/js/jquery.tablesorter.js"></script>
+    </head>
+    <body>
+        <div id="page_header" class="hidden-xs hidden-sm">
+            <div class="container">
+                <img src="./static/img/default-logo.png" align="left" hspace="10" vspace="5"></img>
+                <span style="display:inline-block; padding-top:10px;">PiScout<br>
+                FRC Team 238/2067</span>
+                <br clear="left">
+            </div>
+        </div>
+        <div id="top_menu">
+            <div class="container">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <!-- Brand and toggle get grouped for better mobile display -->
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                                <span class="sr-only">Toggle navigation</span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                        </div>
+                        
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                            <ul class="nav navbar-nav">
+                                <li class="active"><a href="#">Home <span class="sr-only">(current)</span></a></li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Set Display<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li id="averages"><a href="?m=averages">Averages</a></li>
+                                        <li id="maxes"><a href="?m=maxes">Maxes</a></li>
+                                        <li id="noD"><a href="?m=noD">No-D</a></li>
+                                        <li id="last3"><a href="?m=last3">Last 3</a></li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Set Event<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li id="2017wkzro"><a href="#?e=2017wkzro">Week 0</a></li>
+                                        <li id="2017nhgrs"><a href="#?e=2017nhgrs">Granite State</a></li>
+                                        <li id="2017nhbed"><a href="#?e=2017nhbed">Bedford</a></li>
+                                        <li id="2017necmp"><a href="#?e=2017necmp">NE DCMP</a></li>
+                                        <li id="2017daly"><a href="#?e=2017daly">Daly Division</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="rankings">Rankings</a></li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="compareTeams">Teams</a></li>
+                                        <li><a href="compareAlliances">Alliances</a></li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Matches<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="matches?n=238">238 Matches</a></li>
+                                        <li><a href="matches">All Matches</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
+                                <li><a href="recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
+                            </ul>
+                            <form class="navbar-form navbar-left" method="get" action="team">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Team Number" name="n" maxlength="4">
+                                </div>
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </form>
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+        </div>
+        <div id="body_bg">
+            <div class="container clearfix">
+                <div id="page_title" align="center">Home</div>
+                <div id="table_container">                
+                    <script>
+                        $(document).ready(function () {{
+
+                        }});
+                    </script>
+                    
+                    <script>
+                        $(function () {{
+                            var i = 1;
+                            var j = 2;
+                            var k = 3;
+                            
+                            $('.rotateButton').click(function () {{
+                                $('.titleColumn' + i).addClass("hidden-xs");
+                                $('.rankColumn' + i).addClass("hidden-xs");
+                                i++;
+                                if (i > 6) {{
+                                    i = 1;
+                                }}
+                                $('.titleColumn').hide();
+                                $('.titleColumn' + i).removeClass("hidden-xs");
+                                $('.titleColumn' + i).show();
+                                j = i + 1;
+                                k = i + 2;
+                                $('.titleColumn' + j).removeClass("hidden-xs");
+                                $('.titleColumn' + j).show();
+                                $('.titleColumn' + k).removeClass("hidden-xs");
+                                $('.titleColumn' + k).show();
+                                $('.rankingColumn').hide();
+                                $('.rankColumn' + i).removeClass("hidden-xs");
+                                $('.rankColumn' + i).show();
+                                $('.rankColumn' + j).removeClass("hidden-xs");
+                                $('.rankColumn' + j).show();
+                                $('.rankColumn' + k).removeClass("hidden-xs");
+                                $('.rankColumn' + k).show();
+                            }});
+                            $('.titleColumn' + i).removeClass("hidden-xs");
+                            $('.titleColumn' + i).show();
+                            $('.rankColumn' + i).removeClass("hidden-xs");
+                            $('.rankColumn' + i).show();
+                            $('.titleColumn' + j).removeClass("hidden-xs");
+                            $('.titleColumn' + j).show();
+                            $('.rankColumn' + j).removeClass("hidden-xs");
+                            $('.rankColumn' + j).show();
+                        }});
+                    </script>
+                    
+                    <div class="row visible-xs">
+                        <button type="button" class="btn btn-primary col-xs-offset-5 col-xs-4 rotateButton" style="font-size:11px;">Cycle Columns</button>
+                    </div>
+                    <table class="table table-striped table-hover text-center tablesorter tablesorter-default" role="grid">
+                        <thead>
+                            <tr role="row" class="tablesorter-headerRow">
+                                <th class="col-xs-3 col-sm-1 tablesorter-header tablesorter-headerAsc text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="ascending" aria-label="Team: Ascending sort applied, activate to apply a descending sort"><div class="tablesorter-header-inner">Team</div></th>
+                                
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="APR: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">APR</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="2" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Auto Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Auto Gears</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="3" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Teleop Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Tele Gears</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="4" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Total Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Total Gears</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="5" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Auto kPa: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Auto kPa</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="6" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Tele kPa: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Tele kPa</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="7" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Climb: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Climb</div></th>
+                                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="8" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="Defense: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Defense</div></th>
+                                
+                                <th class="titleColumn titleColumn1 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="9" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="APR: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">APR</div></th>
+                                <th class="titleColumn titleColumn2 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="10" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Auto Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Auto Gears</div></th>
+                                <th class="titleColumn titleColumn3 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="11" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Tele Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Tele Gears</div></th>
+                                <th class="titleColumn titleColumn4 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="12" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Total Gears: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Total Gears</div></th>
+                                <th class="titleColumn titleColumn5 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted" data-column="13" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00;" aria-sort="none" aria-label="Auto kPa: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Auto kPa</div></th>
+                                <th class="titleColumn titleColumn6 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="14" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Tele kPa: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Tele kPa</div></th>
+                                <th class="titleColumn titleColumn7 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="15" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Climb: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Climb</div></th>
+                                <th class="titleColumn titleColumn8 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="16" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; color: #EEEE00; display: none;" aria-sort="none" aria-label="Defense: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">Defense</div></th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody aria-live="polite" aria-relevant="all">
+                            <!-- Sample Data
+                                <tr role="row">
+                                <td>1</td>
+                                <td class="hidden-xs"><a href="/2017/team/1058">1058</a></td>
+                                <td class="hidden-xs">2.70</td>
+                                <td class="hidden-xs">3,449</td>
+                                <td class="hidden-xs">844</td>
+                                <td class="hidden-xs">1,740</td>
+                                <td class="hidden-xs">1,350</td>
+                                <td class="hidden-xs">94</td>
+                                <td class="hidden-xs">9 - 1 - 0</td>
+                                
+                                <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">1058</td>
+                                <td class="rankingColumn rankColumn2 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">2.70</td>
+                                <td class="rankingColumn rankColumn3 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">3,449</td>
+                                <td class="rankingColumn rankColumn4 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">844</td>
+                                <td class="rankingColumn rankColumn5 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">1,740</td>
+                                <td class="rankingColumn rankColumn6 hidden-sm hidden-md hidden-lg" style="">1,350</td>
+                                <td class="rankingColumn rankColumn7 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">94</td>
+                                <td class="rankingColumn rankColumn8 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">9 - 1 - 0</td>
+                                
+                                </tr>
+                                <tr role="row">
+                                <td>2</td>
+                                <td class="hidden-xs"><a href="/2017/team/225">225</a></td>
+                                <td class="hidden-xs">2.70</td>
+                                <td class="hidden-xs">3,395</td>
+                                <td class="hidden-xs">824</td>
+                                <td class="hidden-xs">1,480</td>
+                                <td class="hidden-xs">1,300</td>
+                                <td class="hidden-xs">410</td>
+                                <td class="hidden-xs">8 - 2 - 0</td>
+                                
+                                <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">2.70</td>
+                                <td class="rankingColumn rankColumn2 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">2.70</td>
+                                <td class="rankingColumn rankColumn3 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">3,395</td>
+                                <td class="rankingColumn rankColumn4 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">824</td>
+                                <td class="rankingColumn rankColumn5 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">1,480</td>
+                                <td class="rankingColumn rankColumn6 hidden-sm hidden-md hidden-lg" style="">1,300</td>
+                                <td class="rankingColumn rankColumn7 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">410</td>
+                                <td class="rankingColumn rankColumn8 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">8 - 2 - 0</td>
+                                
+                                </tr>
+                            <-->
+                            {0}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="footer" class="container hidden-sm hidden-xs">
+                <p>
+                    <em>FIRST</em> Robotics Competition Team 238<br>
+                    1 Crusader Way<br>
+                Manchester, NH 03103</p>
+                <p>&copy; Team 238 | <a href="http://frc238.org/legal/">Privacy and Tracking Policy</a></p>
+            </div>
+        </div>
+        <div id="bottom_border"></div>
+    </body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>PiScout</title>
+        <link rel="stylesheet" type="text/css" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="./static/css/site.css" >
+        <script src="./static/js/jquery.js"></script>
+        <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+        <script src="./static/js/amcharts.js"></script>
+        <script src="./static/js/serial.js"></script>
+        
+        <script>
+                    var chart;
+                    var graph;
+
+                    var chartData = {0}
+                    //Sample data
+                    //[{{"match": 1, "team254stat1": 1, "team238stat1": 0, "team2767stat1": 0, "team1676stat1": 1}}, {{"match": 2, "team254stat1": 1, "team238stat1": 0, "team2767stat1": 1, "team1676stat1": 1}}, {{"match": 4, "team254stat1": 0, "team238stat1": 1, "team1676stat1": 0}}, {{"match": 5, "team254stat1": 0, "team238stat1": 0, "team2767stat1": 0, "team1676stat1": 0}}, {{"match": 7, "team254stat1": 1, "team238stat1": 0, "team2767stat1": 0, "team1676stat1": 1}}, {{"match": 8, "team254stat1": 1, "team238stat1": 0, "team1676stat1": 1}}, {{"match": 9, "team254stat1": 1, "team238stat1": 0, "team2767stat1": 0, "team1676stat1": 1}}, {{"match": 10, "team254stat1": 1, "team238stat1": 0, "team2767stat1": 0, "team1676stat1": 1}}, {{"match": 10, "team238stat1": 1, "team2767stat1": 1, "team1676stat1": 0}}, {{"match": 10, "team2767stat1": 0, "team1676stat1": 1}}];
+
+                    AmCharts.ready(function () {{
+                        // SERIAL CHART
+                        chart = new AmCharts.AmSerialChart();
+
+                        chart.dataProvider = chartData;
+                        chart.marginLeft = 10;
+                        chart.categoryField = "match";
+
+                        // AXES
+                        // category
+                        var categoryAxis = chart.categoryAxis;
+                        categoryAxis.dashLength = 3;
+                        categoryAxis.minorGridEnabled = true;
+                        categoryAxis.minorGridAlpha = 0.1;
+
+                        // value
+                        var valueAxis = new AmCharts.ValueAxis();
+                        valueAxis.position = "left";
+                        valueAxis.axisColor = "#111111";
+                        valueAxis.gridAlpha = 0;
+                        valueAxis.axisThickness = 2;
+                        chart.addValueAxis(valueAxis)
+
+                        var valueAxis2 = new AmCharts.ValueAxis();
+                        valueAxis2.position = "right";
+                        valueAxis2.axisColor = "#FCD202";
+                        valueAxis2.gridAlpha = 0;
+                        valueAxis2.axisThickness = 2;
+                        chart.addValueAxis(valueAxis2);
+                        
+                        // GRAPH Sample
+                        /*    graph254_1 = new AmCharts.AmGraph();
+                            graph254_1.title = "Team 254autogears";
+                            graph254_1.valueAxis = valueAxis;
+                            graph254_1.type = "smoothedLine"; // this line makes the graph smoothed line.
+                            graph254_1.lineColor = "#FF0000";
+                            graph254_1.bullet = "round";
+                            graph254_1.bulletSize = 8;
+                            graph254_1.bulletBorderColor = "#FFFFFF";
+                            graph254_1.bulletBorderAlpha = 1;
+                            graph254_1.bulletBorderThickness = 2;
+                            graph254_1.lineThickness = 2;
+                            graph254_1.valueField = "team254stat1";
+                            graph254_1.balloonText = "Team 254autogears<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                            chart.addGraph(graph254_1);
+                        */
+                        
+                        {1}
+                        
+                        // CURSOR
+                        var chartCursor = new AmCharts.ChartCursor();
+                        chartCursor.cursorAlpha = 0;
+                        chartCursor.cursorPosition = "mouse";
+                        chart.addChartCursor(chartCursor);
+
+                        var legend = new AmCharts.AmLegend();
+                        legend.marginLeft = 110;
+                        legend.useGraphSettings = true;
+                        chart.addLegend(legend);
+                        chart.creditsPosition = "bottom-right";
+
+                        // WRITE
+                        chart.write("chartdiv");
+                    }});
+                $(document).ready(function() {{
+                    $("#{2}").attr("selected", "selected");
+                    $("#{3}").attr("selected", "selected");
+                }});
+                </script>
+    </head>
+    <body>
+        <div id="page_header" class="hidden-xs hidden-sm">
+            <div class="container">
+                <img src="./static/img/default-logo.png" align="left" hspace="10" vspace="5"></img>
+                    <span style="display:inline-block; padding-top:10px;">PiScout<br>
+                    FRC Team 238/2067</span>
+                <br clear="left">
+            </div>
+        </div>
+        <div id="top_menu">
+            <div class="container">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <!-- Brand and toggle get grouped for better mobile display -->
+                        <div class="navbar-header">
+                          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                          </button>
+                        </div>
+
+                         <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                          <ul class="nav navbar-nav">
+                            <li><a href="/index">Home</a></li>
+                            <li><a href="/rankings">Rankings</a></li>
+                            <li class="dropdown active">
+                              <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                              <li class="active"><a href="/compareTeams">Teams</a></li>
+                                <li><a href="/compareAlliances">Alliances</a></li>
+                              </ul>
+                            </li>
+                            <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Matches<span class="caret"></span></a>
+                              <ul class="dropdown-menu">
+                                <li><a href="/matches?n=238">238 Matches</a></li>
+                                <li><a href="/matches">All Matches</a></li>
+                              </ul>
+                            </li>
+                            <li><a href="/edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
+                            <li><a href="/recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
+                          </ul>
+                         <form class="navbar-form navbar-left" method="get" action="team">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Team Number" name="n" maxlength="4">
+                                </div>
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </form>
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+        </div>
+        <div id="body_bg">
+            <div class="container clearfix" align="center">
+                <div id="page_title" align="center">Compare Teams</div>
+                <!--Sample Data boxes
+                <div>
+                <div class="comparebox_container">
+                    <p><a href="/team?n=254" style="font-size: 32px;">Team 254</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">140</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>
+                            <p class="statbox">Auto Gears: 0.6</p>
+                            <p class="statbox">Teleop Gears: 2.1</p>
+                            <p class="statbox">Dropped Gears: 0.4</p>
+                            <p class="statbox">Auto Shoot Points: 21.0</p>
+                            <p class="statbox">Teleop Shoot Points: 32.0</p>
+                            <p class="statbox">Endgame Points: 40.0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparebox_container">
+                    <p><a href="/team?n=238" style="font-size: 32px;">Team 238</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">116</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>
+                            <p class="statbox">Auto Gears: 0.2</p>
+                            <p class="statbox">Teleop Gears: 3.6</p>
+                            <p class="statbox">Dropped Gears: 0.4</p>
+                            <p class="statbox">Auto Shoot Points: 8.4</p>
+                            <p class="statbox">Teleop Shoot Points: 0.17</p>
+                            <p class="statbox">Endgame Points: 50.0</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div>
+                <div class="comparebox_container">
+                    <p><a href="/team?n=254" style="font-size: 32px;">Team 254</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">140</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>
+                            <p class="statbox">Auto Gears: 0.6</p>
+                            <p class="statbox">Teleop Gears: 2.1</p>
+                            <p class="statbox">Dropped Gears: 0.4</p>
+                            <p class="statbox">Auto Shoot Points: 21.0</p>
+                            <p class="statbox">Teleop Shoot Points: 32.0</p>
+                            <p class="statbox">Endgame Points: 40.0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparebox_container">
+                    <p><a href="/team?n=254" style="font-size: 32px;">Team 254</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">140</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>
+                            <p class="statbox">Auto Gears: 0.6</p>
+                            <p class="statbox">Teleop Gears: 2.1</p>
+                            <p class="statbox">Dropped Gears: 0.4</p>
+                            <p class="statbox">Auto Shoot Points: 21.0</p>
+                            <p class="statbox">Teleop Shoot Points: 32.0</p>
+                            <p class="statbox">Endgame Points: 40.0</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                -->
+                {4}
+                <div id="chartdiv" style="height:400px; margin: 0 auto;"></div>
+                <div id="statSelect" style="margin:auto;">
+                    <form method="post" action="" style="display:inline-block; margin:5px">
+                            <select class="fieldsm" name="stat1">
+                              <option id="autoshoot" value="autoshoot">Auto Shoot Points</option>
+                              <option id="autogears" value="autogears">Auto Gears</option>
+                              <option id="shoot" value="shoot">Teleop Shoot Points</option>
+                              <option id="gears" value="gears">Teleop Gears</option>
+                              <option id="geardrop" value="geardrop">Dropped Gears</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                    <form method="post" action="" style="display:inline-block; margin:5px">
+                            <select class="fieldsm" name="stat2">
+                                <option id="none" value="none">None</option>
+                                <option id="autoshoot2" value="autoshoot">Auto Shoot Points</option>
+                                <option id="autogears2" value="autogears">Auto Gears</option>
+                                <option id="shoot2" value="shoot">Teleop Shoot Points</option>
+                                <option id="gears2" value="gears">Teleop Gears</option>
+                                <option id="geardrop2" value="geardrop">Dropped Gears</option>
+                            </select>
+                            <button class="submit" type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+            <div id="footer" class="container hidden-sm hidden-xs">
+                <p>
+                <em>FIRST</em> Robotics Competition Team 238<br>
+                1 Crusader Way<br>
+                Manchester, NH 03103</p>
+                <p>&copy; Team 238 | <a href="http://frc238.org/legal/">Privacy and Tracking Policy</a></p>
+            </div>
+        </div>
+        <div id="bottom_border"></div>
+    </body>
+</html>
