@@ -150,7 +150,7 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6},{7});">X</a></td>
                 <td class="hidden-xs"><a class="edit" href="/edit?key={8}">E</a></td>
-            </tr>'''.format(e['Match'], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Team'])
+            </tr>'''.format(e['Match'], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Key'])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
             if not e['Flag']: #if flagged
@@ -811,38 +811,25 @@ class ScoutServer(object):
             conn.close()
             
     @cherrypy.expose()
-    def edit(self, key='', team='', match='', fouls='', techFouls='', autoGears='', autoBaseline='',
-             autoLowBalls='', autoHighBalls='', gearsFloor='', feeder='', defense='', defended='',
-             teleGears='', teleGearsDropped='', teleLowBalls='', teleHighBalls='', hang='', failHang='', flag=''):
+    def edit(self, key='', **params):
         datapath = 'data_' + self.getevent() + '.db'
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        if team:
-            data = (team, match, fouls, techFouls, autoGears, autoBaseline, autoLowBalls, autoHighBalls,
-                    gearsFloor, feeder, defense, defended, teleGears, teleGearsDropped, teleLowBalls,
-                    teleHighBalls, hang, failHang)
+        if len(params) > 1:
             sqlCommand = 'UPDATE scout SET '
-            for index, item in enumerate(data):
-                if item:
-                    if item == 'on':
-                        sqlCommand+= 'd' + str(index) + '=1,'
-                    else:
-                        sqlCommand+= 'd' + str(index) + '=' + str(item) + ','
-                else:
-                    sqlCommand+= 'd' + str(index) + '=0,'
-            if flag:
-                sqlCommand+='Flag=1 '
-            else: 
-                sqlCommand+='Flag=0 '
+            for name, value in params.items():
+                sqlCommand += name + '=' + (value if value else 'NULL') + " , "
+            sqlCommand = sqlCommand[:-2]
             sqlCommand+='WHERE key=' + str(key)
+            print(sqlCommand)
             cursor.execute(sqlCommand)
             conn.commit()
             conn.close()
-            self.calcavg(team, self.getevent())
-            self.calcmaxes(team, self.getevent())
-            self.calcavgNoD(team, self.getevent())
-            self.calcavgLastThree(team, self.getevent())
+            self.calcavg(params['Team'], self.getevent())
+            self.calcmaxes(params['Team'], self.getevent())
+            self.calcavgNoD(params['Team'], self.getevent())
+            self.calcavgLastThree(params['Team'], self.getevent())
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor= conn.cursor()
@@ -850,125 +837,33 @@ class ScoutServer(object):
                 
         if key == '':
             key = entries[0][0]
-        combobox = '''<form method="post" action="edit">
-                        <select class="fieldsm" name="key">'''
+        combobox = ''
 
         for e in entries:
-            combobox += '''<option id="{0}" value="{0}">{1} Team {2}: Match {3}</option>\n'''.format(e[0], "*" if e[19] else "", e[1], e[2])
+            combobox += '''<option id="{0}" value="{0}">{1} Team {2}: Match {3}</option>\n'''.format(e['Key'], "*" if e['Flag'] else "", e['Team'], e['Match'])
                          
-        combobox += '''</select>
-                        <button class="submit" type="submit">Submit</button>
-                    </form>
-                    <br><br>'''
         
         entry = cursor.execute('SELECT * from scout WHERE key=?', (key,)).fetchone()
         conn.close()
-        mainEditor = '''<h1>Editing Team {0[1]}: Match {0[2]}</h1>
-                        <br>
-                        <form method="post" action="edit" style="width:670px">
-                                <div class="editHeaderLeft">Match Info</div>
-                                <div class="editHeaderRight">Fouls</div>
-                                <div class="editCellLeft">
-                                    <input type="number" name="key" value="{8}" hidden/>
-                                    <label for="team" class="editLabel">Team</label>
-                                    <input class="editNum" type="number" name="team" value="{0[1]}">
-                                    <br>
-                                    <label for="match" class="editLabel">Match</label>
-                                    <input class="editNum" type="number" name="match" value="{0[2]}">
-                                </div>
-                                <div class="editCellRight">
-                                    <label for="fouls" class="editLabel">Fouls</label>
-                                    <input class="editNum" type="number" name="fouls" value="{0[3]}">
-                                    <br>
-                                    <label for="techFouls" class="editLabel">Tech Fouls</label>
-                                    <input class="editNum" type="number" name="techFouls" value="{0[4]}">
-                                </div>
-                                <div class="editHeaderLeft">Auto</div>
-                                <div class="editHeaderRight">Teleop</div>
-                                <div class="editCellLeft">
-                                    <label for="autoGears" class="editLabel">Auto Gears</label>
-                                    <input class="editNum" type="number" name="autoGears" value="{0[5]}">
-                                    <br>
-                                    <label for="autoBaseline" class="editLabel">Auto Baseline</label>
-                                    <input class="editNum" type="checkbox" name="autoBaseline" {1}>
-                                    <br>
-                                    <label for="autoLowBalls" class="editLabel">Auto Low Balls</label>
-                                    <input class="editNum" type="number" name="autoLowBalls" value="{0[7]}">
-                                    </br>
-                                    <label for="autoHighBalls" class="editLabel">Auto High Balls</label>
-                                    <input class="editNum" type="number" name="autoHighBalls" value="{0[8]}">
-                                </div>
-                                <div class="editCellRight">
-                                    <label for="teleGears" class="editLabel">Teleop Gears</label>
-                                    <input class="editNum" type="number" name="teleGears" value="{0[13]}">
-                                    <br>
-                                    <label for="teleGearsDropped" class="editLabel">Teleop Dropped Gears</label>
-                                    <input class="editNum" type="number" name="teleGearsDropped" value="{0[14]}">
-                                    <br>
-                                    <label for="teleLowBalls" class="editLabel">Teleop Low Balls</label>
-                                    <input class="editNum" type="number" name="teleLowBalls" value="{0[15]}">
-                                    <br>
-                                    <label for="teleHighBalls" class="editLabel">Teleop High Balls</label>
-                                    <input class="editNum" type="number" name="teleHighBalls" value="{0[16]}">
-                                </div>
-                                <div class="editHeaderLeft">Other</div>
-                                <div class="editHeaderRight">End Game</div>
-                                <div class="editCellLeft">
-                                    <label for="gearsFloor" class="editLabel">Gear Floor Intake</label>
-                                    <input class="editNum" type="checkbox" name="gearsFloor" {2}>
-                                    <br>
-                                    <label for="feeder" class="editLabel">Feeder Bot</label>
-                                    <input class="editNum" type="checkbox" name="feeder" {3}>
-                                    <br>
-                                    <label for="defense" class="editLabel">Defense Bot</label>
-                                    <input class="editNum" type="checkbox" name="defense" {4}>
-                                    <label for="defended" class="editLabel">Defended</label>
-                                    <input class="editNum" type="checkbox" name="defended" {5}>
-                                    <br>
-                                </div>
-                                <div class="editCellRight">
-                                    <label for="hang" class="editLabel">Hang</label>
-                                    <input class="editNum" type="checkbox" name="hang" {6}>
-                                    <br>
-                                    <label for="failhang" class="editLabel">Failed Hang</label>
-                                    <input class="editNum" type="checkbox" name="failHang" {7}>
-                                    <br>
-                                    <br>
-                                    <br>
-                                </div>
-                                <div class="editHeaderLeft">Flag</div>
-                                <div class="editHeaderRight">Submit</div>
-                                <div class="editCellLeft">
-                                    <label for="flag" class="editLabel">Flagged</label>
-                                    <input class="editNum" type="checkbox" name="flag" {9}>
-                                </div>
-                                <div class="editCellRight">
-                                    <input type="submit" value="Submit">
-                                </div>
-                        </form>'''.format(entry, "checked" if entry[6] else "", "checked" if entry[9] else "",
-                                          "checked" if entry[10] else "", "checked" if entry[11] else "",
-                                          "checked" if entry[12] else "", "checked" if entry[17] else "",
-                                          "checked" if entry[18] else "", key, "checked" if entry[19] else "")
         
+        i = 0
+        leftEdit = ''
+        rightEdit = ''
+        for key in SCOUT_FIELDS:
+            print(key)
+            if(key == 'Replay'):
+                continue
+            if(i < len(SCOUT_FIELDS)/2):
+                leftEdit += '''<div><label for="team" class="editLabel">{0}</label>
+                            <input class="editNum" type="number" name="{0}" value="{1}"></div>'''.format(key, entry[key])
+            else:
+                rightEdit += '''<div><label for="team" class="editLabel">{0}</label>
+                            <input class="editNum" type="number" name="{0}" value="{1}"></div>'''.format( key, entry[key])
+            i = i+1
+        with open('web/edit.html', 'r') as file:
+            page = file.read()
+        return page.format(combobox, entry['Team'], entry['Match'], entry['Key'], leftEdit, rightEdit)
         
-        return '''
-            <html>
-            <head>
-                <title>PiScout</title>
-                <link href="http://fonts.googleapis.com/css?family=Chau+Philomene+One" rel="stylesheet" type="text/css">
-                <link href="/static/css/style.css" rel="stylesheet">
-                <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-                <script>
-                $(document).ready(function() {{
-                    $("#{0}").attr("selected", "selected");
-                }});
-                </script>
-            </head>
-            <body>
-                <h1><a style="color: #B20000" href='/'>PiScout</a></h1>
-                <h2><syle="colorL #B20000">Match Editor</h2>
-                <br><br>
-            '''.format(str(key)) + combobox + mainEditor + '''</body>'''
             
     @cherrypy.expose()
     def rankings(self):

@@ -142,6 +142,20 @@ img {
     }
 }
 
+.edit_compare_cell
+{
+    text-align: right;
+    display: table-cell;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+@media (max-width: 767px) {
+    .edit_compare_cell {
+    display: block;
+    margin-bottom: 10px;
+    }
+}
+
 #apr {
     border: 2px solid black;
     text-align: center;
