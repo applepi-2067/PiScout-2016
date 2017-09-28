@@ -616,13 +616,12 @@ class ScoutServer(object):
         #delete the existing entry, if a team has no matches they will be removed
         cursor.execute('DELETE FROM noDefense WHERE team=?',(n,))
         #d0 is the identifier for team, Match is the identifier for match
-        entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND flag=0 AND Match=0 ORDER BY Match DESC', (n,)).fetchall()
+        entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND Flag=0 AND Defense=0 ORDER BY Match DESC', (n,)).fetchall()
         s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
         apr = 0
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
             for e in entries:
-                e = e[1:]
                 s['autogears'] += e['AutoGears']
                 s['teleopgears'] += e['TeleopGears']
                 s['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
