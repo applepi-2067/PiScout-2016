@@ -474,7 +474,7 @@ class ScoutServer(object):
                 match['num'] = match['match_number']
             output += '''
                 <tr role="row">
-                    <td>{0}</td>
+                    <td><a href="alliances?b1={1}&b2={2}&b3={3]&r1={4}&r2={5}&r3={6}>{0}</a></td>
                     <td class="hidden-xs">{1}</td>
                     <td class="hidden-xs">{2}</td>
                     <td class="hidden-xs">{3}</td>
