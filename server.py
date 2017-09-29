@@ -1025,7 +1025,7 @@ conf = {
      },
      '/favicon.ico': {
         'tools.staticfile.on': True,
-        'tools.staticfile.filename': './web/static/img/favicon.ico'
+        'tools.staticfile.filename': os.path.abspath(os.getcwd()) +'./web/static/img/favicon.ico'
     },
     'global': {
         'server.socket_port': 8000
@@ -1048,6 +1048,10 @@ conf = {
                  'tools.staticdir.on': True,
                  'tools.staticdir.dir': './web/static'
          },
+        '/favicon.ico': {
+        'tools.staticfile.on': True,
+        'tools.staticfile.filename': os.path.abspath(os.getcwd()) +'./web/static/img/favicon.ico'
+        },
         'global': {
                 'server.socket_host': '0.0.0.0',
                 'server.socket_port': 80
