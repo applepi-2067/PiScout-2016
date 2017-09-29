@@ -16,6 +16,9 @@ from piscout import AVERAGE_FIELDS
 DEFAULT_MODE = 'averages'
 
 class ScoutServer(object):
+    def __init__(self):
+        self.database_exists(CURRENT_EVENT)
+    
     @cherrypy.expose
     def index(self, m='', e=''):
         
@@ -93,7 +96,37 @@ class ScoutServer(object):
             s = averages[0]
         else:
             s = [0]*8 #generate zeros if no data exists for the team yet
-
+            
+        #if we have less than 4 entries, see if we can grab data from a previous event
+        lastEvent = 0
+        if(len(entries) < 4):
+            globalconn = sql.connect('global.db')
+            globalconn.row_factory = sql.Row
+            globalcursor = globalconn.cursor()
+            teamEvents = globalcursor.execute('SELECT * FROM teamEvents WHERE Team=?', (n,)).fetchone()
+            if teamEvents:
+                for i in range(1,10):
+                    if teamEvents['Event' + str(i)]:
+                        if teamEvents['Event' + str(i)] != cherrypy.session['event']:
+                            lastEventCode = teamEvents['Event' + str(i)]
+                            lastEvent = 1
+            
+        if lastEvent:
+            hidden = ""
+            oldconn = sql.connect('data_' + lastEventCode + '.db')
+            oldconn.row_factory = sql.Row
+            oldcursor = oldconn.cursor()
+            oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            assert len(oldAverages) < 2 #ensure there aren't two entries for one team
+            if len(oldAverages):
+                oldData = oldAverages[0]
+            else:
+                oldData = [0]*8 #generate zeros if no data exists for the team yet
+        else:
+            hidden = "hidden"
+            oldData = [0]*8
+            lastEventCode = ""
+            
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
         conn.close()
 
@@ -106,7 +139,6 @@ class ScoutServer(object):
         #this entire section will need to change from year to year
         output = ''
         dataset = []
-        print(len(entries))
         for e in entries:
             # Important: the index of e refers to the number of the field set in main.py
             # For example e[1] gets value #1 from main.py
@@ -188,7 +220,7 @@ class ScoutServer(object):
         #Then update all the column headers and stuff
         with open('web/team.html', 'r') as file:
             page = file.read()
-        return page.format(n, output, s[1], s[2], s[3], s[4], s[5], s[6], s[7], str(dataset).replace("'",'"'), imcode, commentstr)
+        return page.format(n, output, s[1], s[2], s[3], s[4], s[5], s[6], s[7], str(dataset).replace("'",'"'), imcode, commentstr, hidden, oldData[1], oldData[2], oldData[3], oldData[4], oldData[5], oldData[6], oldData[7], lastEventCode)
 
     # Called to flag a data entry
     @cherrypy.expose()
@@ -567,8 +599,25 @@ class ScoutServer(object):
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        globalconn = sql.connect('global.db')
+        globalconn.row_factory = sql.Row
+        globalcursor = globalconn.cursor()
+        teamEntry = globalcursor.execute('SELECT * FROM teamEvents WHERE Team=?',(n,)).fetchone()
+        if(teamEntry):
+            for i in range (1, 10):
+                if teamEntry['Event'+str(i)] == event:
+                    break;
+                else: 
+                    if not teamEntry['Event'+str(i)]:
+                        updateString = 'UPDATE teamEvents SET Event' + str(i) + " = '" + event + "' WHERE Team=" + str(n)
+                        globalcursor.execute(updateString)
+                        break;
+        else:
+            globalcursor.execute('INSERT INTO teamEvents (Team,Event1) VALUES (?,?)',(n,event))
+        globalconn.commit()
+        globalconn.close()
         #delete the existing entry, if a team has no matches they will be removed
-        cursor.execute('DELETE FROM averages WHERE team=?',(n,))
+        cursor.execute('DELETE FROM averages WHERE Team=?',(n,))
         #d0 is the identifier for team, Match is the identifier for match
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND flag=0 ORDER BY Match DESC', (n,)).fetchall()
         s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
@@ -793,21 +842,29 @@ class ScoutServer(object):
     def database_exists(self, event):
         datapath = 'data_' + event + '.db'
         if not os.path.isfile(datapath):
-            # Generate a new database with the three tables
+            # Generate a new database with the tables
             conn = sql.connect(datapath)
-            conn.row_factory = sql.Row
             cursor = conn.cursor()
-            # Replace 36 with the number of entries in main.py
             tableCreate = "CREATE TABLE scout (key INTEGER PRIMARY KEY, "
             for key in SCOUT_FIELDS:
-                tableCreate += key + " integer , "
+                tableCreate += key + " integer, "
+            tableCreate = tableCreate[:-2]
             tableCreate += ")"
             print(tableCreate)
             cursor.execute(tableCreate)
-            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
-            cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real)''')
+            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+            cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+            cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+            cursor.execute('''CREATE TABLE noDefense (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
+        #next check for the global database
+        if not os.path.isfile('global.db'):
+            globalconn = sql.connect('global.db')
+            globalcursor = globalconn.cursor()
+            globalcursor.execute('''CREATE TABLE teamEvents (Team integer, Event1 text, Event2 text, Event3 text, Event4 text, Event5 text, Event6 text, Event7 text, Event8 text, Event9 text, Event10 text)''')
+            globalconn.commit()
+            globalconn.close()
             
     @cherrypy.expose()
     def edit(self, key='', **params):
@@ -994,25 +1051,6 @@ datapath = 'data_' + CURRENT_EVENT + '.db'
 
 def keyFromItem(func):
     return lambda item: func(*item)
-    
-if not os.path.isfile(datapath):
-    # Generate a new database with the three tables
-    conn = sql.connect(datapath)
-    cursor = conn.cursor()
-    # Replace 36 with the number of entries in main.py
-    tableCreate = "CREATE TABLE scout (key INTEGER PRIMARY KEY, "
-    for key in SCOUT_FIELDS:
-        tableCreate += key + " integer, "
-    tableCreate = tableCreate[:-2]
-    tableCreate += ")"
-    print(tableCreate)
-    cursor.execute(tableCreate)
-    cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-    cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-    cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-    cursor.execute('''CREATE TABLE noDefense (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-    cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
-    conn.close()
 
 conf = {
      '/': {
