@@ -6,10 +6,9 @@ from ast import literal_eval
 import requests
 import math
 from statistics import mode
-from ipaddress import IPV6LENGTH
 from event import CURRENT_EVENT
-from piscout import SCOUT_FIELDS
-from piscout import AVERAGE_FIELDS
+import gamespecific as game
+import serverinfo
 
 # Update this value before every event
 # Use the event codes given by thebluealliance
@@ -846,7 +845,7 @@ class ScoutServer(object):
             conn = sql.connect(datapath)
             cursor = conn.cursor()
             tableCreate = "CREATE TABLE scout (key INTEGER PRIMARY KEY, "
-            for key in SCOUT_FIELDS:
+            for key in game.SCOUT_FIELDS:
                 tableCreate += key + " integer, "
             tableCreate = tableCreate[:-2]
             tableCreate += ")"
@@ -905,11 +904,11 @@ class ScoutServer(object):
         i = 0
         leftEdit = ''
         rightEdit = ''
-        for key in SCOUT_FIELDS:
+        for key in game.SCOUT_FIELDS:
             print(key)
             if(key == 'Replay'):
                 continue
-            if(i < len(SCOUT_FIELDS)/2):
+            if(i < len(game.SCOUT_FIELDS)/2):
                 leftEdit += '''<div><label for="team" class="editLabel">{0}</label>
                             <input class="editNum" type="number" name="{0}" value="{1}"></div>'''.format(key, entry[key])
             else:

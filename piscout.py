@@ -9,31 +9,23 @@ import requests
 from threading import Thread
 import sqlite3 as sql
 from event import CURRENT_EVENT
+import gamespecific as game
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
-# The configuration for the sheets is done in a separate file (main.py)
+# The configuration for the sheets is done in a separate file (gamespecific.py)
 # Cory Lynch 2015
 
-SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
-        "AutoLowBalls":0, "AutoHighBalls":0, "FloorIntake":0, "Feeder":0, "Defense":0, "Defended":0,
-        "TeleopGears":0, "TeleopGearDrops":0, "TeleopLowBalls":0, "TeleopHighBalls":0, "Hang":0,
-        "FailedHang":0, "Replay":0, "AutoSideAttempt":0, "AutoSideSuccess":0, "AutoCenterAttempt":0,
-        "AutoCenterSuccess":0, "Flag":0}
-        
-AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0, "autoballs":0, "teleopballs":0, 
-        "end":0, "defense":0}
-        
 class PiScout:
     # Firstly, initializes the fields of a PiScout object
     # Then it starts the main loop of PiScout
     # Requires a function "main" which contains the sheet configuration
     # Loops indefinitely and triggers a response whenever a new sheet is added
-    def __init__(self, main):
+    def __init__(self):
         print('PiScout Starting')
         self.sheet = None
         self.display = None
-        self.data = dict(SCOUT_FIELDS)
+        self.data = dict(game.SCOUT_FIELDS)
         self.labels = []
         self.shift = 0
 
@@ -46,7 +38,7 @@ class PiScout:
                 if '.jpg' in file or '.png' in file:
                     retval = self.loadsheet("Sheets/" + file)
                     if retval == 1:
-                        main(self) #call the main loop with this PiScout object as an argument
+                        game.processSheet(self)
                         f.add(file)
                     elif retval == -1:
                         f.add(file)
@@ -54,7 +46,7 @@ class PiScout:
     # Loads a new scout sheet from an image
     # Processes the image and stores the result in self.sheet
     def loadsheet(self, imgpath, b=3, guess=False):
-        self.data = dict(SCOUT_FIELDS)
+        self.data = dict(game.SCOUT_FIELDS)
         print('Loading a new sheet: ' + imgpath)
         img = cv2.imread(imgpath)
         try:
@@ -216,7 +208,7 @@ class PiScout:
     def submit(self):
         if self.data['Team'] == 0:
             print("Found an empty match, skipping")
-            self.data = dict(SCOUT_FIELDS)
+            self.data = dict(game.SCOUT_FIELDS)
             return
         
         datapath = 'data_' + CURRENT_EVENT + '.db'
@@ -226,7 +218,7 @@ class PiScout:
         history = cursor.execute('SELECT * FROM scout WHERE Team=? AND Match=?', (str(self.data['Team']),str(self.data['Match']))).fetchall()
         if history and not self.data['Replay']:
             print("Already processed this match, skipping")
-            self.data = dict(SCOUT_FIELDS)
+            self.data = dict(game.SCOUT_FIELDS)
             return
 
         #the following block opens the GUI for piscout, this code shouldn't need to change
@@ -254,7 +246,7 @@ class PiScout:
         except AttributeError:
             print("Window resizing exploded, oh well.")
         plt.show()
-        self.data = dict(SCOUT_FIELDS)
+        self.data = dict(game.SCOUT_FIELDS)
         self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
     # Invoked by the "Save Data Offline" button
@@ -275,12 +267,12 @@ class PiScout:
         print("Attempting upload to server")
 
         try: #post it to piscout's ip address
-            requests.post("http://34.199.157.169/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
+            requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
             print("Uploading this match was successful")
             if os.path.isfile('queue.txt'):
                 with open("queue.txt", "r") as file:
                     for line in file:
-                        requests.post("http://34.199.157.169/submit", data={'event':CURRENT_EVENT, 'data': line})
+                        requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line})
                         print("Uploaded an entry from the queue")
                 os.remove('queue.txt')
             requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
@@ -321,3 +313,5 @@ class PiScout:
     # Displays a message box
     def message(self, title, message, type=0):
         return ctypes.windll.user32.MessageBoxW(0, message, title, type)
+
+PiScout()

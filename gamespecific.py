@@ -1,8 +1,19 @@
-from piscout import *
 
+SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
+        "AutoLowBalls":0, "AutoHighBalls":0, "FloorIntake":0, "Feeder":0, "Defense":0, "Defended":0,
+        "TeleopGears":0, "TeleopGearDrops":0, "TeleopLowBalls":0, "TeleopHighBalls":0, "Hang":0,
+        "FailedHang":0, "Replay":0, "AutoSideAttempt":0, "AutoSideSuccess":0, "AutoCenterAttempt":0,
+        "AutoCenterSuccess":0, "Flag":0}
+
+
+AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0, "autoballs":0, "teleopballs":0, 
+        "end":0, "defense":0}
+
+        
+     
 # Main method to process a full-page sheet
 # Submits three times, because there are three matches on one sheet
-def main(scout):
+def processSheet(scout):
     for s in (0,16,32):
         scout.shiftDown(s)
 
@@ -57,7 +68,3 @@ def main(scout):
         scout.set("AutoCenterSuccess", int(centerSuccess)) #21
 
         scout.submit()
-
-# This line creates a new PiScout and starts the program
-# It takes the main function as an argument and runs it when it finds a new sheet
-PiScout(main)

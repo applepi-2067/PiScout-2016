@@ -1,6 +1,7 @@
 import os
 import requests
 import server
+import serverinfo
 
 n = 1
 print("Attemting to upload matches...")
@@ -8,7 +9,7 @@ if os.path.isfile('queue.txt'):
 	with open("queue.txt", "r") as file:
 		try:
 			for line in file:
-				requests.post("http://34.199.157.169/submit", data={'event':server.CURRENT_EVENT, 'data': line})
+				requests.post(serverinfo.server + "/submit", data={'event':server.CURRENT_EVENT, 'data': line})
 				print("Uploaded entry number " + str(n))			
 				n += 1
 		except:
