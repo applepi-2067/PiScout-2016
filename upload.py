@@ -9,7 +9,7 @@ if os.path.isfile('queue.txt'):
 	with open("queue.txt", "r") as file:
 		try:
 			for line in file:
-				requests.post(serverinfo.server + "/submit", data={'event':server.CURRENT_EVENT, 'data': line})
+				requests.post(serverinfo.server + "/submit", data={'event':server.CURRENT_EVENT, 'data': line, 'auth': serverinfo.AUTH})
 				print("Uploaded entry number " + str(n))			
 				n += 1
 		except:

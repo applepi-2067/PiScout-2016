@@ -537,7 +537,7 @@ class ScoutServer(object):
     # Used by the scanning program to submit data, and used by comment system to submit data
     # this won't ever need to change
     @cherrypy.expose()
-    def submit(self, data='', event='', team='', comment=''):
+    def submit(self, auth='', data='', event='', team='', comment=''):
         if not (data or team):
             return '''
                 <h1>FATAL ERROR</h1>
@@ -562,35 +562,38 @@ class ScoutServer(object):
             conn.close()
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
-        d = literal_eval(data)
-        flag = 0
-        if (d['AutoHighBalls'] or d['TeleopHighBalls']) and (d['AutoLowBalls'] or d['AutoHighBalls']): 
-            flag = 1
-        if d['Hang'] and d['FailedHang']:
-            flag = 1
-            
-        m = self.getMatches(event)
+        if auth == serverinfo.AUTH:
+            d = literal_eval(data)
+            flag = 0
+            if (d['AutoHighBalls'] or d['TeleopHighBalls']) and (d['AutoLowBalls'] or d['AutoHighBalls']): 
+                flag = 1
+            if d['Hang'] and d['FailedHang']:
+                flag = 1
                 
-        if m:
-            match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
-            teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
-            if not 'frc' + str(d['Team']) in teams:
-                flag = 1   
+            m = self.getMatches(event)
+                    
+            if m:
+                match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
+                teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
+                if not 'frc' + str(d['Team']) in teams:
+                    flag = 1   
+                    
+            if d['AutoGears']:    #if auto gear, set baseline
+                d['AutoBaseline'] = 1
                 
-        if d['AutoGears']:    #if auto gear, set baseline
-            d['AutoBaseline'] = 1
-            
-        if d['Replay']:   #replay
-            cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
-        cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d]) + ')')
-        conn.commit()
-        conn.close()
+            if d['Replay']:   #replay
+                cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
+            cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d]) + ')')
+            conn.commit()
+            conn.close()
 
-        self.calcavg(d['Team'], event)
-        self.calcmaxes(d['Team'], event)
-        self.calcavgNoD(d['Team'], event)
-        self.calcavgLastThree(d['Team'], event)
-        return ''
+            self.calcavg(d['Team'], event)
+            self.calcmaxes(d['Team'], event)
+            self.calcavgNoD(d['Team'], event)
+            self.calcavgLastThree(d['Team'], event)
+            return ''
+        else:
+            raise cherrypy.HTTPError(401, "Error: Not authorized to submit match data")
 
     # Calculates average scores for a team
     def calcavg(self, n, event):

@@ -10,6 +10,7 @@ from threading import Thread
 import sqlite3 as sql
 from event import CURRENT_EVENT
 import gamespecific as game
+import serverinfo
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -257,7 +258,7 @@ class PiScout:
         with open("queue.txt", "a+") as file:
             file.write(str(self.data) + '\n')
         plt.close()
-        requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
+        requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
 
     # Invoked by the "Upload Data" button
     # Uploads all data (including queue) to the online database
@@ -267,15 +268,15 @@ class PiScout:
         print("Attempting upload to server")
 
         try: #post it to piscout's ip address
-            requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
+            requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
             print("Uploading this match was successful")
             if os.path.isfile('queue.txt'):
                 with open("queue.txt", "r") as file:
                     for line in file:
-                        requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line})
+                        requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
                         print("Uploaded an entry from the queue")
                 os.remove('queue.txt')
-            requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data)})
+            requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
         except:
             print("Failed miserably")
             r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)
