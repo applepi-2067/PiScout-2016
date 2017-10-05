@@ -17,7 +17,6 @@ def processSheet(scout):
     for s in (0,16,32):
         scout.shiftDown(s)
 
-        # The numberings of the fields are important; you reference them by number in server.py
         num1 = scout.rangefield('J-5', 0, 9)
         num2 = scout.rangefield('J-6', 0, 9)
         num3 = scout.rangefield('J-7', 0, 9)

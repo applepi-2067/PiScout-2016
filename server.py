@@ -49,30 +49,26 @@ class ScoutServer(object):
         else:
             data = conn.cursor().execute('SELECT * from lastThree ORDER BY apr DESC').fetchall()
         conn.close()
-        for team in data: #this table will need to change based on the number of columns on the main page
+        for key in game.AVERAGE_FIELDS:
+            if key != "team":
+                table += '''
+                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+                
+                <th class="titleColumn titleColumn1 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="9" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key)
+        table += '''                            </tr>
+                        </thead>
+                        <tbody aria-live="polite" aria-relevant="all">'''
+        for team in data:
             table += '''
                 <tr role="row">
-                    <td><a href="team?n={0}">{0}</a></td>
-                    <td class="hidden-xs">{1}</td>
-                    <td class="hidden-xs">{2}</td>
-                    <td class="hidden-xs">{3}</td>
-                    <td class="hidden-xs">{4}</td>
-                    <td class="hidden-xs">{5}</td>
-                    <td class="hidden-xs">{6}</td>
-                    <td class="hidden-xs">{7}</td>
-                    <td class="hidden-xs">{8}</td>
-
-                    <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{1}</td>
-                    <td class="rankingColumn rankColumn2 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{2}</td>
-                    <td class="rankingColumn rankColumn3 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{3}</td>
-                    <td class="rankingColumn rankColumn4 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{4}</td>
-                    <td class="rankingColumn rankColumn5 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{5}</td>
-                    <td class="rankingColumn rankColumn6 hidden-sm hidden-md hidden-lg" style="">{6}</td>
-                    <td class="rankingColumn rankColumn7 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{7}</td>
-                    <td class="rankingColumn rankColumn8 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{8}</td>
-                </tr>
-            '''.format(team['team'], team['apr'], team['autogear'], team['teleopgear'], round(team['autogear'] + team['teleopgear'], 2), team['autoballs'], team['teleopballs'], team['end'], team['defense'])
-        #in this next block, update the event list and the column titles
+                    <td><a href="team?n={0}">{0}</a></td>'''.format(team['Team'])
+            for key in game.AVERAGE_FIELDS:
+                if key!= 'team':
+                    table += '''
+                        <td class="hidden-xs">{0}</td>
+                        <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                        '''.format(team[key])
+            table += '''</tr>'''
         
         with open('web/index.html', 'r') as file:
             page = file.read()
