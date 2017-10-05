@@ -242,7 +242,7 @@ class ScoutServer(object):
         if stat2 == 'none':
             stat2 = ''      
         if not stat1:
-            stat1 = 'autogears'
+            stat1 = list(game.CHART_FIELDS)[1]
             
         averages = []
         conn = sql.connect(self.datapath())
@@ -259,26 +259,23 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*8
+                entry = [0]*len(game.AVERAGE_FIELDS)
             # Add a data entry for each team
             output += '''<div class="comparebox_container">
-                    <p><a href="/team?n=254" style="font-size: 32px;">Team {0}</a></p>
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
                         <div id="apr">
                             <p style="font-size: 20pt;">APR</p>
                             <p style="font-size: 40pt;">{1}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>
-                            <p class="statbox">Auto Gears: {2}</p>
-                            <p class="statbox">Teleop Gears: {3}</p>
-                            <p class="statbox">Dropped Gears: {4}</p>
-                            <p class="statbox">Auto Shoot Points: {5}</p>
-                            <p class="statbox">Teleop Shoot Points: {6}</p>
-                            <p class="statbox">Endgame Points: {7}</p>
-                        </div>
-                    </div>
-                </div>'''.format(n, *list(entry[1:])) #unpack the elements
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(entry['Team'], entry['APR'])
+            for key in game.AVERAGE_FIELDS:
+                if (key != 'team') and (key != 'apr'):
+                    output += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            output += '''       </div>
+                            </div>
+                         </div>'''
             if ((len(nums) == 2 and index==0) or (len(nums) != 2 and index==1)):
                 output += '</div><div>'
         output += '</div>'
@@ -295,32 +292,8 @@ class ScoutServer(object):
             # Important: the index of e refers to the number of the field set in main.py
                 # For example e[1] gets value #1 from main.py
                 if(not isinstance(e, tuple)):
-                    dp = {"autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0} 
-                    a = ''
-                    a += 'baseline, ' if e['AutoBaseline'] else ''
-                    a += str(e[5]) + 'x gears, ' if e['AutoGears'] else ''
-                    dp['autogears'] += e['AutoGears']
-                    a += str(e[7]) + 'x low goal, ' if e['AutoLowBalls'] else ''
-                    a += str(e[8]) + 'x high goal, ' if e['AutoHighBalls'] else ''
-                    dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+                    dp = game.generateChartData(e)
         
-                    d = ''
-                    d += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
-                    d += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
-                    dp['gears'] += e['TeleopGears']
-                    dp['geardrop'] += e['TeleopGearDrops']
-        
-                    sh = ''
-                    sh += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopLowBalls'] else ''
-                    sh += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
-                    dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-        
-                    o = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
-                    o += str(e['Fouls']) + 'x foul, ' if e['Fouls'] else ''
-                    o += str(e['TechFouls']) + 'x tech foul, ' if e['TechFouls'] else ''
-                    o += 'defense, ' if e['Defense'] else ''
-                    o += 'feeder, ' if e['Feeder'] else ''
-                    o += 'defended, ' if e['Defended'] else ''
                     for key,val in dp.items():
                         dp[key] = round(val, 2)
                     if not e['Flag']:
