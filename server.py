@@ -362,10 +362,6 @@ class ScoutServer(object):
         #to later be formatted with sum APR
         teamsBlue = []
         teamsRed = []
-        ballScore = []
-        endGame = []
-        autoGears = []
-        teleopGears = []
         #iterate through all six teams
         for i,n in enumerate(numsBlue):
             if not n.isdigit():
@@ -378,7 +374,7 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*8
+                entry = [0]*len(game.AVERAGE_FIELDS)
             teamsBlue.append(n)
             teamsBlue.extend(entry[1:-1])
         for i,n in enumerate(numsRed):
@@ -396,8 +392,8 @@ class ScoutServer(object):
             teamsRed.append(n)
             teamsRed.extend(entry[1:-1])
         
-        blue_score = self.predictScore(numsBlue, level)['score']
-        red_score = self.predictScore(numsRed, level)['score']
+        blue_score = game.predictScore(numsBlue, level)['score']
+        red_score = game.predictScore(numsRed, level)['score']
         blue_score = int(blue_score)
         red_score = int(red_score)
         
@@ -503,12 +499,8 @@ class ScoutServer(object):
 
         if auth == serverinfo.AUTH:
             d = literal_eval(data)
-            flag = 0
-            if (d['AutoHighBalls'] or d['TeleopHighBalls']) and (d['AutoLowBalls'] or d['AutoHighBalls']): 
-                flag = 1
-            if d['Hang'] and d['FailedHang']:
-                flag = 1
-                
+            flag = game.autoFlag(d)
+            
             m = self.getMatches(event)
                     
             if m:
@@ -516,9 +508,6 @@ class ScoutServer(object):
                 teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
                 if not 'frc' + str(d['Team']) in teams:
                     flag = 1   
-                    
-            if d['AutoGears']:    #if auto gear, set baseline
-                d['AutoBaseline'] = 1
                 
             if d['Replay']:   #replay
                 cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
@@ -895,10 +884,10 @@ class ScoutServer(object):
             if match['comp_level'] == 'qm':
                 if match['alliances']['blue']['score'] == -1:
                     blueTeams = [match['alliances']['blue']['teams'][0][3:], match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:]]
-                    blueResult = self.predictScore(blueTeams)
+                    blueResult = game.predictScore(blueTeams)
                     blueRP = blueResult['fuelRP'] + blueResult['gearRP']
                     redTeams = [match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:], match['alliances']['red']['teams'][2][3:]]
-                    redResult = self.predictScore(redTeams)
+                    redResult = game.predictScore(redTeams)
                     redRP = redResult['fuelRP'] + redResult['gearRP']
                     if blueResult['score'] > redResult['score']:
                         blueRP += 2
@@ -940,50 +929,7 @@ class ScoutServer(object):
 
         
     
-    def predictScore(self, teams, level='quals'):
-        conn = sql.connect(self.datapath())
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        ballScore = []
-        endGame = []
-        autoGears = []
-        teleopGears = []
-        for n in teams:
-            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
-            assert len(average) < 2
-            if len(average):
-                entry = average[0]
-            else:
-                entry = [0]*8
-            autoGears.append(entry[2])
-            teleopGears.append(entry[3])
-            ballScore.append((entry[5]+entry[6]))
-            endGame.append((entry[7]))
-        retVal = {'score': 0, 'gearRP': 0, 'fuelRP': 0}
-        score = sum(ballScore[0:3]) + sum(endGame[0:3])
-        if sum(autoGears[0:3]) >= 1:
-            score += 60
-        else:
-            score += 40
-        if sum(autoGears[0:3]) >= 3:
-            score += 60
-        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
-            score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
-            score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
-            score += 40
-            if level == 'playoffs':
-                score += 100
-            else:
-                retVal['gearRP'] == 1
-        if sum(ballScore[0:3]) >= 40:
-            if level == 'playoffs':
-                score += 20
-            else:
-                retVal['fuelRP'] == 1
-        retVal['score'] = score
-        return retVal
+    
             
     #END OF CLASS
 

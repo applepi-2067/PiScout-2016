@@ -95,7 +95,8 @@ def generateTeamText(e):
     return text
     
 def generateChartData(e):
-    dp = {"match": e['match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+    dp = dict(CHART_FIELDS)
+    dp["match"]= e['match']
     
     dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
     dp['autogears'] += e['AutoGears']
@@ -106,3 +107,55 @@ def generateChartData(e):
     dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
     
     return dp
+    
+def predictScore(teams, level='quals'):
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        cursor = conn.cursor()
+        ballScore = []
+        endGame = []
+        autoGears = []
+        teleopGears = []
+        for n in teams:
+            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            assert len(average) < 2
+            if len(average):
+                entry = average[0]
+            else:
+                entry = [0]*8
+            autoGears.append(entry[2])
+            teleopGears.append(entry[3])
+            ballScore.append((entry[5]+entry[6]))
+            endGame.append((entry[7]))
+        retVal = {'score': 0, 'gearRP': 0, 'fuelRP': 0}
+        score = sum(ballScore[0:3]) + sum(endGame[0:3])
+        if sum(autoGears[0:3]) >= 1:
+            score += 60
+        else:
+            score += 40
+        if sum(autoGears[0:3]) >= 3:
+            score += 60
+        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
+            score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
+            score += 40
+        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
+            score += 40
+            if level == 'playoffs':
+                score += 100
+            else:
+                retVal['gearRP'] == 1
+        if sum(ballScore[0:3]) >= 40:
+            if level == 'playoffs':
+                score += 20
+            else:
+                retVal['fuelRP'] == 1
+        retVal['score'] = score
+        return retVal
+        
+def autoFlag(entry):
+    if (entry['AutoHighBalls'] or entry['TeleopHighBalls']) and (entry['AutoLowBalls'] or entry['AutoHighBalls']): 
+        return 1
+    if d['Hang'] and d['FailedHang']:
+        return 1
+    return 0
