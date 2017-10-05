@@ -67,3 +67,41 @@ def processSheet(scout):
         scout.set("AutoCenterSuccess", int(centerSuccess)) #21
 
         scout.submit()
+
+def generateTeamText(e):
+    text = {'auto':"", 'teleop1':"", 'teleop2':"", 'other':""}
+    text['auto'] += 'baseline, ' if e['AutoBaseline'] else ''
+    text['auto'] += 'side try, ' if e['AutoSideAttempt'] else ''
+    text['auto'] += 'center try, ' if e['AutoCenterAttempt'] else ''
+    text['auto'] += 'side peg, ' if e['AutoSideSuccess'] else ''
+    text['auto'] += 'center peg, ' if e['AutoCenterSuccess'] else ''
+    text['auto'] += str(e['AutoLowBalls']) + 'x low goal, ' if e['AutoLowBalls'] else ''
+    text['auto'] += str(e['AutoHighBalls']) + 'x high goal, ' if e['AutoHighBalls'] else ''
+    
+    text['teleop1'] += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
+    text['teleop1'] += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
+    
+    text['teleop2'] += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopHighBalls'] else ''
+    text['teleop2'] += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
+    
+    text['other'] = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
+    text['other'] += str(e['Fouls']) + 'x foul, ' if e['Fouls'] else ''
+    text['other'] += str(e['TechFouls']) + 'x tech foul, ' if e['TechFouls'] else ''
+    text['other'] += 'defense, ' if e['Defense'] else ''
+    text['other'] += 'feeder, ' if e['Feeder'] else ''
+    text['other'] += 'defended, ' if e['Defended'] else ''
+    
+    return text
+    
+def generateChartData(e):
+    dp = {"match": e['match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
+    
+    dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+    dp['autogears'] += e['AutoGears']
+    
+    dp['gears'] += e['TeleopGears']
+    dp['geardrop'] += e['TeleopGearDrops']
+    
+    dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+    
+    return dp

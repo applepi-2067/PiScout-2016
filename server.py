@@ -90,7 +90,7 @@ class ScoutServer(object):
         if len(averages):
             s = averages[0]
         else:
-            s = [0]*8 #generate zeros if no data exists for the team yet
+            s = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
             
         #if we have less than 4 entries, see if we can grab data from a previous event
         lastEvent = 0
@@ -116,10 +116,10 @@ class ScoutServer(object):
             if len(oldAverages):
                 oldData = oldAverages[0]
             else:
-                oldData = [0]*8 #generate zeros if no data exists for the team yet
+                oldData = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
         else:
             hidden = "hidden"
-            oldData = [0]*8
+            oldData = [0]*len(game.AVERAGE_FIELDS)
             lastEventCode = ""
             
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
@@ -135,37 +135,9 @@ class ScoutServer(object):
         output = ''
         dataset = []
         for e in entries:
-            # Important: the index of e refers to the number of the field set in main.py
-            # For example e[1] gets value #1 from main.py
-            dp = {"match": e['match'], "autoshoot":0, "shoot":0, "autogears":0, "gears":0, "geardrop":0}
-            a = ''
-            a += 'baseline, ' if e['AutoBaseline'] else ''
-            a += 'side try, ' if e['AutoSideAttempt'] else ''
-            a += 'center try, ' if e['AutoCenterAttempt'] else ''
-            a += 'side peg, ' if e['AutoSideSuccess'] else ''
-            a += 'center peg, ' if e['AutoCenterSuccess'] else ''
-            dp['autogears'] += e['AutoGears']
-            a += str(e['AutoLowBalls']) + 'x low goal, ' if e['AutoLowBalls'] else ''
-            a += str(e['AutoHighBalls']) + 'x high goal, ' if e['AutoHighBalls'] else ''
-            dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
 
-            d = ''
-            d += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
-            d += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
-            dp['gears'] += e['TeleopGears']
-            dp['geardrop'] += e['TeleopGearDrops']
-
-            sh = ''
-            sh += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopHighBalls'] else ''
-            sh += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
-            dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-
-            o = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
-            o += str(e['Fouls']) + 'x foul, ' if e['Fouls'] else ''
-            o += str(e['TechFouls']) + 'x tech foul, ' if e['TechFouls'] else ''
-            o += 'defense, ' if e['Defense'] else ''
-            o += 'feeder, ' if e['Feeder'] else ''
-            o += 'defended, ' if e['Defended'] else ''
+            dp = game.generateChartData(e)
+            text = game.generateTeamText(e)
 
             #Generate a row in the table for each match
             output += '''
@@ -177,12 +149,12 @@ class ScoutServer(object):
                 <td>{4}</td>
                 <td><a class="flag" href="javascript:flag({6},{7});">X</a></td>
                 <td class="hidden-xs"><a class="edit" href="/edit?key={8}">E</a></td>
-            </tr>'''.format(e['Match'], a[:-2], d[:-2], sh[:-2], o[:-2], 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Key'])
+            </tr>'''.format(e['Match'], *text.values(), 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Key'])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
             if not e['Flag']: #if flagged
                 dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
-            dataset.reverse() #reverse so that graph is in the correct order
+        dataset.reverse() #reverse so that graph is in the correct order
 
         #Grab the image from the blue alliance
         imcode = ''
@@ -211,11 +183,9 @@ class ScoutServer(object):
                 </div>'''.format(media['details']['image_partial'].replace('_l', '_m'))
                 break
 
-        #Every year, update the labels for the graphs. The data will come from the variable dataset
-        #Then update all the column headers and stuff
         with open('web/team.html', 'r') as file:
             page = file.read()
-        return page.format(n, output, s[1], s[2], s[3], s[4], s[5], s[6], s[7], str(dataset).replace("'",'"'), imcode, commentstr, hidden, oldData[1], oldData[2], oldData[3], oldData[4], oldData[5], oldData[6], oldData[7], lastEventCode)
+        return page.format(n, output, *s[1:], str(dataset).replace("'",'"'), imcode, commentstr, hidden, *oldData[1:], lastEventCode)
 
     # Called to flag a data entry
     @cherrypy.expose()
