@@ -48,12 +48,12 @@ class ScoutServer(object):
         else:
             data = conn.cursor().execute('SELECT * from lastThree ORDER BY apr DESC').fetchall()
         conn.close()
-        for key in game.AVERAGE_FIELDS:
+        for i,key in enumerate(game.AVERAGE_FIELDS):
             if key != "team":
                 table += '''
-                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="1" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
                 
-                <th class="titleColumn titleColumn1 text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="9" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key)
+                <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
         table += '''                            </tr>
                         </thead>
                         <tbody aria-live="polite" aria-relevant="all">'''
@@ -61,12 +61,12 @@ class ScoutServer(object):
             table += '''
                 <tr role="row">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(team['Team'])
-            for key in game.AVERAGE_FIELDS:
+            for i,key in enumerate(game.AVERAGE_FIELDS):
                 if key!= 'team':
                     table += '''
                         <td class="hidden-xs">{0}</td>
-                        <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
-                        '''.format(team[key])
+                        <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                        '''.format(team[key], i)
             table += '''</tr>'''
         
         with open('web/index.html', 'r') as file:
