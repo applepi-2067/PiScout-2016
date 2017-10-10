@@ -1,3 +1,4 @@
+import numpy as np
 
 SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
         "AutoLowBalls":0, "AutoHighBalls":0, "FloorIntake":0, "Feeder":0, "Defense":0, "Defended":0,
@@ -156,6 +157,71 @@ def predictScore(teams, level='quals'):
 def autoFlag(entry):
     if (entry['AutoHighBalls'] or entry['TeleopHighBalls']) and (entry['AutoLowBalls'] or entry['AutoHighBalls']): 
         return 1
-    if d['Hang'] and d['FailedHang']:
+    if entry['Hang'] and entry['FailedHang']:
         return 1
     return 0
+    
+def calcTotals(entries):
+    sums = dict(AVERAGE_FIELDS)
+    noDefense = dict(AVERAGE_FIELDS)
+    lastThree = dict(AVERAGE_FIELDS)
+    noDCount = 0
+    for key in sums:
+        sums[key] = []
+    for i, e in enumerate(entries):
+        sums['autogear'].append(e['AutoGears'])
+        sums['teleopgear'].append(e['TeleopGears'])
+        sums['autoballs'].append(e['AutoLowBalls']/3 + e['AutoHighBalls'])
+        sums['teleopballs'].append(e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3)
+        sums['geardrop'].append(e['TeleopGearDrops'])
+        sums['end'].append(e['Hang']*50)
+        sums['defense'].append(e['Defense'])
+        if not e['Defense']:
+            noDefense['autogear'] += e['AutoGears']
+            noDefense['teleopgear'] += e['TeleopGears']
+            noDefense['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+            noDefense['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+            noDefense['geardrop'] += e['TeleopGearDrops']
+            noDefense['end'] += e['Hang']*50
+            noDefense['defense'] += e['Defense']
+            noDCount += 1
+        if i < 3:
+            lastThree['autogear'] += e['AutoGears']
+            lastThree['teleopgear'] += e['TeleopGears']
+            lastThree['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
+            lastThree['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+            lastThree['geardrop'] += e['TeleopGearDrops']
+            lastThree['end'] += e['Hang']*50
+            lastThree['defense'] += e['Defense']
+    
+    for key,val in lastThree.items():
+        lastThree[key] = round(val/3, 2)
+    for key,val in noDefense.items():
+        noDefense[key] = round(val/noDCount, 2)
+    average = dict(AVERAGE_FIELDS)
+    median = dict(AVERAGE_FIELDS)
+    maxes = dict(AVERAGE_FIELDS)
+    for key in sums:
+        if key != 'team' and key!= 'apr':
+            average[key] = round(np.mean(sums[key]), 2)
+            median[key] = round(np.median(sums[key]), 2)
+            maxes[key] = round(np.max(sums[key]), 2)
+    retVal = {'averages':average, 'median':median, 'maxes':maxes, 'noDefense':noDefense, 'lastThree':lastThree}
+    for key in retVal:
+        apr = retVal[key]['autoballs'] + retVal[key]['teleopballs'] + retVal[key]['end']
+        if retVal[key]['autogear']:
+            apr += 20 * min(retVal[key]['autogear'], 1)
+        if retVal[key]['autogear'] > 1:
+            apr += (retVal[key]['autogear'] - 1) * 10   
+            
+        apr += max(min(retVal[key]['teleopgear'], 2 - retVal[key]['autogear']) * 20, 0)
+        if retVal[key]['autogear'] + retVal[key]['teleopgear'] > 2:
+            apr += min(retVal[key]['teleopgear'] + retVal[key]['autogear'] - 2, 4) * 10
+        if retVal[key]['autogear'] + retVal[key]['teleopgear'] > 6:
+            apr += min(retVal[key]['teleopgear'] + retVal[key]['autogear'] - 6, 6) * 7
+        apr = int(apr)
+        retVal[key]['apr'] = apr
+    
+    return retVal
+            
+        

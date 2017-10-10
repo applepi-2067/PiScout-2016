@@ -5,7 +5,6 @@ import json
 from ast import literal_eval
 import requests
 import math
-from statistics import mode
 from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
@@ -199,9 +198,6 @@ class ScoutServer(object):
         conn.commit()
         conn.close()
         self.calcavg(num, self.getevent())
-        self.calcmaxes(num, self.getevent())
-        self.calcavgNoD(num, self.getevent())
-        self.calcavgLastThree(num, self.getevent())
         return ''
     
     #Called to recalculate all averages/maxes
@@ -213,9 +209,6 @@ class ScoutServer(object):
         data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
         for team in data:
             self.calcavg(team[0], self.getevent())
-            self.calcmaxes(team[0], self.getevent())
-            self.calcavgNoD(team[0], self.getevent())
-            self.calcavgLastThree(team[0], self.getevent())
         with open('web/recalculate.html', 'r') as file:
             page = file.read()
         return page
@@ -511,14 +504,11 @@ class ScoutServer(object):
                 
             if d['Replay']:   #replay
                 cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
-            cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d]) + ')')
+            cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d.values()]) + ')')
             conn.commit()
             conn.close()
 
             self.calcavg(d['Team'], event)
-            self.calcmaxes(d['Team'], event)
-            self.calcavgNoD(d['Team'], event)
-            self.calcavgLastThree(d['Team'], event)
             return ''
         else:
             raise cherrypy.HTTPError(401, "Error: Not authorized to submit match data")
@@ -548,41 +538,18 @@ class ScoutServer(object):
         globalconn.close()
         #delete the existing entry, if a team has no matches they will be removed
         cursor.execute('DELETE FROM averages WHERE Team=?',(n,))
-        #d0 is the identifier for team, Match is the identifier for match
+        cursor.execute('DELETE FROM median WHERE Team=?',(n,))
+        cursor.execute('DELETE FROM maxes WHERE Team=?',(n,))
+        cursor.execute('DELETE FROM lastThree WHERE Team=?',(n,))
+        cursor.execute('DELETE FROM noDefense WHERE Team=?',(n,))
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND flag=0 ORDER BY Match DESC', (n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
-        apr = 0
         # Iterate through all entries (if any exist) and sum all categories
         if entries:
-            for e in entries:
-                s['autogears'] += e['AutoGears']
-                s['teleopgears'] += e['TeleopGears']
-                s['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
-                s['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-                s['geardrop'] += e['TeleopGearDrops']
-                s['end'] += e['Hang']*50
-                s['defense'] += e['Defense']
-
-            # take the average (divide by number of entries)
-            for key,val in s.items():
-                s[key] = round(val/len(entries), 2)
-
-            # formula for calculating APR (point contribution)
-            apr = s['autoballs'] + s['teleopballs'] + s['end']
-            if s['autogears']:
-                apr += 20 * min(s['autogears'], 1)
-            if s['autogears'] > 1:
-                apr += (s['autogears'] - 1) * 10   
-                
-            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
-            if s['autogears'] + s['teleopgears'] > 2:
-                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
-            if s['autogears'] + s['teleopgears'] > 6:
-                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
-            apr = int(apr)
-
-            #replace the data entry with a new one
-            cursor.execute('INSERT INTO averages VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
+            totals = game.calcTotals(entries)
+            for key in totals:
+                totals[key]['team'] = n
+                #replace the data entries with new ones
+                cursor.execute('INSERT INTO ' + key + ' VALUES (' + ','.join([str(a) for a in totals[key].values()]) + ')')
         conn.commit()
         conn.close()
         
