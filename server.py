@@ -106,16 +106,20 @@ class ScoutServer(object):
                             lastEvent = 1
             
         if lastEvent:
-            hidden = ""
-            oldconn = sql.connect('data_' + lastEventCode + '.db')
-            oldconn.row_factory = sql.Row
-            oldcursor = oldconn.cursor()
-            oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
-            assert len(oldAverages) < 2 #ensure there aren't two entries for one team
-            if len(oldAverages):
-                oldData = oldAverages[0]
-            else:
-                oldData = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
+            try:
+                hidden = ""
+                oldconn = sql.connect('data_' + lastEventCode + '.db')
+                oldconn.row_factory = sql.Row
+                oldcursor = oldconn.cursor()
+                oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+                assert len(oldAverages) < 2 #ensure there aren't two entries for one team
+                if len(oldAverages):
+                    oldData = oldAverages[0]
+                else:
+                    oldData = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
+            except:
+                oldData = [0]*len(game.AVERAGE_FIELDS)
+            
         else:
             hidden = "hidden"
             oldData = [0]*len(game.AVERAGE_FIELDS)
@@ -753,6 +757,7 @@ class ScoutServer(object):
             cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
             cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
             cursor.execute('''CREATE TABLE noDefense (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+            cursor.execute('''CREATE TABLE median (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
         #next check for the global database

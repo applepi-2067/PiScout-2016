@@ -83,7 +83,7 @@ def generateTeamText(e):
     text['teleop1'] += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
     text['teleop1'] += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
     
-    text['teleop2'] += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopHighBalls'] else ''
+    text['teleop2'] += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopLowBalls'] else ''
     text['teleop2'] += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
     
     text['other'] = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
@@ -166,6 +166,7 @@ def calcTotals(entries):
     noDefense = dict(AVERAGE_FIELDS)
     lastThree = dict(AVERAGE_FIELDS)
     noDCount = 0
+    lastThreeCount = 0
     for key in sums:
         sums[key] = []
     for i, e in enumerate(entries):
@@ -193,11 +194,14 @@ def calcTotals(entries):
             lastThree['geardrop'] += e['TeleopGearDrops']
             lastThree['end'] += e['Hang']*50
             lastThree['defense'] += e['Defense']
+            lastThreeCount += 1
     
-    for key,val in lastThree.items():
-        lastThree[key] = round(val/3, 2)
-    for key,val in noDefense.items():
-        noDefense[key] = round(val/noDCount, 2)
+    if(lastThreeCount):
+        for key,val in lastThree.items():
+            lastThree[key] = round(val/lastThreeCount, 2)
+    if(noDCount):
+        for key,val in noDefense.items():
+            noDefense[key] = round(val/noDCount, 2)
     average = dict(AVERAGE_FIELDS)
     median = dict(AVERAGE_FIELDS)
     maxes = dict(AVERAGE_FIELDS)

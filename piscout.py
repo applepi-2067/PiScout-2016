@@ -179,9 +179,11 @@ class PiScout:
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
         min = np.argmin(values)
         retval = 0
+        rect = 0
         if values[min] < 45000:
             retval = startval + min
-        if retval:
+            rect = 1
+        if rect:
             cv2.rectangle(self.display, ((loc[0]+min)*16, loc[1]*16), ((loc[0]+min+1)*16, (loc[1]+1)*16), (0,50,150),3) 
         return retval
 
