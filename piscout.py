@@ -20,7 +20,7 @@ import serverinfo
 class PiScout:
     # Firstly, initializes the fields of a PiScout object
     # Then it starts the main loop of PiScout
-    # Requires a function "main" which contains the sheet configuration
+    # Requires a function "processSheet" which contains the sheet configuration
     # Loops indefinitely and triggers a response whenever a new sheet is added
     def __init__(self):
         print('PiScout Starting')
@@ -212,6 +212,7 @@ class PiScout:
         if self.data['Team'] == 0:
             print("Found an empty match, skipping")
             self.data = dict(game.SCOUT_FIELDS)
+            self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
         
         datapath = 'data_' + CURRENT_EVENT + '.db'
@@ -222,6 +223,7 @@ class PiScout:
         if history and not self.data['Replay']:
             print("Already processed this match, skipping")
             self.data = dict(game.SCOUT_FIELDS)
+            self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
 
         #the following block opens the GUI for piscout, this code shouldn't need to change
