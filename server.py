@@ -38,14 +38,7 @@ class ScoutServer(object):
         table = ''
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
-        if(cherrypy.session['mode'] == "averages"):
-            data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
-        elif (cherrypy.session['mode'] == "maxes"):
-            data = conn.cursor().execute('SELECT * FROM maxes ORDER BY apr DESC').fetchall()
-        elif (cherrypy.session['mode'] == "noD"):
-            data = conn.cursor().execute('SELECT * FROM noDefense ORDER BY apr DESC').fetchall()
-        else:
-            data = conn.cursor().execute('SELECT * from lastThree ORDER BY apr DESC').fetchall()
+        data = conn.cursor().execute('SELECT * FROM ? ORDER BY apr DESC', cherrypy.session['mode']).fetchall()
         conn.close()
         #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
@@ -637,11 +630,15 @@ class ScoutServer(object):
             tableCreate += ")"
             print(tableCreate)
             cursor.execute(tableCreate)
-            cursor.execute('''CREATE TABLE averages (team integer,apr integer,autogear real,teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-            cursor.execute('''CREATE TABLE maxes (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-            cursor.execute('''CREATE TABLE lastThree (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-            cursor.execute('''CREATE TABLE noDefense (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
-            cursor.execute('''CREATE TABLE median (team integer, apr integer, autogear real, teleopgear real, geardrop real, autoballs real, teleopballs real, end real, defense real)''')
+            tableCreate = ""
+            for key in game.AVERAGE_FIELDS:
+                tableCreate += key + " real, "
+            tableCreate = tableCreate[:-2]
+            cursor.execute('''CREATE TABLE averages ''' + tableCreate)
+            cursor.execute('''CREATE TABLE maxes ''' + tableCreate)
+            cursor.execute('''CREATE TABLE lastThree ''' + tableCreate)
+            cursor.execute('''CREATE TABLE noDefense ''' + tableCreate) 
+            cursor.execute('''CREATE TABLE median ''' + tableCreate)
             cursor.execute('''CREATE TABLE comments (team integer, comment text)''')
             conn.close()
         #next check for the global database
