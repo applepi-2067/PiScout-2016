@@ -8,6 +8,7 @@ import math
 from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
+import sys
 
 DEFAULT_MODE = 'averages'
 
@@ -801,7 +802,9 @@ datapath = 'data_' + CURRENT_EVENT + '.db'
 def keyFromItem(func):
     return lambda item: func(*item)
 
-conf = {
+    
+#Configuration used for local instance of the server
+localConf = {
      '/': {
          'tools.sessions.on': True,
          'tools.staticdir.root': os.path.abspath(os.getcwd())
@@ -819,14 +822,8 @@ conf = {
     }
 }
 
-#start method only to be used on the local version
-#def start():
-#    cherrypy.quickstart(ScoutServer(), '/', conf)
-
-#the following is run on the real server
-'''
-
-conf = {
+#Configuration for remote instance of the server
+remoteConf = {
          '/': {
                  'tools.sessions.on': True,
                  'tools.staticdir.root': os.path.abspath(os.getcwd())
@@ -844,6 +841,16 @@ conf = {
                 'server.socket_port': 80
         }
 }
-'''
-cherrypy.quickstart(ScoutServer(), '/', conf)
+
+#Determine which config to launch based on command line args
+if len(sys.argv) > 1:
+    if sys.argv[1] == "-local":
+        print("Starting local server")
+        cherrypy.quickstart(ScoutServer(), '/', localConf)
+    else:
+        print("Starting remote server")
+        cherrypy.quickstart(ScoutServer(), '/', remoteConf)
+else:
+    print("Starting remote server")
+    cherrypy.quickstart(ScoutServer(), '/', remoteConf)
 
