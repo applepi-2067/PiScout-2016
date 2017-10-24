@@ -30,14 +30,16 @@ class PiScout:
         self.labels = []
         self.shift = 0
 
+        #Uses relative path to Sheets subdirectory where scans are stored
         f = set(os.listdir("Sheets"))
         while True:
             sleep(0.25)
             files = set(os.listdir("Sheets")) #grabs all file names as a set
-            added = files - f #check if any files were added (if first iteration, added = files)
+            added = files - f #check if any files were added
             for file in added:
                 if '.jpg' in file or '.png' in file:
                     retval = self.loadsheet("Sheets/" + file)
+                    #If loading succeeds, process and add to the list of existing files, if the loading has a critical failure, add the file to the list. If the load has a temporary failure, retval is 0 and the file will be reprocessed on the next pass
                     if retval == 1:
                         game.processSheet(self)
                         f.add(file)
@@ -49,6 +51,8 @@ class PiScout:
     def loadsheet(self, imgpath, b=3, guess=False):
         self.data = dict(game.SCOUT_FIELDS)
         print('Loading a new sheet: ' + imgpath)
+        
+        #Sometimes the file has been created but the scanner has not yet finished writing to it. In these cases the resize will fail. Return 0 so the file will be reprocessed
         img = cv2.imread(imgpath)
         try:
             img = cv2.resize(img, (2456,3260))
@@ -58,11 +62,8 @@ class PiScout:
 
         # The first step is to figure out the four markers on the corners of the page
         # The next two lines will blur the image and extract the edges from the shapes
-        #blur = cv2.GaussianBlur(imgray,(b,b),0)
         blur = cv2.medianBlur(imgray, 2*b + 1)
-        #DEBUGGING
         #cv2.imwrite('Output/' + imgpath[7:] + '.b' + str(b) + '.jpg', blur)
-        #edges = cv2.Canny(blur,150,300)
         retVal, edges = cv2.threshold(blur,200,255, cv2.THRESH_BINARY)
         #cv2.imwrite('Output/' + imgpath[7:] + '.thresh.jpg', edges)
 
@@ -70,7 +71,6 @@ class PiScout:
         # Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
         # If the polygons have 4 sides and are relatively large, save the center coordinates in sq[]
         image, contours, hierarchy = cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
         sq = []
         sqsize = []
         for cont in contours:
@@ -100,13 +100,14 @@ class PiScout:
             marksize.append(sqsize[ind])
             print('Corner: ' + str(corner) + "  Size:" + str(sqsize[ind]))
 
+        #Make a copy of the list, sort the original, then calculate the median by averaging the middle 2 elements (of 4)
         u_marksize = marksize[:] #clone the list
         marksize.sort()
         median = (marksize[1] + marksize[2]) / 2
 
-        #this block contains illegal inefficient recursive nonsense to salvage crappy sheets
+        #This block contains code to attempt to recover a sheet where the marks are not properly detected. First it will try increasing blur, then a really small blur, before finally trying to guess the location of the final mark based on the other marks
         for i,m in enumerate(u_marksize):
-            if abs(1 - m/median) > 0.1: #if there is a size anomoly in markers, try some things
+            if abs(1 - m/median) > 0.1: #if there is a size anomaly in markers, try some things
                 print("Damaged marker detected, attempting fix: " + str(abs(1-m/median)))
                 if b < 13 and b != 1 and not guess:
                     print("Increasing gaussian blur to " + str(b+2))
@@ -131,7 +132,7 @@ class PiScout:
                     print('Guessing bottom right corner')
 
 
-        # Now, we fit apply a perspective transform
+        # Apply a perspective transform
         # The centers of the 4 marks become the 4 corners of the image
         pts1 = np.float32(marks)
         pts2 = np.float32([[0,0],[0,784],[560,0],[560,784]])
@@ -209,12 +210,14 @@ class PiScout:
 
     # Opens the GUI, preparing the data for submission
     def submit(self):
+        #If the match is empty, reset the data and display fields
         if self.data['Team'] == 0:
             print("Found an empty match, skipping")
             self.data = dict(game.SCOUT_FIELDS)
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
         
+        #Open the database and check if the match has already been processed
         datapath = 'data_' + CURRENT_EVENT + '.db'
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
@@ -226,7 +229,7 @@ class PiScout:
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
 
-        #the following block opens the GUI for piscout, this code shouldn't need to change
+        #Create and open the GUI to verify match data
         print("Found a new match, opening")
         output = ''
         for key, value in self.data.items():

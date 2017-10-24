@@ -9,27 +9,25 @@ from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
 
-# Update this value before every event
-# Use the event codes given by thebluealliance
 DEFAULT_MODE = 'averages'
 
 class ScoutServer(object):
+    #Make sure that database for current event exists on startup
     def __init__(self):
         self.database_exists(CURRENT_EVENT)
     
+    #Home page
     @cherrypy.expose
     def index(self, m='', e=''):
         
-        #First part is to handle event selection. When the event is changed, a POST request is sent here.
-        illegal = '' #i competely forget what this variable does, just leave it
+        #Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
             if os.path.isfile('data_' + e + '.db'):
                 cherrypy.session['event'] = e
-            else:
-                illegal = e
         if 'event' not in cherrypy.session:
             cherrypy.session['event'] = CURRENT_EVENT
-            
+        
+        #Handle mode selection. When the mode is changed, a POST request is sent here.
         if m != '':
             cherrypy.session['mode'] = m
         if 'mode' not in cherrypy.session:
@@ -48,6 +46,7 @@ class ScoutServer(object):
         else:
             data = conn.cursor().execute('SELECT * from lastThree ORDER BY apr DESC').fetchall()
         conn.close()
+        #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
             if key != "team":
                 table += '''
@@ -57,6 +56,8 @@ class ScoutServer(object):
         table += '''                            </tr>
                         </thead>
                         <tbody aria-live="polite" aria-relevant="all">'''
+        
+        #Generate a row for each team
         for team in data:
             table += '''
                 <tr role="row">
@@ -78,21 +79,25 @@ class ScoutServer(object):
     def team(self, n="238"):
         if not n.isdigit():
             raise cherrypy.HTTPRedirect('/')
-        if int(n)==666:
-            raise cherrypy.HTTPError(403, 'Satan has commanded me to not disclose his evil strategy secrets.')
+
+        #Grab team data
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
         averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+        comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
+        conn.close()
         assert len(averages) < 2 #ensure there aren't two entries for one team
         if len(averages):
             s = averages[0]
         else:
             s = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
             
-        #if we have less than 4 entries, see if we can grab data from a previous event
+            
+        #If we have less than 4 entries, see if we can grab data from a previous event
         lastEvent = 0
+        hidden = "hidden"
         if(len(entries) < 4):
             globalconn = sql.connect('global.db')
             globalconn.row_factory = sql.Row
@@ -103,11 +108,9 @@ class ScoutServer(object):
                     if teamEvents['Event' + str(i)]:
                         if teamEvents['Event' + str(i)] != cherrypy.session['event']:
                             lastEventCode = teamEvents['Event' + str(i)]
-                            lastEvent = 1
-            
+                            lastEvent = 1         
         if lastEvent:
             try:
-                hidden = ""
                 oldconn = sql.connect('data_' + lastEventCode + '.db')
                 oldconn.row_factory = sql.Row
                 oldcursor = oldconn.cursor()
@@ -115,30 +118,28 @@ class ScoutServer(object):
                 assert len(oldAverages) < 2 #ensure there aren't two entries for one team
                 if len(oldAverages):
                     oldData = oldAverages[0]
+                    hidden = "" #This will unhide the section to disaply old data
                 else:
                     oldData = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
+                oldconn.close()
             except:
                 oldData = [0]*len(game.AVERAGE_FIELDS)
+                oldconn.close()
             
         else:
-            hidden = "hidden"
             oldData = [0]*len(game.AVERAGE_FIELDS)
             lastEventCode = ""
-            
-        comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
-        conn.close()
+
 
         # Generate html for comments section
         commentstr = ''
         for comment in comments:
             commentstr += '<div class="commentbox"><p>{0}</p></div>'.format(comment[1])
 
-        #Iterate through all the data entries and generate some text to go in the main table
-        #this entire section will need to change from year to year
         output = ''
         dataset = []
         for e in entries:
-
+            #Generate chart data and table text for this match entry
             dp = game.generateChartData(e)
             text = game.generateTeamText(e)
 
@@ -155,9 +156,9 @@ class ScoutServer(object):
             </tr>'''.format(e['Match'], *text.values(), 'style="color: #B20000"' if e['Flag'] else '', e['Match'], e['Flag'], e['Key'])
             for key,val in dp.items():
                 dp[key] = round(val, 2)
-            if not e['Flag']: #if flagged
+            if not e['Flag']:
                 dataset.append(dp) #add it to dataset, which is an array of data that is fed into the graphs
-        dataset.reverse() #reverse so that graph is in the correct order
+        dataset.reverse() #reverse data so that graph is in the correct order
 
         #Grab the image from the blue alliance
         imcode = ''
@@ -169,7 +170,7 @@ class ScoutServer(object):
             if m.status_code == 400:
                 m = []
         except:
-            pass #swallow the error lol
+            pass #swallow the error
         for media in m:
             if media['type'] == 'imgur': #check if there's an imgur image on TBA
                 imcode = '''<br>
@@ -190,7 +191,7 @@ class ScoutServer(object):
             page = file.read()
         return page.format(n, output, *s[1:], str(dataset).replace("'",'"'), imcode, commentstr, hidden, *oldData[1:], lastEventCode)
 
-    # Called to flag a data entry
+    # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
     @cherrypy.expose()
     def flag(self, num='', match='', flagval=0):
         if not (num.isdigit() and match.isdigit()):
@@ -204,7 +205,7 @@ class ScoutServer(object):
         self.calcavg(num, self.getevent())
         return ''
     
-    #Called to recalculate all averages/maxes
+    #Called to recalculate all calculated values
     @cherrypy.expose()
     def recalculate(self):
         conn = sql.connect(self.datapath())
@@ -246,6 +247,8 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         output = '<div>'
+        
+        #Grab data for each team, and generate a statbox
         for index, n in enumerate(nums):
             if not n:
                 continue
@@ -257,7 +260,6 @@ class ScoutServer(object):
                 entry = average[0]
             else:
                 entry = [0]*len(game.AVERAGE_FIELDS)
-            # Add a data entry for each team
             output += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
@@ -280,14 +282,14 @@ class ScoutServer(object):
         teamCharts = ''
         dataset = []
         colors = ["#FF0000", "#000FFF", "#1DD300", "#C100E3", "#AF0000", "#000666", "#0D5B000", "#610172"]
+        
+        #For each team, grab each match entry and generate chart data, then add them to the graph
         for idx, n in enumerate(nums):
             if not n:
                 continue
             entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match ASC', (n,)).fetchall()
 
             for index, e in enumerate(entries):
-            # Important: the index of e refers to the number of the field set in main.py
-                # For example e[1] gets value #1 from main.py
                 if(not isinstance(e, tuple)):
                     dp = game.generateChartData(e)
         
@@ -355,11 +357,11 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        #start a div table for the comparison
-        #to later be formatted with sum APR
+        
         teamsBlue = []
         teamsRed = []
-        #iterate through all six teams
+        
+        #iterate through all six teams and grab data
         for i,n in enumerate(numsBlue):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
@@ -389,12 +391,14 @@ class ScoutServer(object):
             teamsRed.append(n)
             teamsRed.extend(entry[1:-1])
         
+        #Predict scores
         blue_score = game.predictScore(numsBlue, level)['score']
         red_score = game.predictScore(numsRed, level)['score']
         blue_score = int(blue_score)
         red_score = int(red_score)
         
-        prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score))) #calculates win probability from 2016 data
+        #Calculate win probability. Currently uses regression from 2016 data, this should be updated
+        prob_red = 1/(1+math.e**(-0.08099*(red_score - blue_score)))
         conn.close()
         with open('web/alliances.html', 'r') as file:
             page = file.read()
@@ -411,6 +415,7 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         
+        #Get match data
         m = self.getMatches(event, n)
 
         output = ''
@@ -430,6 +435,8 @@ class ScoutServer(object):
                 match['value'] += 3000
 
         m = sorted(m, key=lambda k: k['value'])
+        
+        #For each match, generate a row in the table
         for match in m:
             if match['comp_level'] != 'qm':
                 match['num'] = match['comp_level'].upper() + ' ' + str(match['match_number'])
@@ -466,15 +473,13 @@ class ScoutServer(object):
             page = file.read()
         return page.format(": {0}".format(n) if n else "", output)
 
-    # Used by the scanning program to submit data, and used by comment system to submit data
-    # this won't ever need to change
+    # Used by the scanning program to submit data, and used by comment system to submit dat
     @cherrypy.expose()
     def submit(self, auth='', data='', event='', team='', comment=''):
         if not (data or team):
             return '''
                 <h1>FATAL ERROR</h1>
-                <h3>DATA CORRUPTION</h3>
-                <p>Erasing database to prevent further damage to the system.</p>'''
+                <h3>DATA CORRUPTION</h3>'''
 
         if data == 'json':
             return '[]' #bogus json for local version
@@ -485,6 +490,7 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
 
+        #If team is defined, this should be a comment
         if team:
             if not comment:
                 conn.close()
@@ -494,24 +500,31 @@ class ScoutServer(object):
             conn.close()
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
+        #If team is not defined, this should be scout data. First check auth key
         if auth == serverinfo.AUTH:
             d = literal_eval(data)
+            
+            #Check if data should be flagged due to conflicting game specific values
             flag = game.autoFlag(d)
             
-            m = self.getMatches(event)
-                    
+            #If match schedule is available, check if this is a real match and flag if bad
+            m = self.getMatches(event)    
             if m:
                 match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
                 teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
                 if not 'frc' + str(d['Team']) in teams:
                     flag = 1   
-                
+            
+            #If replay is marked, replace previous data
             if d['Replay']:   #replay
                 cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
+                
+            #Insert data into database
             cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d.values()]) + ')')
             conn.commit()
             conn.close()
-
+            
+            #Recalc stats for new data
             self.calcavg(d['Team'], event)
             return ''
         else:
@@ -523,6 +536,8 @@ class ScoutServer(object):
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        
+        #Check if this team has been added for this event in the globalDB and add if not 
         globalconn = sql.connect('global.db')
         globalconn.row_factory = sql.Row
         globalcursor = globalconn.cursor()
@@ -540,155 +555,24 @@ class ScoutServer(object):
             globalcursor.execute('INSERT INTO teamEvents (Team,Event1) VALUES (?,?)',(n,event))
         globalconn.commit()
         globalconn.close()
-        #delete the existing entry, if a team has no matches they will be removed
+        
+        
+        #Delete the existing entries, if a team has no matches they will be removed
         cursor.execute('DELETE FROM averages WHERE Team=?',(n,))
         cursor.execute('DELETE FROM median WHERE Team=?',(n,))
         cursor.execute('DELETE FROM maxes WHERE Team=?',(n,))
         cursor.execute('DELETE FROM lastThree WHERE Team=?',(n,))
         cursor.execute('DELETE FROM noDefense WHERE Team=?',(n,))
+        
+        
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND flag=0 ORDER BY Match DESC', (n,)).fetchall()
-        # Iterate through all entries (if any exist) and sum all categories
+        #If match entries exist, calc stats and put into appropriate tables
         if entries:
             totals = game.calcTotals(entries)
             for key in totals:
                 totals[key]['team'] = n
                 #replace the data entries with new ones
                 cursor.execute('INSERT INTO ' + key + ' VALUES (' + ','.join([str(a) for a in totals[key].values()]) + ')')
-        conn.commit()
-        conn.close()
-        
-        # Calculates average scores for a team
-    def calcavgNoD(self, n, event):
-        datapath = 'data_' + event + '.db'
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        #delete the existing entry, if a team has no matches they will be removed
-        cursor.execute('DELETE FROM noDefense WHERE team=?',(n,))
-        #d0 is the identifier for team, Match is the identifier for match
-        entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND Flag=0 AND Defense=0 ORDER BY Match DESC', (n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
-        apr = 0
-        # Iterate through all entries (if any exist) and sum all categories
-        if entries:
-            for e in entries:
-                s['autogears'] += e['AutoGears']
-                s['teleopgears'] += e['TeleopGears']
-                s['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
-                s['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-                s['geardrop'] += e['TeleopGearDrops']
-                s['end'] += e['Hang']*50
-                s['defense'] += e['Defense']
-
-            # take the average (divide by number of entries)
-            for key,val in s.items():
-                s[key] = round(val/len(entries), 2)
-
-            # formula for calculating APR (point contribution)
-            apr = s['autoballs'] + s['teleopballs'] + s['end']
-            if s['autogears']:
-                apr += 20 * min(s['autogears'], 1)
-            if s['autogears'] > 1:
-                apr += (s['autogears'] - 1) * 10   
-                
-            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
-            if s['autogears'] + s['teleopgears'] > 2:
-                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
-            if s['autogears'] + s['teleopgears'] > 6:
-                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
-            apr = int(apr)
-
-            #replace the data entry with a new one
-            cursor.execute('INSERT INTO noDefense VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
-        conn.commit()
-        conn.close()
-        
-    # Calculates average scores for a team
-    def calcavgLastThree(self, n, event):
-        datapath = 'data_' + event + '.db'
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        #delete the existing entry, if a team has no matches they will be removed
-        cursor.execute('DELETE FROM lastThree WHERE team=?',(n,))
-        #d0 is the identifier for team, Match is the identifier for match
-        entries = cursor.execute('SELECT * FROM scout WHERE Team=? AND Flag=0 ORDER BY Match DESC', (n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'defense': 0}
-        apr = 0
-        # Iterate through all entries (if any exist) and sum all categories
-        if entries:
-            entries = entries[0:3]
-            for e in entries:
-                s['autogears'] += e['AutoGears']
-                s['teleopgears'] += e['TeleopGears']
-                s['autoballs'] += e['AutoLowBalls']/3 + e['AutoLowBalls']
-                s['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopLowBalls']/3
-                s['geardrop'] += e['TeleopGearDrops']
-                s['end'] += e['Hang']*50
-                s['defense'] += e['Defense']
-
-            # take the average (divide by number of entries)
-            for key,val in s.items():
-                s[key] = round(val/len(entries), 2)
-
-            # formula for calculating APR (point contribution)
-            apr = s['autoballs'] + s['teleopballs'] + s['end']
-            if s['autogears']:
-                apr += 20 * min(s['autogears'], 1)
-            if s['autogears'] > 1:
-                apr += (s['autogears'] - 1) * 10   
-                
-            apr += max(min(s['teleopgears'], 2 - s['autogears']) * 20, 0)
-            if s['autogears'] + s['teleopgears'] > 2:
-                apr += min(s['teleopgears'] + s['autogears'] - 2, 4) * 10
-            if s['autogears'] + s['teleopgears'] > 6:
-                apr += min(s['teleopgears'] + s['autogears'] - 6, 6) * 7
-            apr = int(apr)
-
-            #replace the data entry with a new one
-            cursor.execute('INSERT INTO lastThree VALUES (?,?,?,?,?,?,?,?,?)',(n, apr, s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
-        conn.commit()
-        conn.close()
-        
-    def calcmaxes(self, n, event):
-        datapath = 'data_' + event + '.db'
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        
-        #delete entry, if the team has match records left it will be replaced later
-        cursor.execute('DELETE FROM maxes WHERE team=?',(n,))
-        entries = cursor.execute('SELECT * FROM scout WHERE Team = ? AND Flag=0 ORDER BY Match DESC',(n,)).fetchall()
-        s = {'autogears': 0, 'teleopgears': 0, 'geardrop': 0, 'autoballs': 0, 'teleopballs':0, 'end': 0, 'apr':0, 'defense': 0 }
-        apr = 0
-        # Iterate through all entries (if any exist) and sum all categories
-        if entries:
-            for e in entries:
-                s['autogears'] = max(s['autogears'], e['AutoGears'])
-                s['teleopgears'] = max(s['teleopgears'], e['TeleopGears'])
-                s['autoballs'] = max(s['autoballs'], (e['AutoLowBalls']/3 + e['AutoHighBalls']))
-                s['teleopballs'] = max(s['teleopballs'], (e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3))
-                s['geardrop'] = max(s['geardrop'], e['TeleopGearDrops'])
-                s['end'] = max(s['end'], e['Hang']*50)
-                s['defense'] = max(s['defense'], e['Defense'])
-                apr = (e['AutoLowBalls']/3 + e['AutoHighBalls']) + (e['TeleopLowBalls']/9 + e['AutoHighBalls']/3) + e['Hang']*50
-                if e['AutoGears']:
-                    apr += 60
-                if e['AutoGears'] > 1:
-                    apr += (e['AutoGears'] - 1) * 30   
-                    
-                apr += min(min(e['TeleopGears'], 2 - e['AutoGears']) * 20, 0)
-                if e['AutoGears'] + e['TeleopGears'] > 2:
-                    apr += min(e['TeleopGears'] + e['AutoGears'] - 2, 4) * 10
-                if e['AutoGears'] + e['TeleopGears'] > 6:
-                    apr += min(e['TeleopGears'] + e['AutoGears'] - 6, 6) * 7
-                s['apr'] = max(s['apr'], (int(apr)))
-
-        for key,val in s.items():
-            s[key] = round(val, 2)
-        #replace the data entry with a new one
-
-        cursor.execute('INSERT INTO maxes VALUES (?,?,?,?,?,?,?,?,?)',(n, s['apr'], s['autogears'], s['teleopgears'], s['geardrop'], s['autoballs'], s['teleopballs'], s['end'], s['defense']))
         conn.commit()
         conn.close()
 
@@ -728,16 +612,15 @@ class ScoutServer(object):
         return m
 
     # Wrapper for requests, ensuring nothing goes terribly wrong
-    # This code is trash; it just works to avoid errors when running without internet
+    # Used to avoid errors when running without internet
     def get(self, req, params=""):
         a = None
         try:
             a = requests.get(req, params=params)
             if a.status_code == 404:
-                raise Exception #freaking stupid laziness
+                raise Exception 
         except:
-            #stupid lazy solution for local mode
-            a = requests.get('http://127.0.0.1:8000/submit?data=json')
+            a = '[]'
         return a
     
     def database_exists(self, event):
@@ -767,13 +650,16 @@ class ScoutServer(object):
             globalcursor.execute('''CREATE TABLE teamEvents (Team integer, Event1 text, Event2 text, Event3 text, Event4 text, Event5 text, Event6 text, Event7 text, Event8 text, Event9 text, Event10 text)''')
             globalconn.commit()
             globalconn.close()
-            
+    
+    #Page for editing match data
     @cherrypy.expose()
     def edit(self, key='', **params):
         datapath = 'data_' + self.getevent() + '.db'
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        
+        #If there is data, this is a post and data should be used to update the entry
         if len(params) > 1:
             sqlCommand = 'UPDATE scout SET '
             for name, value in params.items():
@@ -785,9 +671,8 @@ class ScoutServer(object):
             conn.commit()
             conn.close()
             self.calcavg(params['Team'], self.getevent())
-            self.calcmaxes(params['Team'], self.getevent())
-            self.calcavgNoD(params['Team'], self.getevent())
-            self.calcavgLastThree(params['Team'], self.getevent())
+        
+        #Grab all match data entries from the event, with flagged entries first, then sorted by team, then match
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor= conn.cursor()
@@ -797,13 +682,16 @@ class ScoutServer(object):
             key = entries[0][0]
         combobox = ''
 
+        #Generate the entry selection dropdown, placing a * in front of flagged entries
         for e in entries:
             combobox += '''<option id="{0}" value="{0}">{1} Team {2}: Match {3}</option>\n'''.format(e['Key'], "*" if e['Flag'] else "", e['Team'], e['Match'])
                          
         
+        #Grab the currently selected entry
         entry = cursor.execute('SELECT * from scout WHERE key=?', (key,)).fetchone()
         conn.close()
         
+        #Generate the Edit interface, with half the data on the left and half on the right
         i = 0
         leftEdit = ''
         rightEdit = ''
@@ -823,6 +711,7 @@ class ScoutServer(object):
         return page.format(combobox, entry['Team'], entry['Match'], entry['Key'], leftEdit, rightEdit)
         
             
+    #Page to show current rankings, and predict final rankings
     @cherrypy.expose()
     def rankings(self):
         event = self.getevent()
@@ -834,6 +723,7 @@ class ScoutServer(object):
         
         rankings = {}
         
+        #Grab latest rankings and match data from TBA
         headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
         m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
         r = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/rankings".format(event), params=headers)
@@ -848,12 +738,15 @@ class ScoutServer(object):
         else:
             raise cherrypy.HTTPError(503, "Unable to retrieve match data for this event.")
  
+        #Process current rankings into dict
         del r[0]
         for item in r:
             rankings[str(item[1])] = {'rp': round(item[2]*item[9],0), 'matchScore': item[3], 'currentRP': round(item[2]*item[9],0), 'currentMatchScore': item[3]}
             
+        #Iterate through all matches
         for match in m:
             if match['comp_level'] == 'qm':
+                #Un-played matches show a score of -1. Predict the outcome
                 if match['alliances']['blue']['score'] == -1:
                     blueTeams = [match['alliances']['blue']['teams'][0][3:], match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:]]
                     blueResult = game.predictScore(blueTeams)
@@ -875,6 +768,7 @@ class ScoutServer(object):
                         rankings[team]['rp'] += redRP
                         rankings[team]['matchScore'] += redResult['score']
 
+        #Sort rankings, then output into table
         output = ''
         for index,out in enumerate(sorted(rankings.items(), key=keyFromItem(lambda k,v: (v['rp'], v['matchScore'])), reverse=True)):
             output += '''
@@ -897,17 +791,13 @@ class ScoutServer(object):
             '''.format(index + 1, out[0], (int)(out[1]['rp']), (int)(out[1]['matchScore']), (int)(out[1]['currentRP']), (int)(out[1]['currentMatchScore']))
         with open('web/rankings.html', 'r') as file:
             page = file.read()
-        return page.format(output)
-
-        
-    
-    
-            
+        return page.format(output)  
     #END OF CLASS
 
 # Execution starts here
 datapath = 'data_' + CURRENT_EVENT + '.db'
 
+#Helper function used in rankings sorting
 def keyFromItem(func):
     return lambda item: func(*item)
 
