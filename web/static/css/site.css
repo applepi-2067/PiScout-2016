@@ -1,412 +1,385 @@
-#page_header {
-    background-color: #fff;
-    background-image: url('../img/bg-header.png');
-    background-repeat: repeat;
-    background-attachment: scroll;
-    background-size: auto auto;
-    color: #eeee00;
-    font-size: 24pt;
-    font-weight: bold;
-    position: relative;
+/* Team specific section */
+
+  /* Border at the very bottom of the page, below the footer */
+  #bottom_border
+  {
+    background-color:#2f2f2f;
+    height:48px;
+  }
+
+  /* Outermost header container. Change color property to set color of text next to logo */
+  #page_header
+  {
+    background-attachment:scroll;
+    background-color:#fff;
+    background-image:url(../img/bg-header.png);
+    background-repeat:repeat;
+    color:#ee0;
+    font-size:24pt;
+    font-weight:700;
+    position:relative;
+  }
+
+  /* Page title (underneath header). Change color to set text color */
+  #page_title
+  {
+    color:#EE0;
+    font-size:36pt;
+    font-weight:700;
+    padding:25px 0;
+  }
+
+  /* Top menu bar. Color sets text color of menu items. Border-bottom-color sets the color of the border below the menu (note that most of the current stripe width comes from the body_bg image */
+  #top_menu
+  {
+    background-attachment:scroll;
+    background-color:#fff;
+    background-image:url(../img/bg-nav.gif);
+    background-repeat:repeat-x;
+    border-bottom-color:#EE0;
+    border-bottom-style:solid;
+    border-bottom-width:1px;
+    color:#FFF;
+    height:38px;
+  }
+
+  /* Sets the background color and text color of dropdown menu items when selected */
+  .dropdown-menu > .active a,.dropdown-menu > .active a:focus,.dropdown-menu > .active a:hover
+  {
+    background-color:#EE0;
+    color:#000;
+  }
+
+  /* Sets the background and text color of top menu bar items and rotate button when selected */
+  .navbar-inverse .navbar-nav > .active > a,.navbar-inverse .navbar-nav > .active > a:focus,.navbar-inverse .navbar-nav > .active > a:hover,.navbar-inverse .navbar-nav > .open > a:focus,.navbar-inverse .navbar-nav > .open > a:hover,.rotateButton,.rotateButton:hover,.rotateButton:focus,.rotateButton.focus,.rotateButton:active,.rotateButton.active,.rotateButton:visited,.rotateButton:active:hover,.rotateButton.active:hover,.rotateButton:active:focus
+  {
+    background:#EE0;
+    color:#000;
+  }
+
+  /* Sets the un-selected text color of menu items in the top menu bar */
+  .navbar-inverse .navbar-nav > li > a
+  {
+    color:#FFF;
+  }
+
+  /* Sets the text color of menu items in the top menu bar when hovered */
+  .navbar-inverse .navbar-nav > li > a:hover
+  {
+    color:#9d9d9d;
+  }
+
+  /* Sets the background and text colors of the table headers */
+  th
+  {
+    background:#000;
+    border:1px solid #000;
+    color:#FFF;
+    padding:4px;
+  }
+
+  /* Sets the background color of even rows of tables. Can also add a color property here if different text colors are desired (but may need some modification to handle links correctly) */
+  tr:nth-child(even)
+  {
+    background:#EE0;
+  }
+
+  /* Sets the background color of odd rows of tables. Can also add a color property here if different text colors are desired (but may need some modification to handle links correctly)*/
+  tr:nth-child(odd)
+  {
+    background:#FFF;
+  }
+
+  /* Sets the color of links in tables */
+  #table_container a:link,#table_container a:visited,#table_container a:hover,#table_container a:active,a:link,a:visited,a:hover,a:active
+  {
+    color:#666;
+    text-decoration:underline;
+  }
+
+/* End Team specific section */ 
+
+
+#alliance_compare_container
+{
+  display:table;
+  text-align:center;
 }
 
-#top_menu {
-    background-color: #fff;
-    background-image: url('../img/bg-nav.gif');
-    background-repeat: repeat-x;
-    background-attachment: scroll;
-    background-clip: border-box;
-    background-origin: padding-box;
-    background-size: auto auto;
-    background-position-x: center;
-    background-position-y: top;
-    height: 38px;
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
-    border-bottom-color: #EEEE00;
-    color: #FFFFFF;
+#apr
+{
+  background-color:#F4F4F9;
+  border:2px solid #000;
+  text-align:center;
+  vertical-align:top;
+}
+
+#apr > p
+{
+  margin:0 2px;
 }
 
 #body_bg {
     background-image: url("../img/bg-body_header.png");
     background-repeat: repeat-x;
-    background-clip: border-box;
-    background-origin: padding-box;
-    background-position-x: center;
-    background-position-y: top;
-    background-size: auto auto;
+    background-position: center top;
 }
 
-#footer {
-    background-image: url('../img/footer-logo.png');
-    background-repeat: no-repeat;
-    background-position-x: right;
-    background-position-y: top;
-}
-
-#page_title {
-    font-size: 36pt;
-    padding: 25px 0px;
-    color: #EEEE00;
-    font-weight: bold;
-}
-
-@media print {
-    #page_title {
-        display:none;
-    }
-}
-
-@media (max-width: 767px) {
-    .team_table {
-        font-size: 8pt;
-    }
-}
-
-img {
-    max-width: 75%;
-}
-
-#left_nav {
-    vertical-align:top; 
-    float:left; 
-    width: 200px;
-    margin: 0px 20px 0px 0px;
-    }
-    
-#table_container {
-    vertical-align:top;  
-    overflow: hidden;
-}
-#table_container a:link {
-    color: #666;
-    text-decoration: underline;
-}
-#table_container a:visited {
-    color: #666;
-    text-decoration: underline;
-}
-#table_container a:hover {
-    color: #666;
-    text-decoration: underline;
-}
-#table_container a:active {
-    color: #666;
-    text-decoration: underline;
-}
-
-#bottom_border {
-    background-color: #2f2f2f;
-    height: 48px;
-}
-
-.statbox_container {
-    text-align: center;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-}
-
-.comparebox_container {
-    text-align:center; 
-    display: inline-block; 
-    margin: 16px;
-}
-
-@media (max-width: 767px){
-.comparebox_container {
-    margin: 0px;
-}
-}
-
-#alliance_compare_container
+#footer
 {
-    text-align: center;
-    display: table;
+  background-image:url(../img/footer-logo.png);
+  background-position:right top;
+  background-repeat:no-repeat;
 }
-@media (max-width: 767px) {
-    #alliance_compare_container {
-    display: block;
-    }
+
+#left_nav
+{
+  float:left;
+  margin:0 20px 0 0;
+  vertical-align:top;
+  width:200px;
+}
+
+#stats
+{
+  background-color:#F4F4F9;
+  border:2px solid #000;
+  height:100%;
+  text-align:center;
+  vertical-align:top;
+}
+
+#table_container
+{
+  overflow:hidden;
+  vertical-align:top;
 }
 
 .alliance_compare_cell
 {
-    text-align: center;
-    display: table-cell;
+  display:table-cell;
+  text-align:center;
 }
-@media (max-width: 767px) {
-    .alliance_compare_cell {
-    display: block;
-    margin-bottom: 10px;
-    }
+
+.clearfix::after
+{
+  clear:both;
+  content:"";
+  display:table;
+}
+
+.comparebox_container
+{
+  display:inline-block;
+  margin:16px;
+  text-align:center;
 }
 
 .edit_compare_cell
 {
-    text-align: right;
-    display: table-cell;
-    padding-left: 20px;
-    padding-right: 20px;
-}
-@media (max-width: 767px) {
-    .edit_compare_cell {
-    display: block;
-    margin-bottom: 10px;
-    }
+  display:table-cell;
+  padding-left:20px;
+  padding-right:20px;
+  text-align:right;
 }
 
-#apr {
-    border: 2px solid black;
-    text-align: center;
-    vertical-align: top;
-    background-color: #F4F4F9;
-}
-#apr > p {
-    margin: 0px 2px;
-}
-
-#stats {
-    border: 2px solid black;
-    height: 100%;
-    text-align: center;
-    vertical-align: top;
-    background-color:#F4F4F9
-}
-
-.statbox {
-    line-height: 0.5em;
-    margin: 0.68em;
-}
-
-body {
-    background-color: rgb(223, 225, 225);
-    background-image: url('../img/bg-body.png');
-    background-repeat: repeat;
-    background-attachment: scroll;
-    background-clip: border-box;
-    background-origin: padding-box;
-    background-position-x: center;
-    background-position-y: top;
-    background-size: auto auto;
-    padding: 0px 0px;
-    margin: 0px 0px;
-    color: #666;
-    font-family: verdana;
-}
-
-tr:nth-child(even) {
-    background: #EEEE00;
-}
-tr:nth-child(odd) {
-    background: #FFFFFF;
-}
-
-.match_table td:nth-child(n+2):nth-child(-n+4) {
-    color: #0000B8;
-}
-.match_table td:nth-child(8) {
-    color: #0000B8;
-}
-.match_table td:nth-child(n+5):nth-child(-n+7) {
-    color: #B20000;
-}
-.match_table td:nth-child(9) {
-    color: #B20000;
-}
-.match_table td:nth-child(n+10):nth-child(-n+12) {
-    color: #0000B8;
-}
-.match_table td:nth-child(16) {
-    color: #0000B8;
-}
-.match_table td:nth-child(n+13):nth-child(-n+15) {
-    color: #B20000;
-}
-.match_table td:nth-child(17) {
-    color: #B20000;
-}
-
-
-table {
-    width: auto;
-    margin: 0 auto;
-    text-align: center;
-    border-collapse: collapse;
-}
-td {
-    border: 1px solid black;
-    padding: 2px;
-}
-th {
-    border: 1px solid black;
-    padding: 4px;
-    background: #000000;
-    color: #FFFFFF;
-}
-
-.submit {
-    width: 200px;
-    height: 35px;
-    font-size: 18px;
-    margin: 5px 0px 10px 0px;
-}
-.field {
-	vertical-align: top;
-    font-size: 36px;
-    text-align: center;
-    width: 200px;
-    background-color: #F9F9EC;
-}
-.fieldsm {
-    font-size: 18px;
-    text-align: center;
-    width: 200px;
-    background-color: #F9F9EC;
-}
-
-.label {
-    text-align: center;
-    font-size: 24px;
-    line-height: 0em;
-    margin: 0.65em
-}
-
-.clearfix::after {
-    content: "";
-    clear: both;
-    display: table;
-}
-
-.navbar {
-    min-height: 35px;
-    height: 35px;
-    background: transparent;
-}
-.navbar-nav > li > a {
-    padding-top: 7px;
-    padding-bottom: 7px;
-}
-
-.navbar-header > a {
-    padding-top: 7px;
-    padding-bottom: 7px;
-}
-
-.navbar-form  input {
-    height: 27px;
-}
-
-.navbar-form button {
-    height: 27px;
-    padding-top: 2px;
-    padding-right: 12px;
-}
-
-.navbar-form { 
-    margin-top: 4px;
-}
-
-.navbar-inverse .navbar-nav > .active > a {
-    color: #000;
-    background: #EEEE00;
-}
-.navbar-inverse .navbar-nav > .active > a:focus {
-    color: #000;
-    background: #EEEE00;
-}
-.navbar-inverse .navbar-nav > .active > a:hover {
-    color: #000;
-    background: #EEEE00;
-}
-
-.navbar-inverse .navbar-nav > li > a {
-    color: #FFF;
-}
-
-.navbar-inverse .navbar-nav > li > a:hover {
-    color: #9d9d9d;
-}
-
-.navbar-inverse .navbar-nav > .open > a:focus {
-    color: #000;
-    background: #EEEE00;
-}
-
-.navbar-inverse .navbar-nav > .open > a:hover {
-    color: #000;
-    background: #EEEE00;
-}
-
-.navbar-collapse {
-    padding-left: 0px;
-    padding-right: 0px;
-    }
-    
-a:link {
-color: #666;
-text-decoration: underline;
-}
-a:visited {
-    color: #666;
-    text-decoration: underline;
-}
-a:hover {
-    color: #666;
-    text-decoration: underline;
-}
-a:active {
-    color: #666;
-    text-decoration: underline;
-}
-
-.navbar-form .form-control{
-    width: 150px;
-}
-
-.navbar-toggle {
-    background-color: #EEEE00;
-    margin-top: 3px;
-    height: 30px;
-}
-
-@media (max-width: 767px){
-.navbar-collapse {
-    background-color: #000000;
-    position: relative;
-    z-index: 1000;
-}
-}
-
-.rotateButton, .rotateButton:hover, .rotateButton:focus, .rotateButton.focus, .rotateButton:active, .rotateButton.active, .rotateButton:visited, .rotateButton:active:hover, .rotateButton.active:hover, .rotateButton:active:focus {
-    background: #EEEE00;
-    color: #000000;
-}
-
-.dropdown-menu > .active   a, .dropdown-menu > .active   a:focus, .dropdown-menu > .active   a:hover
+.field
 {
-    background-color: #EEEE00;
-    color: #000000;
+  background-color:#F9F9EC;
+  font-size:36px;
+  text-align:center;
+  vertical-align:top;
+  width:200px;
 }
 
+.fieldsm
+{
+  background-color:#F9F9EC;
+  font-size:18px;
+  text-align:center;
+  width:200px;
+}
+
+.header
+{
+  background-image:url(../img/updown.gif);
+}
+
+.headerSortDown
+{
+  background-image:url(../img/desc.gif);
+}
+
+.headerSortUp
+{
+  background-image:url(../img/asc.gif);
+}
+
+.label
+{
+  font-size:24px;
+  line-height:0;
+  margin:.65em;
+  text-align:center;
+}
+
+.match_table td:nth-child(n+2):nth-child(-n+4),.match_table td:nth-child(8),.match_table td:nth-child(n+10):nth-child(-n+12),.match_table td:nth-child(16)
+{
+  color:#0000B8;
+}
+
+.match_table td:nth-child(n+5):nth-child(-n+7),.match_table td:nth-child(9),.match_table td:nth-child(n+13):nth-child(-n+15),.match_table td:nth-child(17)
+{
+  color:#B20000;
+}
+
+.navbar
+{
+  background:transparent;
+  height:35px;
+  min-height:35px;
+}
+
+.navbar-collapse
+{
+  padding-left:0;
+  padding-right:0;
+}
+
+.navbar-form
+{
+  margin-top:4px;
+}
+
+.navbar-form .form-control
+{
+  width:150px;
+}
+
+.navbar-form button
+{
+  height:27px;
+  padding-right:12px;
+  padding-top:2px;
+}
+
+.navbar-form input
+{
+  height:27px;
+}
+
+.navbar-nav > li > a,.navbar-header > a
+{
+  padding-bottom:7px;
+  padding-top:7px;
+}
+
+.navbar-toggle
+{
+  background-color:#EE0;
+  height:30px;
+  margin-top:3px;
+}
+
+.statbox
+{
+  line-height:.5em;
+  margin:.68em;
+}
+
+.statbox_container
+{
+  display:flex;
+  text-align:center;
+}
+
+.submit
+{
+  font-size:18px;
+  height:35px;
+  margin:5px 0 10px;
+  width:200px;
+}
+
+.tablesorter-header
+{
+  background-position:center right;
+  background-repeat:no-repeat;
+  cursor:pointer;
+  padding-right:20px!important;
+}
+
+body
+{
+  background-attachment:scroll;
+  background-color:#dfe1e1;
+  background-image:url(../img/bg-body.png);
+  background-repeat:repeat;
+  color:#666;
+  font-family:verdana;
+  margin:0;
+  padding:0;
+}
+
+img
+{
+  max-width:75%;
+}
+
+table
+{
+  border-collapse:collapse;
+  margin:0 auto;
+  text-align:center;
+  width:auto;
+}
+
+td
+{
+  border:1px solid #000;
+  padding:2px;
+}
+
+/* Removes page title and URLs (inserted by bootstrap) from print so Alliance compare fits on a page */
 @media print {
-a[href]:after {
-    content: none;
-    }
+  #page_title
+  {
+    display:none;
+  }
+  
+  a[href]:after
+  {
+    content:none;
+  }
 }
 
-.tablesorter-header {
-    padding-right: 20px !important;
-	background-repeat: no-repeat;
-	background-position: center right;
-	cursor: pointer;
-}
-.header {
-    background-image: url("../img/updown.gif");
-}
-.headerSortUp {
-	background-image: url(../img/asc.gif);
-}
-.headerSortDown {
-	background-image: url(../img/desc.gif);
+/* Tweak styles for mobile for better display. Block display allows the elements to stack on top when they don't fit side by side */
+@media max-width 767px {
+  #alliance_compare_container
+  {
+    display:block;
+  }
+  
+  .alliance_compare_cell,.edit_compare_cell
+  {
+    display:block;
+    margin-bottom:10px;
+  }
+  
+  .comparebox_container
+  {
+    margin:0;
+  }
+  
+  .navbar-collapse
+  {
+    background-color:#000;
+    position:relative;
+    z-index:1000;
+  }
+  
+  .team_table
+  {
+    font-size:8pt;
+  }
 }
