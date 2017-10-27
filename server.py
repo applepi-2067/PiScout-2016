@@ -38,7 +38,8 @@ class ScoutServer(object):
         table = ''
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
-        data = conn.cursor().execute('SELECT * FROM ? ORDER BY apr DESC', cherrypy.session['mode']).fetchall()
+        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY apr DESC"
+        data = conn.cursor().execute(sqlCommand).fetchall()
         conn.close()
         #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
@@ -438,7 +439,7 @@ class ScoutServer(object):
                 match['num'] = match['match_number']
             output += '''
                 <tr role="row">
-                    <td><a href="alliances?b1={1}&b2={2}&b3={3]&r1={4}&r2={5}&r3={6}>{0}</a></td>
+                    <td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
                     <td class="hidden-xs">{1}</td>
                     <td class="hidden-xs">{2}</td>
                     <td class="hidden-xs">{3}</td>
