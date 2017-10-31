@@ -1,22 +1,8 @@
-# PiScout-2016
-Scouting system for the 2016 season
+# PiScout
+Scouting system originally developed by FRC 2067 (2016) and continued by FRC 238 (2017)+.
 
-Installation:
-Requires Python 3
+This software implements a "Scantron" style scouting system where information is collected by bubbling in paper forms which are then scanned in and processed by the software. Data is accessible via webpages on a local server with support for an additional remote server to make data accessible over the web.
 
-The dependencies zip file contains some JS libraries.
-Put the "js" folder inside the "public" directory.
-For example /public/js/amcharts.js references the amcharts library.
+For more information about the code structure/function, installation/operation, and how to use it for your team, see the Wiki
 
-To run the program, make sure you have these modules:
-- CherryPy 
-- MatPlotLib
-- NumPy
-- OpenCV 3.0
-- Requests
 
-For Windows users, you can use the .whl files provided in the zip to install these libraries. (using `pip install`)
-
-To run the program first start the local server by running server.py (you must leave this running). If you would like to scan files, run main.py
-
-Running upload.py uploads any matches that are stored locally in the queue.
