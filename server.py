@@ -631,10 +631,10 @@ class ScoutServer(object):
             tableCreate += ")"
             print(tableCreate)
             cursor.execute(tableCreate)
-            tableCreate = ""
+            tableCreate = "("
             for key in game.AVERAGE_FIELDS:
                 tableCreate += key + " real, "
-            tableCreate = tableCreate[:-2]
+            tableCreate = tableCreate[:-2]+ ")"
             cursor.execute('''CREATE TABLE averages ''' + tableCreate)
             cursor.execute('''CREATE TABLE maxes ''' + tableCreate)
             cursor.execute('''CREATE TABLE lastThree ''' + tableCreate)
