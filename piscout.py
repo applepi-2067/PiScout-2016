@@ -11,6 +11,7 @@ import sqlite3 as sql
 from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
+import json
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -178,7 +179,7 @@ class PiScout:
         end = loc[0]-startval+endval+1 #grid coordinate where the rangefield ends
 
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
-        min = np.argmin(values)
+        min = np.asscalar(np.argmin(values))
         retval = 0
         rect = 0
         if values[min] < 45000:
@@ -296,18 +297,12 @@ class PiScout:
     # Opens up the data in notepad, and lets the user make modifications
     # Afterward, it re-opens the GUI with the updated data
     def edit(self, event):
-        datastr = ''
-        for a in range(len(self.data)):
-            datastr += self.labels[a] + "=" + str(self.data[a]) + '\n'
         with open('piscout.txt', "w") as file:
-            file.write(datastr)
+          file.write(json.dumps(self.data, indent=4))
         os.system('piscout.txt')
         try:
-            d = []
-            with open('piscout.txt', 'r') as file:
-                for line in file:
-                    d.append(int(line.split('=')[1].replace('\n', '')))
-            self.data = d
+          with open('piscout.txt', 'r') as file:
+            self.data = json.load(file)
         except:
             self.message("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
         plt.close()
