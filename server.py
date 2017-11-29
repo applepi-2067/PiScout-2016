@@ -650,7 +650,6 @@ class ScoutServer(object):
                 tableCreate += key + " integer, "
             tableCreate = tableCreate[:-2]
             tableCreate += ")"
-            print(tableCreate)
             cursor.execute(tableCreate)
             tableCreate = "("
             for key in game.AVERAGE_FIELDS:
@@ -689,7 +688,6 @@ class ScoutServer(object):
                 sqlCommand += name + '=' + (value if value else 'NULL') + " , "
             sqlCommand = sqlCommand[:-2]
             sqlCommand+='WHERE key=' + str(key)
-            print(sqlCommand)
             cursor.execute(sqlCommand)
             conn.commit()
             conn.close()
@@ -719,7 +717,6 @@ class ScoutServer(object):
         leftEdit = ''
         rightEdit = ''
         for key in game.SCOUT_FIELDS:
-            print(key)
             if(key == 'Replay'):
                 continue
             if(i < len(game.SCOUT_FIELDS)/2):
