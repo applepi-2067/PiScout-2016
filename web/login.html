@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>PiScout</title>
+        <link rel="stylesheet" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
+        <link href="./static/css/site.css" rel="stylesheet" type="text/css">
+        <script src="./static/js/jquery.js"></script>
+        <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div id="page_header" class="hidden-xs hidden-sm">
+            <div class="container">
+                <img src="./static/img/default-logo.png" align="left" hspace="10" vspace="5"></img>
+                <span style="display:inline-block; padding-top:10px;">PiScout<br>
+                FRC Team 238/2067</span>
+                <br clear="left">
+            </div>
+        </div>
+        <div id="top_menu">
+            <div class="container">
+                <nav class="navbar navbar-inverse">
+                    <div class="container-fluid">
+                        <!-- Brand and toggle get grouped for better mobile display -->
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                                <span class="sr-only">Toggle navigation</span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                        </div>
+                        
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                            <ul class="nav navbar-nav">
+                                <li><a href="index">Home <span class="sr-only">(current)</span></a></li>
+                                <li><a href="rankings">Rankings</a></li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="compareTeams">Teams</a></li>
+                                        <li><a href="compareAlliances">Alliances</a></li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Matches<span class="caret"></span></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="matches?n=238">238 Matches</a></li>
+                                        <li><a href="matches">All Matches</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
+                                <li><a href="recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
+                                <li class="dropdown active">
+                                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></span></a>
+                                  <ul class="dropdown-menu">
+                                    <form method="post" action="login">
+                                      <div class="form-group">
+                                        <input type="text" class="form-control" placeholder="Password" name="auth">
+                                      </div>
+                                      <button type="submit" class="btn btn-default">Submit</button>
+                                    </form>
+                                  </ul>
+                                </li>
+                            </ul>
+                            <form class="navbar-form navbar-left" method="get" action="team">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" placeholder="Team Number" name="n" maxlength="4">
+                                </div>
+                                <button type="submit" class="btn btn-default">Submit</button>
+                            </form>
+                        </div><!-- /.navbar-collapse -->
+                    </div><!-- /.container-fluid -->
+                </nav>
+            </div>
+        </div>
+        <div id="body_bg">
+            <div class="container clearfix">
+                <div id="page_title" align="center">Login</div>
+                <div>
+                  <p style="color: #000; font-size: 40pt;">{0}</p>
+                </div>
+            </div>
+            <div id="footer" class="container hidden-sm hidden-xs">
+                <p>
+                    <em>FIRST</em> Robotics Competition Team 238<br>
+                    1 Crusader Way<br>
+                Manchester, NH 03103</p>
+                <p>&copy; Team 238 | <a href="http://frc238.org/legal/">Privacy and Tracking Policy</a></p>
+            </div>
+        </div>
+        <div id="bottom_border"></div>
+    </body>
+</html>

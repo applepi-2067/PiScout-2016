@@ -20,6 +20,10 @@ class ScoutServer(object):
     #Home page
     @cherrypy.expose
     def index(self, m='', e=''):
+    
+        #Add auth value to session if not present
+        if 'auth' not in cherrypy.session:
+          cherrypy.session['auth'] = ""
         
         #Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
@@ -69,6 +73,18 @@ class ScoutServer(object):
             page = file.read()
         return page.format(table, cherrypy.session['event'], cherrypy.session['mode'])
 
+    # Page to show result of login attempt
+    @cherrypy.expose()
+    def login(self, auth=''):
+      loginResult = "Login failed! Please check password"
+      if auth == serverinfo.AUTH:
+        cherrypy.session['auth'] = auth
+        loginResult = "Login successful"
+      
+      with open('web/login.html', 'r') as file:
+            page = file.read()
+      return page.format(loginResult)  
+        
     # Show a detailed summary for a given team
     @cherrypy.expose()
     def team(self, n="238"):
@@ -206,6 +222,8 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        if not cherrypy.session['auth'] == serverinfo.AUTH:
+          raise cherrypy.HTTPError(401, "Not authorized to perform recalculate. Please log in and try again.")          
         data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
         for team in data:
             self.calcavg(team[0], self.getevent())
@@ -490,6 +508,9 @@ class ScoutServer(object):
             if not comment:
                 conn.close()
                 raise cherrypy.HTTPRedirect('/team?n=' + str(team))
+            if not cherrypy.session['auth'] == serverinfo.AUTH:
+                conn.close()
+                raise cherrypy.HTTPError(401, "Error: Not authorized to submit comments. Please login and try again")
             cursor.execute('INSERT INTO comments VALUES (?, ?)', (team, comment))
             conn.commit()
             conn.close()
@@ -657,6 +678,9 @@ class ScoutServer(object):
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        
+        if not cherrypy.session['auth'] == serverinfo.AUTH:
+          raise cherrypy.HTTPError(401, "Not authorized to edit match data. Please log in and try again")
         
         #If there is data, this is a post and data should be used to update the entry
         if len(params) > 1:
