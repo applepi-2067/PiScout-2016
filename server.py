@@ -11,6 +11,7 @@ import serverinfo
 import sys
 
 DEFAULT_MODE = 'averages'
+localInstance = False;
 
 class ScoutServer(object):
     #Make sure that database for current event exists on startup
@@ -23,7 +24,10 @@ class ScoutServer(object):
     
         #Add auth value to session if not present
         if 'auth' not in cherrypy.session:
-          cherrypy.session['auth'] = ""
+          if localInstance:
+            cherrypy.session['auth'] = serverinfo.AUTH
+          else:
+            cherrypy.session['auth'] = ""
         
         #Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
@@ -865,6 +869,7 @@ remoteConf = {
 if len(sys.argv) > 1:
     if sys.argv[1] == "-local":
         print("Starting local server")
+        localInstance = True
         cherrypy.quickstart(ScoutServer(), '/', localConf)
     else:
         print("Starting remote server")
