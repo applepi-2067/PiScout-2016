@@ -1,0 +1,9 @@
+Output/
+Sheets/
+__pycache__/
+*.db
+*.whl
+*.json
+piscout.txt
+queue.txt
+piscout.ppk
