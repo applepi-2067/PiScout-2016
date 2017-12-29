@@ -173,6 +173,7 @@
   display:inline-block;
   margin:16px;
   text-align:center;
+  width: 100%;
 }
 
 .edit_compare_cell
@@ -244,7 +245,6 @@
 {
   padding-left:0;
   padding-right:0;
-  background: #000;
 }
 
 .navbar-form
@@ -356,7 +356,7 @@ td
 }
 
 /* Tweak styles for mobile for better display. Block display allows the elements to stack on top when they don't fit side by side */
-@media max-width 767px {
+@media (max-width: 767px) {
   #alliance_compare_container
   {
     display:block;
