@@ -1,4 +1,5 @@
 import numpy as np
+import sqlite3 as sql
 
 #Defines the fields stored in the "Scout" table of the database. This database stores the record for each match scan
 SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
@@ -119,8 +120,8 @@ def generateChartData(e):
     
 
 #Takes a set of team numbers and a string indicating quals or playoffs and returns a prediction for the alliances score and whether or not they will achieve any additional ranking points
-def predictScore(teams, level='quals'):
-        conn = sql.connect(self.datapath())
+def predictScore(datapath, teams, level='quals'):
+        conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         ballScore = []

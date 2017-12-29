@@ -404,13 +404,13 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*8
+                entry = [0]*len(game.AVERAGE_FIELDS)
             teamsRed.append(n)
             teamsRed.extend(entry[1:-1])
         
         #Predict scores
-        blue_score = game.predictScore(numsBlue, level)['score']
-        red_score = game.predictScore(numsRed, level)['score']
+        blue_score = game.predictScore(self.datapath(), numsBlue, level)['score']
+        red_score = game.predictScore(self.datapath(), numsRed, level)['score']
         blue_score = int(blue_score)
         red_score = int(red_score)
         
@@ -773,10 +773,10 @@ class ScoutServer(object):
                 #Un-played matches show a score of -1. Predict the outcome
                 if match['alliances']['blue']['score'] == -1:
                     blueTeams = [match['alliances']['blue']['teams'][0][3:], match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:]]
-                    blueResult = game.predictScore(blueTeams)
+                    blueResult = game.predictScore(self.datapath(), blueTeams)
                     blueRP = blueResult['fuelRP'] + blueResult['gearRP']
                     redTeams = [match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:], match['alliances']['red']['teams'][2][3:]]
-                    redResult = game.predictScore(redTeams)
+                    redResult = game.predictScore(self.datapath(), redTeams)
                     redRP = redResult['fuelRP'] + redResult['gearRP']
                     if blueResult['score'] > redResult['score']:
                         blueRP += 2
