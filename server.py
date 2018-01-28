@@ -114,13 +114,16 @@ class ScoutServer(object):
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
         sql_averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
+        sql_pit = cursor.execute('SELECT * FROM pitScout WHERE team=?', (n,)).fetchall()
         conn.close()
         assert len(sql_averages) < 2 #ensure there aren't two entries for one team
+        assert len(sql_pit) < 2
         if len(sql_averages):
-            averages = sql_averages[0]
+            averages = sql_averages[0]          
         else:
             averages = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS)) #generate zeros if no data exists for the team yet
-            
+        if len(sql_pit):
+            pit = sql_pit[0]  
         
         statbox = ""
         #If we have less than 4 entries, see if we can grab data from a previous event
@@ -185,6 +188,20 @@ class ScoutServer(object):
           for key in game.HIDDEN_AVERAGE_FIELDS:
             statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, averages[key])
         statbox += '''       </div>
+                        </div>
+                     </div>'''
+         
+        #If logged in, display pit scout data 
+        if cherrypy.session['auth'] == serverinfo.AUTH:
+          if(pit):
+            statbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Pit Scout</a></p>
+                    <div class="statbox_container">
+                        <div id="stats">'''
+            for key in game.PIT_SCOUT_FIELDS:
+              if (key != 'team') and (pit[key] != 0):
+                statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, pit[key])
+            statbox += '''       </div>
                         </div>
                      </div>'''
             
@@ -734,6 +751,11 @@ class ScoutServer(object):
                 tableCreate += key + " integer, "
             tableCreate = tableCreate[:-2]
             tableCreate += ")"
+            cursor.execute(tableCreate)
+            tableCreate = "CREATE TABLE pitScout ("
+            for key in game.PIT_SCOUT_FIELDS:
+              tableCreate += key + " integer, "
+            tableCreate = tableCreate[:-2]+ ")"
             cursor.execute(tableCreate)
             tableCreate = "("
             for key in game.AVERAGE_FIELDS:
