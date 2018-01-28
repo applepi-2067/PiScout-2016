@@ -190,8 +190,9 @@ class ScoutServer(object):
             
         # Generate html for comments section
         commentstr = ''
-        for comment in comments:
-            commentstr += '<div class="commentbox"><p>{0}</p></div>'.format(comment[1])
+        if cherrypy.session['auth'] == serverinfo.AUTH:
+          for comment in comments:
+              commentstr += '<div class="commentbox"><p>{0}</p></div>'.format(comment[1])
 
         output = ''
         dataset = []
