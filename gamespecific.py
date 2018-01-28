@@ -8,8 +8,9 @@ SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "A
         "FailedHang":0, "Replay":0, "AutoSideAttempt":0, "AutoSideSuccess":0, "AutoCenterAttempt":0,
         "AutoCenterSuccess":0, "Flag":0}
 
-#Defines the fields that are stored in the "averages" and similar tables of the database. These are the fields displayed on the home page of the website.
-AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0, "autoballs":0, "teleopballs":0, "end":0, "defense":0}
+#Defines the fields that are stored in the "averages" and similar tables of the database. These are the fields displayed on the home page of the website. Hidden average fields are only displayed when logged in or on local.
+AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0, "autoballs":0, "teleopballs":0}
+HIDDEN_AVERAGE_FIELDS = {"end":0, "defense":0}
 
 #Defines the fields displayed on the charts on the team and compare pages
 CHART_FIELDS = {"match":0, "autoshoot":0, "autogears":0, "gears":0, "geardrop":0, "shoot":0}

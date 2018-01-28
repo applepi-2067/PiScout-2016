@@ -56,6 +56,12 @@ class ScoutServer(object):
                 <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
                 
                 <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
+        if cherrypy.session['auth'] == serverinfo.AUTH:
+          for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+            table += '''
+            <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+            
+            <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
         table += '''                            </tr>
                         </thead>
                         <tbody aria-live="polite" aria-relevant="all">'''
@@ -71,6 +77,12 @@ class ScoutServer(object):
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                         '''.format(team[key], i)
+            if cherrypy.session['auth'] == serverinfo.AUTH:
+              for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+                table += '''
+                    <td class="hidden-xs">{0}</td>
+                    <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                    '''.format(team[key], i)
             table += '''</tr>'''
         
         with open('web/index.html', 'r') as file:
@@ -100,19 +112,19 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
-        averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+        sql_averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
         conn.close()
-        assert len(averages) < 2 #ensure there aren't two entries for one team
-        if len(averages):
-            s = averages[0]
+        assert len(sql_averages) < 2 #ensure there aren't two entries for one team
+        if len(sql_averages):
+            averages = sql_averages[0]
         else:
-            s = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
+            averages = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS)) #generate zeros if no data exists for the team yet
             
-            
+        
+        statbox = ""
         #If we have less than 4 entries, see if we can grab data from a previous event
         lastEvent = 0
-        hidden = "hidden"
         if(len(entries) < 4):
             globalconn = sql.connect('global.db')
             globalconn.row_factory = sql.Row
@@ -125,27 +137,57 @@ class ScoutServer(object):
                             lastEventCode = teamEvents['Event' + str(i)]
                             lastEvent = 1         
         if lastEvent:
-            try:
-                oldconn = sql.connect('data_' + lastEventCode + '.db')
-                oldconn.row_factory = sql.Row
-                oldcursor = oldconn.cursor()
-                oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
-                assert len(oldAverages) < 2 #ensure there aren't two entries for one team
-                if len(oldAverages):
-                    oldData = oldAverages[0]
-                    hidden = "" #This will unhide the section to disaply old data
-                else:
-                    oldData = [0]*len(game.AVERAGE_FIELDS) #generate zeros if no data exists for the team yet
-                oldconn.close()
-            except:
-                oldData = [0]*len(game.AVERAGE_FIELDS)
-                oldconn.close()
+          try:
+              oldconn = sql.connect('data_' + lastEventCode + '.db')
+              oldconn.row_factory = sql.Row
+              oldcursor = oldconn.cursor()
+              oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+              assert len(oldAverages) < 2 #ensure there aren't two entries for one team
+              if len(oldAverages):
+                  oldData = oldAverages[0]
+                  statbox += '''<div class="comparebox_container">
+                  <p><a href="/team?n={0}" style="font-size: 32px;">Last Event - {0}</a></p>
+                  <div class="statbox_container">
+                      <div id="apr">
+                          <p style="font-size: 20pt;">APR</p>
+                          <p style="font-size: 40pt;">{1}</p>
+                      </div>
+                      <div id="stats">
+                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldAverages['APR'])
+                  for key in game.AVERAGE_FIELDS:
+                      if (key != 'team') and (key != 'apr'):
+                          statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldAverages[key])
+                  if cherrypy.session['auth'] == serverinfo.AUTH:
+                    for key in game.HIDDEN_AVERAGE_FIELDS:
+                      output += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldAverages[key])
+                  output += '''       </div>
+                                  </div>
+                               </div>'''
+          except:
+            pass #swallow the error
+
+
+
+        # Generate Statbox
+        statbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">This Event</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">{0}</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(averages['APR'])
+        for key in game.AVERAGE_FIELDS:
+          if (key != 'team') and (key != 'apr'):
+              statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, averages[key])
+        if cherrypy.session['auth'] == serverinfo.AUTH:
+          for key in game.HIDDEN_AVERAGE_FIELDS:
+            statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, averages[key])
+        statbox += '''       </div>
+                        </div>
+                     </div>'''
             
-        else:
-            oldData = [0]*len(game.AVERAGE_FIELDS)
-            lastEventCode = ""
-
-
         # Generate html for comments section
         commentstr = ''
         for comment in comments:
@@ -201,10 +243,10 @@ class ScoutServer(object):
                 <img src=http://chiefdelphi.com/media/img/{}></img>
                 </div>'''.format(media['details']['image_partial'].replace('_l', '_m'))
                 break
-
+                
         with open('web/team.html', 'r') as file:
             page = file.read()
-        return page.format(n, output, *s[1:], str(dataset).replace("'",'"'), imcode, commentstr, hidden, *oldData[1:], lastEventCode)
+        return page.format(n, output, statbox, str(dataset).replace("'",'"'), imcode, commentstr)
 
     # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
     @cherrypy.expose()
@@ -276,7 +318,7 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*len(game.AVERAGE_FIELDS)
+                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
             output += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
@@ -289,6 +331,9 @@ class ScoutServer(object):
             for key in game.AVERAGE_FIELDS:
                 if (key != 'team') and (key != 'apr'):
                     output += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            if cherrypy.session['auth'] == serverinfo.AUTH:
+              for key in game.HIDDEN_AVERAGE_FIELDS:
+                output += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             output += '''       </div>
                             </div>
                          </div>'''
@@ -377,7 +422,7 @@ class ScoutServer(object):
         
         teamsBlue = []
         teamsRed = []
-        
+        blueStatbox = ""
         #iterate through all six teams and grab data
         for i,n in enumerate(numsBlue):
             if not n.isdigit():
@@ -390,9 +435,27 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*len(game.AVERAGE_FIELDS)
-            teamsBlue.append(n)
-            teamsBlue.extend(entry[1:-1])
+                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
+            blueStatbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">{1}</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['APR'])
+            for key in game.AVERAGE_FIELDS:
+                if (key != 'team') and (key != 'apr'):
+                    blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            if cherrypy.session['auth'] == serverinfo.AUTH:
+              for key in game.HIDDEN_AVERAGE_FIELDS:
+                blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            blueStatbox += '''       </div>
+                            </div>
+                         </div>'''
+         
+        redStatbox = ""
         for i,n in enumerate(numsRed):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
@@ -404,9 +467,25 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*len(game.AVERAGE_FIELDS)
-            teamsRed.append(n)
-            teamsRed.extend(entry[1:-1])
+                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
+            redStatbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+                    <div class="statbox_container">
+                        <div id="apr">
+                            <p style="font-size: 20pt;">APR</p>
+                            <p style="font-size: 40pt;">{1}</p>
+                        </div>
+                        <div id="stats">
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['APR'])
+            for key in game.AVERAGE_FIELDS:
+                if (key != 'team') and (key != 'apr'):
+                    redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            if cherrypy.session['auth'] == serverinfo.AUTH:
+              for key in game.HIDDEN_AVERAGE_FIELDS:
+                redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            redStatbox += '''       </div>
+                            </div>
+                         </div>'''
         
         #Predict scores
         blue_score = game.predictScore(self.datapath(), numsBlue, level)['score']
@@ -419,7 +498,7 @@ class ScoutServer(object):
         conn.close()
         with open('web/alliances.html', 'r') as file:
             page = file.read()
-        return page.format(round((1-prob_red)*100,1), blue_score, *teamsBlue, round(prob_red*100,1), red_score, *teamsRed)
+        return page.format(round((1-prob_red)*100,1), blue_score, blueStatbox, round(prob_red*100,1), red_score, redStatbox)
 
     # Lists schedule data from TBA
     @cherrypy.expose()
@@ -657,6 +736,8 @@ class ScoutServer(object):
             cursor.execute(tableCreate)
             tableCreate = "("
             for key in game.AVERAGE_FIELDS:
+                tableCreate += key + " real, "
+            for key in game.HIDDEN_AVERAGE_FIELDS:
                 tableCreate += key + " real, "
             tableCreate = tableCreate[:-2]+ ")"
             cursor.execute('''CREATE TABLE averages ''' + tableCreate)
