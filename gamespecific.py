@@ -1,5 +1,6 @@
 import numpy as np
 import sqlite3 as sql
+from enum import IntEnum
 
 #Defines the fields stored in the "Scout" table of the database. This database stores the record for each match scan
 SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
@@ -13,10 +14,14 @@ AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0,
 HIDDEN_AVERAGE_FIELDS = {"end":0, "defense":0}
 
 #Define the fields collected from Pit Scouting to display on the team page
-PIT_SCOUT_FIELDS = {"team":0, "PitOrganization":0,"WiringQuality":0,"BumperQuality":0,"Batteries":0,"SillyWheels":0,"775Pros":0,"Swerve":0,"FloorPickup":0,"Line":0,"CenterSwitch":0,"SideSwitch":0,"SideScale":0,"C++":0,"Java":0,"LabVIEW":0}
+PIT_SCOUT_FIELDS = {"Team":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "775Pros":0, "Swerve":0, "FloorPickup":0, "Line":0, "CenterSwitch":0, "SideSwitch":0, "SideScale":0, "CPP":0, "Java":0, "LabVIEW":0}
 
 #Defines the fields displayed on the charts on the team and compare pages
 CHART_FIELDS = {"match":0, "autoshoot":0, "autogears":0, "gears":0, "geardrop":0, "shoot":0}
+
+class SheetType(IntEnum):
+  MATCH = 0
+  PIT = 1
         
      
 # Main method to process a full-page sheet
@@ -26,59 +31,92 @@ def processSheet(scout):
     for s in (0,16,32):
         #Sets the shift value (used when turning cell coordinates into pixel coordinates)
         scout.shiftDown(s)
+        
+        type = scout.rangefield('E-5', 0, 1)
+        scout.setType(type)
+        if(type == SheetType.MATCH):
+          #Match scouting sheet
+          num1 = scout.rangefield('J-5', 0, 9)
+          num2 = scout.rangefield('J-6', 0, 9)
+          num3 = scout.rangefield('J-7', 0, 9)
+          num4 = scout.rangefield('J-8', 0, 9)
+          scout.setMatchData("Team", 1000*num1 + 100*num2 + 10*num3 + num4)
 
-        num1 = scout.rangefield('J-5', 0, 9)
-        num2 = scout.rangefield('J-6', 0, 9)
-        num3 = scout.rangefield('J-7', 0, 9)
-        num4 = scout.rangefield('J-8', 0, 9)
-        scout.set("Team", 1000*num1 + 100*num2 + 10*num3 + num4)
+          match1 = scout.rangefield('AB-5', 0, 1)
+          match2 = scout.rangefield('AB-6', 0, 9)
+          match3 = scout.rangefield('AB-7', 0, 9)
+          scout.setMatchData("Match", 100*match1 + 10*match2 + match3)
 
-        match1 = scout.rangefield('AB-5', 0, 1)
-        match2 = scout.rangefield('AB-6', 0, 9)
-        match3 = scout.rangefield('AB-7', 0, 9)
-        scout.set("Match", 100*match1 + 10*match2 + match3)
+          scout.setMatchData("Fouls", scout.rangefield('L-16', 1, 4))
+          scout.setMatchData("TechFouls", scout.rangefield('L-17', 1, 4))
+          
+          scout.setMatchData("AutoGears", scout.boolfield('O-11'))
+          scout.setMatchData("AutoBaseline", int(0))
+          
+          highGoal = scout.boolfield('V-13')
+          lowGoal = scout.boolfield('V-14')
+          balls1 = scout.rangefield('F-12', 0, 9)
+          balls2 = scout.rangefield('F-13', 0, 9)
+          scout.setMatchData("AutoLowBalls", lowGoal * (balls1*10 + balls2))
+          scout.setMatchData("AutoHighBalls", highGoal * (balls1*10 + balls2))
+          
+          scout.setMatchData("FloorIntake", scout.boolfield('V-11'))
+          scout.setMatchData("Feeder", 0) #9
+          scout.setMatchData("Defense", scout.boolfield('V-17'))
+          scout.setMatchData("Defended", scout.boolfield('AB-17'))
+          scout.setMatchData("TeleopGears", scout.rangefield('AB-10', 1, 9))
+          scout.setMatchData("TeleopGearDrops", scout.rangefield('AB-11', 1, 9))
+          
+          balls1 = scout.rangefield('AA-13', 1, 10)
+          balls2 = scout.rangefield('AA-14', 11, 20)
+          balls3 = scout.rangefield('AA-15', 21, 30)
+          scout.setMatchData("TeleopLowBalls", lowGoal * 5 * (balls1 + balls2 + balls3))
+          scout.setMatchData("TeleopHighBalls", highGoal * 5 * (balls1 + balls2 + balls3))
+          
+          scout.setMatchData("Hang", scout.boolfield('G-16'))
+          scout.setMatchData("FailedHang", scout.boolfield('G-17'))
+          
+          scout.setMatchData("Replay", scout.boolfield('AK-5'))
+          
+          sideAttempt = scout.boolfield('F-11') and not scout.boolfield('O-11')
+          centerAttempt = scout.boolfield('J-11') and not scout.boolfield('O-11')
+          sideSuccess = scout.boolfield('F-11') and scout.boolfield('O-11')
+          centerSuccess = scout.boolfield('J-11') and scout.boolfield('O-11')
+          scout.setMatchData("AutoSideAttempt", int(sideAttempt))
+          scout.setMatchData("AutoCenterAttempt", int(centerAttempt))
+          scout.setMatchData("AutoSideSuccess", int(sideSuccess))
+          scout.setMatchData("AutoCenterSuccess", int(centerSuccess))
 
-        scout.set("Fouls", scout.rangefield('L-16', 1, 4))
-        scout.set("TechFouls", scout.rangefield('L-17', 1, 4))
+          scout.submit()
+        elif(type == SheetType.PIT):
+          #Pit scouting sheet
+          num1 = scout.rangefield('O-5', 0, 9)
+          num2 = scout.rangefield('O-6', 0, 9)
+          num3 = scout.rangefield('O-7', 0, 9)
+          num4 = scout.rangefield('O-8', 0, 9)
+          scout.setPitData("Team", 1000*num1 + 100*num2 + 10*num3 + num4)
+          
+          scout.setPitData("CPP", scout.boolfield('J-12'))
+          scout.setPitData("Java", scout.boolfield('K-12'))
+          scout.setPitData("LabVIEW", scout.boolfield('L-12'))
+          
+          scout.setPitData("Line", scout.boolfield('K-14'))
+          scout.setPitData("CenterSwitch", scout.boolfield('K-15'))
+          scout.setPitData("SideSwitch", scout.boolfield('K-16'))
+          scout.setPitData("SideScale", scout.boolfield('K-17'))
+          
+          scout.setPitData("SillyWheels", scout.boolfield('V-12'))
+          scout.setPitData("775Pros", scout.boolfield('V-13'))
+          scout.setPitData("Swerve", scout.boolfield('V-14'))
+          scout.setPitData("FloorPickup", scout.boolfield('V-16')) 
+          
+          scout.setPitData("PitOrganization", scout.rangefield('AF-12', 1, 3))
+          scout.setPitData("WiringQuality", scout.rangefield('AF-13', 1, 3))
+          scout.setPitData("BumperQuality", scout.rangefield('AF-14', 1, 3))
+          scout.setPitData("Batteries", scout.rangefield('AC-16', 1, 7))
+          
+          scout.submit()
         
-        scout.set("AutoGears", scout.boolfield('O-11'))
-        scout.set("AutoBaseline", int(0))
-        
-        highGoal = scout.boolfield('V-13')
-        lowGoal = scout.boolfield('V-14')
-        balls1 = scout.rangefield('F-12', 0, 9)
-        balls2 = scout.rangefield('F-13', 0, 9)
-        scout.set("AutoLowBalls", lowGoal * (balls1*10 + balls2))
-        scout.set("AutoHighBalls", highGoal * (balls1*10 + balls2))
-        
-        scout.set("FloorIntake", scout.boolfield('V-11'))
-        scout.set("Feeder", 0) #9
-        scout.set("Defense", scout.boolfield('V-17'))
-        scout.set("Defended", scout.boolfield('AB-17'))
-        scout.set("TeleopGears", scout.rangefield('AB-10', 1, 9))
-        scout.set("TeleopGearDrops", scout.rangefield('AB-11', 1, 9))
-        
-        balls1 = scout.rangefield('AA-13', 1, 10)
-        balls2 = scout.rangefield('AA-14', 11, 20)
-        balls3 = scout.rangefield('AA-15', 21, 30)
-        scout.set("TeleopLowBalls", lowGoal * 5 * (balls1 + balls2 + balls3))
-        scout.set("TeleopHighBalls", highGoal * 5 * (balls1 + balls2 + balls3))
-        
-        scout.set("Hang", scout.boolfield('G-16'))
-        scout.set("FailedHang", scout.boolfield('G-17'))
-        
-        scout.set("Replay", scout.boolfield('AK-5'))
-        
-        sideAttempt = scout.boolfield('F-11') and not scout.boolfield('O-11')
-        centerAttempt = scout.boolfield('J-11') and not scout.boolfield('O-11')
-        sideSuccess = scout.boolfield('F-11') and scout.boolfield('O-11')
-        centerSuccess = scout.boolfield('J-11') and scout.boolfield('O-11')
-        scout.set("AutoSideAttempt", int(sideAttempt))
-        scout.set("AutoCenterAttempt", int(centerAttempt))
-        scout.set("AutoSideSuccess", int(sideSuccess))
-        scout.set("AutoCenterSuccess", int(centerSuccess))
-
-        scout.submit()
 
 #Takes an entry from the Scout database table and generates text for display on the team page. This page has 4 columns, currently used for auto, 2 teleop, and other (like fouls and end game)
 def generateTeamText(e):

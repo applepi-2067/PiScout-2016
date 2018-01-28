@@ -27,8 +27,10 @@ class PiScout:
         print('PiScout Starting')
         self.sheet = None
         self.display = None
-        self.data = dict(game.SCOUT_FIELDS)
+        self.matchData = dict(game.SCOUT_FIELDS)
+        self.pitData = dict(game.PIT_SCOUT_FIELDS)
         self.labels = []
+        self.type = 0
         self.shift = 0
 
         #Uses relative path to Sheets subdirectory where scans are stored
@@ -50,7 +52,8 @@ class PiScout:
     # Loads a new scout sheet from an image
     # Processes the image and stores the result in self.sheet
     def loadsheet(self, imgpath, b=3, guess=False):
-        self.data = dict(game.SCOUT_FIELDS)
+        self.matchData = dict(game.SCOUT_FIELDS)
+        self.pitData = dict(game.PIT_SCOUT_FIELDS)
         print('Loading a new sheet: ' + imgpath)
         
         #Sometimes the file has been created but the scanner has not yet finished writing to it. In these cases the resize will fail. Return 0 so the file will be reprocessed
@@ -206,35 +209,54 @@ class PiScout:
         return retval
 
     # Adds a data entry into the data dictionary
-    def set(self, name, contents):
-        self.data[name] = contents
+    def setMatchData(self, name, contents):
+        self.matchData[name] = contents
+    
+    def setPitData(self, name, contents):
+        self.pitData[name] = contents
+        
+    def setType(self, type):
+      self.type = type
 
     # Opens the GUI, preparing the data for submission
     def submit(self):
-        #If the match is empty, reset the data and display fields
-        if self.data['Team'] == 0:
-            print("Found an empty match, skipping")
-            self.data = dict(game.SCOUT_FIELDS)
-            self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
-            return
         
-        #Open the database and check if the match has already been processed
-        datapath = 'data_' + CURRENT_EVENT + '.db'
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        history = cursor.execute('SELECT * FROM scout WHERE Team=? AND Match=?', (str(self.data['Team']),str(self.data['Match']))).fetchall()
-        if history and not self.data['Replay']:
-            print("Already processed this match, skipping")
-            self.data = dict(game.SCOUT_FIELDS)
+        if(self.type == game.SheetType.MATCH):
+        #If the match is empty, reset the data and display fields
+          if self.matchData['Team'] == 0:
+            print("Found an empty match, skipping")
+            self.matchData = dict(game.SCOUT_FIELDS)
+            self.pitData = dict(game.PIT_SCOUT_FIELDS)
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
+          #Open the database and check if the match has already been processed
+          datapath = 'data_' + CURRENT_EVENT + '.db'
+          conn = sql.connect(datapath)
+          conn.row_factory = sql.Row
+          cursor = conn.cursor()
+          history = cursor.execute('SELECT * FROM scout WHERE Team=? AND Match=?', (str(self.matchData['Team']),str(self.matchData['Match']))).fetchall()
+          if history and not self.matchData['Replay']:
+              print("Already processed this match, skipping")
+              self.data = dict(game.SCOUT_FIELDS)
+              self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
+              return 
+        elif(self.type == game.SheetType.PIT):
+          if self.pitData['Team'] == 0:
+              print("Found an empty pit sheet, skipping")
+              self.matchData = dict(game.SCOUT_FIELDS)
+              self.pitData = dict(game.PIT_SCOUT_FIELDS)
+              self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
+              return
 
-        #Create and open the GUI to verify match data
-        print("Found a new match, opening")
+        #Create and open the GUI to verify  data
+        print("Found new data, opening")
         output = ''
-        for key, value in self.data.items():
-            output += key + "=" + str(value) + '\n'
+        if self.type == game.SheetType.MATCH:
+          for key, value in self.matchData.items():
+              output += key + "=" + str(value) + '\n'
+        elif self.type == game.SheetType.PIT:
+          for key, value in self.pitData.items():
+              output += key + "=" + str(value) + '\n'
         fig = plt.figure('PiScout')
         fig.subplots_adjust(left=0, right=0.6)
         plt.subplot(111)
@@ -255,7 +277,8 @@ class PiScout:
         except AttributeError:
             print("Window resizing exploded, oh well.")
         plt.show()
-        self.data = dict(game.SCOUT_FIELDS)
+        self.matchData = dict(game.SCOUT_FIELDS)
+        self.pitData = dict(game.PIT_SCOUT_FIELDS)
         self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
     # Invoked by the "Save Data Offline" button
@@ -263,10 +286,16 @@ class PiScout:
     # Also stores in the local database
     def save(self, event):
         print("Queueing match for upload later")
-        with open("queue.txt", "a+") as file:
-            file.write(str(self.data) + '\n')
-        plt.close()
-        requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
+        if self.type == game.SheetType.MATCH:
+          with open("queue.txt", "a+") as file:
+              file.write(str(self.matchData) + '\n')
+          plt.close()
+          requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.matchData), 'auth':serverinfo.AUTH})
+        elif self.type == game.SheetType.PIT:
+          with open("pitQueue.txt", "a+") as file:
+            file.write(str(self.pitData) + '\n')
+          plt.close()
+          requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
 
     # Invoked by the "Upload Data" button
     # Uploads all data (including queue) to the online database
@@ -276,15 +305,24 @@ class PiScout:
         print("Attempting upload to server")
 
         try: #post it to piscout's ip address
-            requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
-            print("Uploading this match was successful")
-            if os.path.isfile('queue.txt'):
-                with open("queue.txt", "r") as file:
-                    for line in file:
-                        requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
-                        print("Uploaded an entry from the queue")
-                os.remove('queue.txt')
-            requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.data), 'auth':serverinfo.AUTH})
+            if self.type == game.SheetType.MATCH:
+              requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.matchData), 'auth':serverinfo.AUTH})
+              print("Uploading this match was successful")
+              if os.path.isfile('queue.txt'):
+                  with open("queue.txt", "r") as file:
+                      for line in file:
+                          requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
+                          print("Uploaded an entry from the queue")
+                  os.remove('queue.txt')
+            elif self.type == game.SheetType.PIT:
+              requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
+              print("Uploading this match was successful")
+              if os.path.isfile('pitQueue.txt'):
+                  with open("pitQueue.txt", "r") as file:
+                      for line in file:
+                          requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'pitData': line, 'auth':serverinfo.AUTH})
+                          print("Uploaded an entry from the queue")
+                  os.remove('queue.txt')
         except:
             print("Failed miserably")
             r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)
@@ -298,11 +336,17 @@ class PiScout:
     # Afterward, it re-opens the GUI with the updated data
     def edit(self, event):
         with open('piscout.txt', "w") as file:
-          file.write(json.dumps(self.data, indent=4))
+          if self.type == game.SheetType.MATCH:
+            file.write(json.dumps(self.matchData, indent=4))
+          elif self.type == game.SheetType.PIT:
+            file.write(json.dumps(self.pitData, indent=4))
         os.system('piscout.txt')
         try:
           with open('piscout.txt', 'r') as file:
-            self.data = json.load(file)
+            if self.type == game.SheetType.MATCH:
+              self.matchData = json.load(file)
+            elif self.type == game.SheetType.PIT:  
+              self.pitData = json.load(file)
         except:
             self.message("Malformed Data", "You messed something up; the data couldn't be read. Try again.")
         plt.close()

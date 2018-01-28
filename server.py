@@ -589,8 +589,8 @@ class ScoutServer(object):
 
     # Used by the scanning program to submit data, and used by comment system to submit dat
     @cherrypy.expose()
-    def submit(self, auth='', data='', event='', team='', comment=''):
-        if not (data or team):
+    def submit(self, auth='', data='', pitData='', event='', team='', comment=''):
+        if not (data or team or pitData):
             return '''
                 <h1>FATAL ERROR</h1>
                 <h3>DATA CORRUPTION</h3>'''
@@ -619,31 +619,42 @@ class ScoutServer(object):
 
         #If team is not defined, this should be scout data. First check auth key
         if auth == serverinfo.AUTH:
-            d = literal_eval(data)
-            
-            #Check if data should be flagged due to conflicting game specific values
-            flag = game.autoFlag(d)
-            
-            #If match schedule is available, check if this is a real match and flag if bad
-            m = self.getMatches(event)    
-            if m:
-                match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
-                teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
-                if not 'frc' + str(d['Team']) in teams:
-                    flag = 1   
-            
-            #If replay is marked, replace previous data
-            if d['Replay']:   #replay
-                cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d[0]),str(d[1])))
-                
-            #Insert data into database
-            cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d.values()]) + ')')
-            conn.commit()
-            conn.close()
-            
-            #Recalc stats for new data
-            self.calcavg(d['Team'], event)
-            return ''
+            if data:
+              d = literal_eval(data)
+              
+              #Check if data should be flagged due to conflicting game specific values
+              flag = game.autoFlag(d)
+              
+              #If match schedule is available, check if this is a real match and flag if bad
+              m = self.getMatches(event)    
+              if m:
+                  match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
+                  teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
+                  if not 'frc' + str(d['Team']) in teams:
+                      flag = 1   
+              
+              #If replay is marked, replace previous data
+              if d['Replay']:   #replay
+                  cursor.execute('DELETE from scout WHERE Team=? AND Match=?', (str(d['Team']),str(d['Match'])))
+                  
+              #Insert data into database
+              cursor.execute('INSERT INTO scout VALUES (NULL,' + ','.join([str(a) for a in d.values()]) + ')')
+              conn.commit()
+              conn.close()
+              
+              #Recalc stats for new data
+              self.calcavg(d['Team'], event)
+              return ''
+            elif pitData:
+              d = literal_eval(pitData)
+              try:
+                cursor.execute('DELETE from pitScout WHERE Team=?', str(d['Team']))
+              except:
+                pass
+              cursor.execute('INSERT INTO pitScout VALUES (' +','.join([str(a) for a in d.values()]) + ')')
+              conn.commit()
+              conn.close()
+              return ''
         else:
             raise cherrypy.HTTPError(401, "Error: Not authorized to submit match data")
 
