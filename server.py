@@ -70,7 +70,7 @@ class ScoutServer(object):
         for team in data:
             table += '''
                 <tr role="row">
-                    <td><a href="team?n={0}">{0}</a></td>'''.format(team['Team'])
+                    <td><a href="team?n={0}">{0}</a></td>'''.format(int(team['Team']))
             for i,key in enumerate(game.AVERAGE_FIELDS):
                 if key!= 'team':
                     table += '''
