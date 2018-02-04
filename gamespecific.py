@@ -1,23 +1,23 @@
 import numpy as np
 import sqlite3 as sql
 from enum import IntEnum
+import proprietary as prop
 
 #Defines the fields stored in the "Scout" table of the database. This database stores the record for each match scan
-SCOUT_FIELDS = {"Team":0, "Match":0, "Fouls":0, "TechFouls":0, "AutoGears":0, "AutoBaseline":0,
-        "AutoLowBalls":0, "AutoHighBalls":0, "FloorIntake":0, "Feeder":0, "Defense":0, "Defended":0,
-        "TeleopGears":0, "TeleopGearDrops":0, "TeleopLowBalls":0, "TeleopHighBalls":0, "Hang":0,
-        "FailedHang":0, "Replay":0, "AutoSideAttempt":0, "AutoSideSuccess":0, "AutoCenterAttempt":0,
-        "AutoCenterSuccess":0, "Flag":0}
+SCOUT_FIELDS = {"Team":0, "Match":0, "Start":0, "End":0, "ALine":0, "ASwitch":0,
+        "AScale":0, "Defense":0, "TXch":0, "TOwnSwitch":0, "TScale":0, 
+        "TOppSwitch":0, "SelfClimbAttempt":0, "SelfClimb":0, "SupportClimbAttempt":0,
+        "SupportClimb":0, "Replay":0, "Flag":0}
 
 #Defines the fields that are stored in the "averages" and similar tables of the database. These are the fields displayed on the home page of the website. Hidden average fields are only displayed when logged in or on local.
-AVERAGE_FIELDS = {"team":0, "apr":0, "autogear":0, "teleopgear":0, "geardrop":0, "autoballs":0, "teleopballs":0}
-HIDDEN_AVERAGE_FIELDS = {"end":0, "defense":0}
+AVERAGE_FIELDS = {"team":0, "apr":0, "ASwitch":0, "AScale":0, "TXch":0, "TOwnSwitch":0, "TScale":0, "TOppSwitch":0, "Climb":0, "Defense":0}
+HIDDEN_AVERAGE_FIELDS = {"CubeScore":0, "FirstP":0, "SecondP":0}
 
 #Define the fields collected from Pit Scouting to display on the team page
-PIT_SCOUT_FIELDS = {"Team":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "775Pros":0, "Swerve":0, "FloorPickup":0, "Line":0, "CenterSwitch":0, "SideSwitch":0, "SideScale":0, "CPP":0, "Java":0, "LabVIEW":0}
+PIT_SCOUT_FIELDS = {"Team":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "Pro775s":0, "Swerve":0, "FloorPickup":0, "Line":0, "CenterSwitch":0, "SideSwitch":0, "SideScale":0, "CPP":0, "Java":0, "LabVIEW":0}
 
 #Defines the fields displayed on the charts on the team and compare pages
-CHART_FIELDS = {"match":0, "autoshoot":0, "autogears":0, "gears":0, "geardrop":0, "shoot":0}
+CHART_FIELDS = {"match":0, "ASwitch":0, "AScale":0, "TXch":0, "TOwnSwitch":0, "TScale":0, "TOppSwitch":0, "TCubes":0, "Climb":0}
 
 class SheetType(IntEnum):
   MATCH = 0
@@ -36,57 +36,39 @@ def processSheet(scout):
         scout.setType(type)
         if(type == SheetType.MATCH):
           #Match scouting sheet
-          num1 = scout.rangefield('J-5', 0, 9)
-          num2 = scout.rangefield('J-6', 0, 9)
-          num3 = scout.rangefield('J-7', 0, 9)
-          num4 = scout.rangefield('J-8', 0, 9)
+          num1 = scout.rangefield('AB-5', 0, 9)
+          num2 = scout.rangefield('AB-6', 0, 9)
+          num3 = scout.rangefield('AB-7', 0, 9)
+          num4 = scout.rangefield('AB-8', 0, 9)
           scout.setMatchData("Team", 1000*num1 + 100*num2 + 10*num3 + num4)
 
-          match1 = scout.rangefield('AB-5', 0, 1)
-          match2 = scout.rangefield('AB-6', 0, 9)
-          match3 = scout.rangefield('AB-7', 0, 9)
+          match1 = scout.rangefield('J-6', 0, 1)
+          match2 = scout.rangefield('J-7', 0, 9)
+          match3 = scout.rangefield('J-8', 0, 9)
           scout.setMatchData("Match", 100*match1 + 10*match2 + match3)
-
-          scout.setMatchData("Fouls", scout.rangefield('L-16', 1, 4))
-          scout.setMatchData("TechFouls", scout.rangefield('L-17', 1, 4))
           
-          scout.setMatchData("AutoGears", scout.boolfield('O-11'))
-          scout.setMatchData("AutoBaseline", int(0))
+          scout.setMatchData("Replay", scout.boolfield('S-6'))
           
-          highGoal = scout.boolfield('V-13')
-          lowGoal = scout.boolfield('V-14')
-          balls1 = scout.rangefield('F-12', 0, 9)
-          balls2 = scout.rangefield('F-13', 0, 9)
-          scout.setMatchData("AutoLowBalls", lowGoal * (balls1*10 + balls2))
-          scout.setMatchData("AutoHighBalls", highGoal * (balls1*10 + balls2))
+          scout.setMatchData("Start", scout.rangefield('J-12', 0, 2))
+          scout.setMatchData("End", scout.rangefield('J-14', 0, 2))
           
-          scout.setMatchData("FloorIntake", scout.boolfield('V-11'))
-          scout.setMatchData("Feeder", 0) #9
+          scout.setMatchData("ALine", scout.boolfield('J-16'))
+          
+          scout.setMatchData("ASwitch", scout.countfield('J-17', 'L-17', 0))
+          scout.setMatchData("AScale", scout.countfield('J-18', 'L-18', 0))
+          
           scout.setMatchData("Defense", scout.boolfield('V-17'))
-          scout.setMatchData("Defended", scout.boolfield('AB-17'))
-          scout.setMatchData("TeleopGears", scout.rangefield('AB-10', 1, 9))
-          scout.setMatchData("TeleopGearDrops", scout.rangefield('AB-11', 1, 9))
           
-          balls1 = scout.rangefield('AA-13', 1, 10)
-          balls2 = scout.rangefield('AA-14', 11, 20)
-          balls3 = scout.rangefield('AA-15', 21, 30)
-          scout.setMatchData("TeleopLowBalls", lowGoal * 5 * (balls1 + balls2 + balls3))
-          scout.setMatchData("TeleopHighBalls", highGoal * 5 * (balls1 + balls2 + balls3))
+          scout.setMatchData("TXch", scout.countfield('V-11', 'AK-11', 0))
+          scout.setMatchData("TOwnSwitch", scout.countfield('V-12', 'AK-12', 0))
+          scout.setMatchData("TScale", scout.countfield('V-13', 'AK-13', 0))
+          scout.setMatchData("TOppSwitch", scout.countfield('V-14', 'AK-14', 0))
           
-          scout.setMatchData("Hang", scout.boolfield('G-16'))
-          scout.setMatchData("FailedHang", scout.boolfield('G-17'))
+          scout.setMatchData("SelfClimbAttempt", scout.boolfield('AD-17'))
+          scout.setMatchData("SelfClimb", scout.boolfield('AG-17'))
+          scout.setMatchData("SupportClimbAttempt", scout.countfield('AD-18', 'AE-18', 1))
+          scout.setMatchData("SupportClimb", scout.countfield('AG-18', 'AH-18', 1))
           
-          scout.setMatchData("Replay", scout.boolfield('AK-5'))
-          
-          sideAttempt = scout.boolfield('F-11') and not scout.boolfield('O-11')
-          centerAttempt = scout.boolfield('J-11') and not scout.boolfield('O-11')
-          sideSuccess = scout.boolfield('F-11') and scout.boolfield('O-11')
-          centerSuccess = scout.boolfield('J-11') and scout.boolfield('O-11')
-          scout.setMatchData("AutoSideAttempt", int(sideAttempt))
-          scout.setMatchData("AutoCenterAttempt", int(centerAttempt))
-          scout.setMatchData("AutoSideSuccess", int(sideSuccess))
-          scout.setMatchData("AutoCenterSuccess", int(centerSuccess))
-
           scout.submit()
         elif(type == SheetType.PIT):
           #Pit scouting sheet
@@ -106,7 +88,7 @@ def processSheet(scout):
           scout.setPitData("SideScale", scout.boolfield('K-17'))
           
           scout.setPitData("SillyWheels", scout.boolfield('V-12'))
-          scout.setPitData("775Pros", scout.boolfield('V-13'))
+          scout.setPitData("Pro775s", scout.boolfield('V-13'))
           scout.setPitData("Swerve", scout.boolfield('V-14'))
           scout.setPitData("FloorPickup", scout.boolfield('V-16')) 
           
@@ -115,142 +97,146 @@ def processSheet(scout):
           scout.setPitData("BumperQuality", scout.rangefield('AF-14', 1, 3))
           scout.setPitData("Batteries", scout.rangefield('AC-16', 1, 7))
           
-          scout.submit()
+          scout.submit()   
         
-
 #Takes an entry from the Scout database table and generates text for display on the team page. This page has 4 columns, currently used for auto, 2 teleop, and other (like fouls and end game)
 def generateTeamText(e):
     text = {'auto':"", 'teleop1':"", 'teleop2':"", 'other':""}
-    text['auto'] += 'baseline, ' if e['AutoBaseline'] else ''
-    text['auto'] += 'side try, ' if e['AutoSideAttempt'] else ''
-    text['auto'] += 'center try, ' if e['AutoCenterAttempt'] else ''
-    text['auto'] += 'side peg, ' if e['AutoSideSuccess'] else ''
-    text['auto'] += 'center peg, ' if e['AutoCenterSuccess'] else ''
-    text['auto'] += str(e['AutoLowBalls']) + 'x low goal, ' if e['AutoLowBalls'] else ''
-    text['auto'] += str(e['AutoHighBalls']) + 'x high goal, ' if e['AutoHighBalls'] else ''
+    text['auto'] += 'Start: '
+    text['auto'] += 'L' if e['Start'] == 0 else 'C' if e['Start'] == 1 else 'R'
+    text['auto'] += ', End: '
+    text['auto'] += 'L' if e['End'] == 0 else 'C' if e['End'] == 1 else 'R'
+    text['auto'] += ', '
+    text['auto'] += 'Line, ' if e['ALine'] else ''
+    text['auto'] += 'Switch: ' + str(e['ASwitch']) + ', ' if e['ASwitch'] else ''
+    text['auto'] += 'Scale: ' + str(e['AScale']) + ', ' if e['AScale'] else ''
+    text['auto'] = text['auto'][:-2]
     
-    text['teleop1'] += str(e['TeleopGears']) + 'x gears, ' if e['TeleopGears'] else ''
-    text['teleop1'] += str(e['TeleopGearDrops']) + 'x gears dropped, ' if e['TeleopGearDrops'] else ''
+    text['teleop1'] += 'Exchange: ' + str(e['TXch']) + ', ' if e['TXch'] else ''
+    text['teleop1'] += 'Own Switch: ' + str(e['TOwnSwitch']) + ', ' if e['TOwnSwitch'] else ''
+    text['teleop1'] = text['teleop1'][:-2]
     
-    text['teleop2'] += str(e['TeleopLowBalls']) + 'x low goal, ' if e['TeleopLowBalls'] else ''
-    text['teleop2'] += str(e['TeleopHighBalls']) + 'x high goal, ' if e['TeleopHighBalls'] else ''
+    text['teleop2'] += 'Scale: ' + str(e['TScale']) + ', ' if e['TScale'] else ''
+    text['teleop2'] += 'Opp Switch: ' + str(e['TOppSwitch']) + ', ' if e['TOppSwitch'] else ''
+    text['teleop2'] = text['teleop2'][:-2]
     
-    text['other'] = 'hang, ' if e['Hang'] else 'failed hang, ' if e['FailedHang'] else ''
-    text['other'] += str(e['Fouls']) + 'x foul, ' if e['Fouls'] else ''
-    text['other'] += str(e['TechFouls']) + 'x tech foul, ' if e['TechFouls'] else ''
-    text['other'] += 'defense, ' if e['Defense'] else ''
-    text['other'] += 'feeder, ' if e['Feeder'] else ''
-    text['other'] += 'defended, ' if e['Defended'] else ''
+    text['other'] = 'Climb, ' if e['SelfClimb'] else 'Failed Climb, ' if e['SelfClimbAttempt'] else ''
+    text['other'] += 'Supported: ' + str(e['SupportClimb']) + ', ' if e['SupportClimb'] else ''
+    text['other'] += 'Failed Support: ' + str(e['SupportClimbAttempt']) + ', ' if e['SupportClimbAttempt'] else ''
+    text['other'] += 'Defense, ' if e['Defense'] else ''
+    text['other'] = text['other'][:-2]
     
     return text
     
-
 #Takes an entry from the Scout database table and generates chart data. The fields in the returned dict must match the CHART_FIELDS definition at the top of this file
 def generateChartData(e):
     dp = dict(CHART_FIELDS)
     dp["match"]= e['match']
     
-    dp['autoshoot'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
-    dp['autogears'] += e['AutoGears']
+    dp['ASwitch'] += e['ASwitch']
+    dp['AScale'] += e['AScale']
     
-    dp['gears'] += e['TeleopGears']
-    dp['geardrop'] += e['TeleopGearDrops']
-    
-    dp['shoot'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
+    dp['TXch'] += e['TXch']
+    dp['TOwnSwitch'] += e['TOwnSwitch']
+    dp['TScale'] += e['TScale']
+    dp['TOppSwitch'] += e['TOppSwitch']
+    dp['TCubes'] += e['TOwnSwitch'] + e['TScale'] + e['TOppSwitch']
+    dp['Climb'] += 30*(e['SelfClimb'] + e['SupportClimb'])
     
     return dp
     
-
 #Takes a set of team numbers and a string indicating quals or playoffs and returns a prediction for the alliances score and whether or not they will achieve any additional ranking points
 def predictScore(datapath, teams, level='quals'):
         conn = sql.connect(datapath)
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        ballScore = []
-        endGame = []
-        autoGears = []
-        teleopGears = []
+        
+        autoRP = 0
+        climbRP = 0
+        climbTotal = 0
+        
+        aprTotal = 0
+
         for n in teams:
             average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*8
-            autoGears.append(entry[2])
-            teleopGears.append(entry[3])
-            ballScore.append((entry[5]+entry[6]))
-            endGame.append((entry[7]))
-        retVal = {'score': 0, 'gearRP': 0, 'fuelRP': 0}
-        score = sum(ballScore[0:3]) + sum(endGame[0:3])
-        if sum(autoGears[0:3]) >= 1:
-            score += 60
-        else:
-            score += 40
-        if sum(autoGears[0:3]) >= 3:
-            score += 60
-        elif sum(autoGears[0:3] + teleopGears[0:3]) >= 2:
-            score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 6:
-            score += 40
-        if sum(autoGears[0:3] + teleopGears[0:3]) >= 12:
-            score += 40
-            if level == 'playoffs':
-                score += 100
+                entry = [0]*len(AVERAGE_FIELDS + HIDDEN_AVERAGE_FIELDS)
+            
+            aprTotal += entry['apr']
+            
+            if(entry['SupportClimb'] + entry['Climb'] > 1):
+              climbRP = 1
             else:
-                retVal['gearRP'] == 1
-        if sum(ballScore[0:3]) >= 40:
-            if level == 'playoffs':
-                score += 20
-            else:
-                retVal['fuelRP'] == 1
-        retVal['score'] = score
+              climbTotal += entry['Climb']
+              
+            if(entry['ASwitch'] > 0.5):
+              autoRP = 1
+              
+        if (climbTotal > 1):
+          climbRP = 1
+              
+        retVal = {'score': 0, 'RP1': 0, 'RP2': 0}
+       
+        retVal['score'] = aprTotal
+        retVal['RP1'] = autoRP
+        retVal['RP2'] = climbRP
+        
         return retVal
 
 #Takes an entry from the Scout table and returns whether or not the entry should be flagged based on contradictory data.
 def autoFlag(entry):
-    if (entry['AutoHighBalls'] or entry['TeleopHighBalls']) and (entry['AutoLowBalls'] or entry['AutoHighBalls']): 
-        return 1
-    if entry['Hang'] and entry['FailedHang']:
+    if entry['SelfClimb'] and entry['SelfClimbAttempt']:
         return 1
     return 0
 
 #Takes a list of Scout table entries and returns a nested dictionary of the statistical calculations (average, maxes, median, etc.) of each field in the AVERAGE_FIELDS definition
 def calcTotals(entries):
     sums = dict(AVERAGE_FIELDS)
+    sums.update(HIDDEN_AVERAGE_FIELDS)
     noDefense = dict(AVERAGE_FIELDS)
+    noDefense.update(HIDDEN_AVERAGE_FIELDS)
     lastThree = dict(AVERAGE_FIELDS)
+    lastThree.update(HIDDEN_AVERAGE_FIELDS)
     noDCount = 0
     lastThreeCount = 0
     for key in sums:
         sums[key] = []
     #For each entry, add components to the running total if appropriate
     for i, e in enumerate(entries):
-        sums['autogear'].append(e['AutoGears'])
-        sums['teleopgear'].append(e['TeleopGears'])
-        sums['autoballs'].append(e['AutoLowBalls']/3 + e['AutoHighBalls'])
-        sums['teleopballs'].append(e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3)
-        sums['geardrop'].append(e['TeleopGearDrops'])
-        sums['end'].append(e['Hang']*50)
-        sums['defense'].append(e['Defense'])
+        sums['ASwitch'].append(e['ASwitch'])
+        sums['AScale'].append(e['AScale'])
+        sums['TXch'].append(e['TXch'])
+        sums['TOwnSwitch'].append(e['TOwnSwitch'])
+        sums['TScale'].append(e['TScale'])
+        sums['TOppSwitch'].append(e['TOppSwitch'])
+        sums['Climb'].append(e['SelfClimb']*30 + e['SupportClimb']*30)
+        sums['Defense'].append(e['Defense'])
+        sums['CubeScore'].append(0)
+        sums['FirstP'].append(0)
+        sums['SecondP'].append(0)
         if not e['Defense']:
-            noDefense['autogear'] += e['AutoGears']
-            noDefense['teleopgear'] += e['TeleopGears']
-            noDefense['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
-            noDefense['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-            noDefense['geardrop'] += e['TeleopGearDrops']
-            noDefense['end'] += e['Hang']*50
-            noDefense['defense'] += e['Defense']
-            noDCount += 1
+          noDefense['ASwitch']+=e['ASwitch']
+          noDefense['AScale']+=e['AScale']
+          noDefense['TXch']+=e['TXch']
+          noDefense['TOwnSwitch']+=e['TOwnSwitch']
+          noDefense['TScale']+=e['TScale']
+          noDefense['TOppSwitch']+=e['TOppSwitch']
+          noDefense['Climb']+=e['SelfClimb']*30 + e['SupportClimb']*30
+          noDefense['Defense']+=e['Defense']
+          noDCount += 1
         if i < 3:
-            lastThree['autogear'] += e['AutoGears']
-            lastThree['teleopgear'] += e['TeleopGears']
-            lastThree['autoballs'] += e['AutoLowBalls']/3 + e['AutoHighBalls']
-            lastThree['teleopballs'] += e['TeleopLowBalls']/9 + e['TeleopHighBalls']/3
-            lastThree['geardrop'] += e['TeleopGearDrops']
-            lastThree['end'] += e['Hang']*50
-            lastThree['defense'] += e['Defense']
-            lastThreeCount += 1
+          lastThree['ASwitch']+=e['ASwitch']
+          lastThree['AScale']+=e['AScale']
+          lastThree['TXch']+=e['TXch']
+          lastThree['TOwnSwitch']+=e['TOwnSwitch']
+          lastThree['TScale']+=e['TScale']
+          lastThree['TOppSwitch']+=e['TOppSwitch']
+          lastThree['Climb']+=e['SelfClimb']*30 + e['SupportClimb']*30
+          lastThree['Defense']+=e['Defense']
+          lastThreeCount += 1
     
     #If there is data, average out the last 3 or less matches
     if(lastThreeCount):
@@ -274,18 +260,14 @@ def calcTotals(entries):
     
     #Calculate APRs. This is an approximate average points contribution to the match
     for key in retVal:
-        apr = retVal[key]['autoballs'] + retVal[key]['teleopballs'] + retVal[key]['end']
-        if retVal[key]['autogear']:
-            apr += 20 * min(retVal[key]['autogear'], 1)
-        if retVal[key]['autogear'] > 1:
-            apr += (retVal[key]['autogear'] - 1) * 10   
-            
-        apr += max(min(retVal[key]['teleopgear'], 2 - retVal[key]['autogear']) * 20, 0)
-        if retVal[key]['autogear'] + retVal[key]['teleopgear'] > 2:
-            apr += min(retVal[key]['teleopgear'] + retVal[key]['autogear'] - 2, 4) * 10
-        if retVal[key]['autogear'] + retVal[key]['teleopgear'] > 6:
-            apr += min(retVal[key]['teleopgear'] + retVal[key]['autogear'] - 6, 6) * 7
-        apr = int(apr)
+        CubeScore = retVal[key]['TXch']*prop.EXCHANGE + retVal[key]['TOwnSwitch']*prop.OWN_SWITCH + retVal[key]['TScale']*prop.SCALE + retVal[key]['TOppSwitch']*prop.OPP_SWITCH
+        FirstPick = retVal[key]['ASwitch']*prop.FIRST_AUTO_SWITCH+retVal[key]['AScale']*prop.FIRST_AUTO_SCALE + CubeScore*prop.FIRST_CUBE_SCORE + retVal[key]['Climb']*prop.FIRST_CLIMB
+        SecondPick = retVal[key]['ASwitch']*prop.SECOND_AUTO_SWITCH+retVal[key]['AScale']*prop.SECOND_AUTO_SCALE + CubeScore*prop.SECOND_CUBE_SCORE + retVal[key]['Climb']*prop.SECOND_CLIMB
+        apr = retVal[key]['TXch'] + retVal[key]['TOwnSwitch'] + retVal[key]['TScale'] + retVal[key]['TOppSwitch']
+        
+        retVal[key]['CubeScore'] = CubeScore
+        retVal[key]['FirstP'] = FirstPick
+        retVal[key]['SecondP'] = SecondPick
         retVal[key]['apr'] = apr
     
     return retVal

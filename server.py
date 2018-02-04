@@ -891,10 +891,10 @@ class ScoutServer(object):
                 if match['alliances']['blue']['score'] == -1:
                     blueTeams = [match['alliances']['blue']['teams'][0][3:], match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:]]
                     blueResult = game.predictScore(self.datapath(), blueTeams)
-                    blueRP = blueResult['fuelRP'] + blueResult['gearRP']
+                    blueRP = blueResult['RP1'] + blueResult['RP2']
                     redTeams = [match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:], match['alliances']['red']['teams'][2][3:]]
                     redResult = game.predictScore(self.datapath(), redTeams)
-                    redRP = redResult['fuelRP'] + redResult['gearRP']
+                    redRP = redResult['RP1'] + redResult['RP2']
                     if blueResult['score'] > redResult['score']:
                         blueRP += 2
                     elif redResult['score'] > blueResult['score']:
