@@ -271,6 +271,8 @@ class ScoutServer(object):
     # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
     @cherrypy.expose()
     def flag(self, num='', match='', flagval=0):
+        if not cherrypy.session['auth'] == serverinfo.AUTH:
+          raise cherrypy.HTTPError(401, "Not authorized to flag match data. Please log in and try again")
         if not (num.isdigit() and match.isdigit()):
             return '<img src="http://goo.gl/eAs7JZ" style="width: 1200px"></img>'
         conn = sql.connect(self.datapath())
