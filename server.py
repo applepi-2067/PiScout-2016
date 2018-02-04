@@ -201,7 +201,7 @@ class ScoutServer(object):
                     <div class="statbox_container">
                         <div id="stats">'''
             for key in game.PIT_SCOUT_FIELDS:
-              if (key != 'team') and (pit[key] != 0):
+              if (key != 'Team') and (pit[key] != 0):
                 statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, pit[key])
             statbox += '''       </div>
                         </div>
