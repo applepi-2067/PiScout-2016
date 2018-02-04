@@ -124,6 +124,8 @@ class ScoutServer(object):
             averages = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS)) #generate zeros if no data exists for the team yet
         if len(sql_pit):
             pit = sql_pit[0]  
+        else:
+            pit = 0
         
         statbox = ""
         #If we have less than 4 entries, see if we can grab data from a previous event
