@@ -203,9 +203,9 @@ class PiScout:
         retval = 0
         for el,box in enumerate(values[::-1]):
             if box < 45000:
-                retval = startval + len(values) - el
+                retval = startval + len(values) - el - 1
         if retval:
-           cv2.rectangle(self.display, ((loc[0] + retval)*16, loc[1]*16), ((loc[0] + retval + 1)*16, loc[1]*16+16), (0,50,150),3) 
+           cv2.rectangle(self.display, ((loc[0] + retval - startval)*16, loc[1]*16), ((loc[0] + retval - startval + 1)*16, loc[1]*16+16), (0,50,150),3) 
         return retval
 
     # Adds a data entry into the data dictionary
