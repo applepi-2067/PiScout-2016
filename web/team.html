@@ -52,7 +52,7 @@
 
                 // GRAPH
                 graph = new AmCharts.AmGraph();
-                graph.title = "Auto Shoot Points";
+                graph.title = "Auto Switch Cubes";
                 graph.valueAxis = valueAxis;
                 graph.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph.lineColor = "#637bb6";
@@ -62,13 +62,13 @@
                 graph.bulletBorderAlpha = 1;
                 graph.bulletBorderThickness = 2;
                 graph.lineThickness = 2;
-                graph.valueField = "autoshoot";
-                graph.balloonText = "Auto Shoot Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph.valueField = "ASwitch";
+                graph.balloonText = "Auto Switch Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph);
 
                 graph2 = new AmCharts.AmGraph();
-                graph2.title = "Auto Gears";
-                graph2.valueAxis = valueAxis2;
+                graph2.title = "Auto Scale Cubes";
+                graph2.valueAxis = valueAxis;
                 graph2.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph2.lineColor = "#187a2e";
                 graph2.bullet = "round";
@@ -77,12 +77,12 @@
                 graph2.bulletBorderAlpha = 1;
                 graph2.bulletBorderThickness = 2;
                 graph2.lineThickness = 2;
-                graph2.valueField = "autogears";
-                graph2.balloonText = "Auto Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph2.valueField = "AScale";
+                graph2.balloonText = "Auto Scale Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph2);
 
                 graph3 = new AmCharts.AmGraph();
-                graph3.title = "Shoot Points";
+                graph3.title = "Teleop Exchange Cubes";
                 graph3.valueAxis = valueAxis;
                 graph3.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph3.lineColor = "#FF6600";
@@ -92,13 +92,13 @@
                 graph3.bulletBorderAlpha = 1;
                 graph3.bulletBorderThickness = 2;
                 graph3.lineThickness = 2;
-                graph3.valueField = "shoot";
-                graph3.balloonText = "Shoot Points:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph3.valueField = "TXch";
+                graph3.balloonText = "Teleop Exchange Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph3);
 
                 graph4 = new AmCharts.AmGraph();
-                graph4.valueAxis = valueAxis2;
-                graph4.title = "Gears";
+                graph4.valueAxis = valueAxis;
+                graph4.title = "Teleop Own Switch Cubes";
                 graph4.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph4.lineColor = "#FCD202";
                 graph4.bullet = "round";
@@ -107,13 +107,13 @@
                 graph4.bulletBorderAlpha = 1;
                 graph4.bulletBorderThickness = 2;
                 graph4.lineThickness = 2;
-                graph4.valueField = "gears";
-                graph4.balloonText = "Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph4.valueField = "TOwnSwitch";
+                graph4.balloonText = "Teleop Own Switch:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph4);
 
                 graph5 = new AmCharts.AmGraph();
-                graph5.valueAxis = valueAxis2;
-                graph5.title = "Dropped Gears";
+                graph5.valueAxis = valueAxis;
+                graph5.title = "Teleop Scale Cubes";
                 graph5.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph5.lineColor = "#FF0000";
                 graph5.bullet = "round";
@@ -122,9 +122,54 @@
                 graph5.bulletBorderAlpha = 1;
                 graph5.bulletBorderThickness = 2;
                 graph5.lineThickness = 2;
-                graph5.valueField = "geardrop";
-                graph5.balloonText = "Dropped Gears:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph5.valueField = "TScale";
+                graph5.balloonText = "Teleop Scale Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph5);
+                
+                graph6 = new AmCharts.AmGraph();
+                graph6.valueAxis = valueAxis;
+                graph6.title = "Teleop Opp Switch Cubes";
+                graph6.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph6.lineColor = "#cc00ff";
+                graph6.bullet = "round";
+                graph6.bulletSize = 8;
+                graph6.bulletBorderColor = "#FFFFFF";
+                graph6.bulletBorderAlpha = 1;
+                graph6.bulletBorderThickness = 2;
+                graph6.lineThickness = 2;
+                graph6.valueField = "TOppSwitch";
+                graph6.balloonText = "Teleop Opp Switch Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph6);
+                
+                graph7 = new AmCharts.AmGraph();
+                graph7.valueAxis = valueAxis;
+                graph7.title = "Total Cubes";
+                graph7.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph7.lineColor = "#663300";
+                graph7.bullet = "round";
+                graph7.bulletSize = 8;
+                graph7.bulletBorderColor = "#FFFFFF";
+                graph7.bulletBorderAlpha = 1;
+                graph7.bulletBorderThickness = 2;
+                graph7.lineThickness = 2;
+                graph7.valueField = "TCubes";
+                graph7.balloonText = "Total Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph7);
+                
+                graph8 = new AmCharts.AmGraph();
+                graph8.valueAxis = valueAxis;
+                graph8.title = "Climb";
+                graph8.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph8.lineColor = "#00ffff";
+                graph8.bullet = "round";
+                graph8.bulletSize = 8;
+                graph8.bulletBorderColor = "#FFFFFF";
+                graph8.bulletBorderAlpha = 1;
+                graph8.bulletBorderThickness = 2;
+                graph8.lineThickness = 2;
+                graph8.valueField = "Climb";
+                graph8.balloonText = "Climb:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph8);
                 
                 // CURSOR
                 var chartCursor = new AmCharts.ChartCursor();

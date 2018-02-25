@@ -140,7 +140,7 @@ def generateChartData(e):
     dp['TOwnSwitch'] += e['TOwnSwitch']
     dp['TScale'] += e['TScale']
     dp['TOppSwitch'] += e['TOppSwitch']
-    dp['TCubes'] += e['TOwnSwitch'] + e['TScale'] + e['TOppSwitch']
+    dp['TCubes'] += e['TOwnSwitch'] + e['TScale'] + e['TOppSwitch'] + e['TXch']
     dp['Climb'] += 30*(e['SelfClimb'] + e['SupportClimb'])
     
     return dp
