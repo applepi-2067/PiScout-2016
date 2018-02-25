@@ -167,7 +167,7 @@ def predictScore(datapath, teams, level='quals'):
             
             aprTotal += entry['apr']
             
-            if(entry['SupportClimb'] + entry['Climb'] > 1):
+            if(entry['Climb'] > 1):
               climbRP = 1
             else:
               climbTotal += entry['Climb']

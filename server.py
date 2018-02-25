@@ -121,7 +121,8 @@ class ScoutServer(object):
         if len(sql_averages):
             averages = sql_averages[0]          
         else:
-            averages = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS)) #generate zeros if no data exists for the team yet
+          averages = dict(game.AVERAGE_FIELDS)
+          averages.update(game.HIDDEN_AVERAGE_FIELDS)
         if len(sql_pit):
             pit = sql_pit[0]  
         else:
@@ -340,7 +341,8 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
+              entry = dict(game.AVERAGE_FIELDS)
+              entry.update(game.HIDDEN_AVERAGE_FIELDS)
             output += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
@@ -349,7 +351,7 @@ class ScoutServer(object):
                             <p style="font-size: 40pt;">{1}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(entry['Team'], entry['APR'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(int(entry['team']), entry['apr'])
             for key in game.AVERAGE_FIELDS:
                 if (key != 'team') and (key != 'apr'):
                     output += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
@@ -457,7 +459,8 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
+              entry = dict(game.AVERAGE_FIELDS)
+              entry.update(game.HIDDEN_AVERAGE_FIELDS)
             blueStatbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
@@ -489,7 +492,8 @@ class ScoutServer(object):
             if len(average):
                 entry = average[0]
             else:
-                entry = [0]*(len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS))
+              entry = dict(game.AVERAGE_FIELDS)
+              entry.update(game.HIDDEN_AVERAGE_FIELDS)
             redStatbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">

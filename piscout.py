@@ -18,6 +18,8 @@ import json
 # The configuration for the sheets is done in a separate file (gamespecific.py)
 # Cory Lynch 2015
 
+SHADED_VAL = 45000
+
 class PiScout:
     # Firstly, initializes the fields of a PiScout object
     # Then it starts the main loop of PiScout
@@ -169,7 +171,7 @@ class PiScout:
     # Returns whether or not the grid unit is shaded
     def boolfield(self, location):
         loc = self.parse(location)
-        retval = int(self.getvalue(loc) < 45000)
+        retval = int(self.getvalue(loc) < SHADED_VAL)
         if retval:
             cv2.rectangle(self.display, (loc[0]*16, loc[1]*16), (loc[0]*16+16, loc[1]*16+16), (0,50,150),3)
         return retval
@@ -185,7 +187,7 @@ class PiScout:
         min = np.asscalar(np.argmin(values))
         retval = 0
         rect = 0
-        if values[min] < 45000:
+        if values[min] < SHADED_VAL:
             retval = startval + min
             rect = 1
         if rect:
@@ -202,10 +204,12 @@ class PiScout:
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
         retval = 0
         for el,box in enumerate(values[::-1]):
-            if box < 45000:
+            if box < SHADED_VAL:
                 retval = startval + len(values) - el - 1
         if retval:
-           cv2.rectangle(self.display, ((loc[0] + retval - startval)*16, loc[1]*16), ((loc[0] + retval - startval + 1)*16, loc[1]*16+16), (0,50,150),3) 
+          cv2.rectangle(self.display, ((loc[0] + retval - startval)*16, loc[1]*16), ((loc[0] + retval - startval + 1)*16, loc[1]*16+16), (0,50,150),3) 
+        elif (startval==0 and values[0] < SHADED_VAL):
+          cv2.rectangle(self.display, ((loc[0])*16, loc[1]*16), ((loc[0] + 1)*16, loc[1]*16+16), (0,50,150),3) 
         return retval
 
     # Adds a data entry into the data dictionary
