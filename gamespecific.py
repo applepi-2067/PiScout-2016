@@ -14,7 +14,7 @@ AVERAGE_FIELDS = {"team":0, "apr":0, "ASwitch":0, "AScale":0, "TXch":0, "TOwnSwi
 HIDDEN_AVERAGE_FIELDS = {"CubeScore":0, "FirstP":0, "SecondP":0}
 
 #Define the fields collected from Pit Scouting to display on the team page
-PIT_SCOUT_FIELDS = {"Team":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "Pro775s":0, "Swerve":0, "FloorPickup":0, "Line":0, "CenterSwitch":0, "SideSwitch":0, "SideScale":0, "CPP":0, "Java":0, "LabVIEW":0}
+PIT_SCOUT_FIELDS = {"Team":0, "Weight":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "Pro775s":0, "Swerve":0, "FloorPickup":0, "Line":0, "CenterSwitch":0, "SideSwitch":0, "SideScale":0, "CPP":0, "Java":0, "LabVIEW":0}
 
 #Defines the fields displayed on the charts on the team and compare pages
 CHART_FIELDS = {"match":0, "ASwitch":0, "AScale":0, "TXch":0, "TOwnSwitch":0, "TScale":0, "TOppSwitch":0, "TCubes":0, "Climb":0}
@@ -72,11 +72,16 @@ def processSheet(scout):
           scout.submit()
         elif(type == SheetType.PIT):
           #Pit scouting sheet
-          num1 = scout.rangefield('O-5', 0, 9)
-          num2 = scout.rangefield('O-6', 0, 9)
-          num3 = scout.rangefield('O-7', 0, 9)
-          num4 = scout.rangefield('O-8', 0, 9)
+          num1 = scout.rangefield('M-5', 0, 9)
+          num2 = scout.rangefield('M-6', 0, 9)
+          num3 = scout.rangefield('M-7', 0, 9)
+          num4 = scout.rangefield('M-8', 0, 9)
           scout.setPitData("Team", 1000*num1 + 100*num2 + 10*num3 + num4)
+          
+          weight1 = scout.rangefield('AB-5', 0, 1)
+          weight2 = scout.rangefield('AB-6', 0, 9)
+          weight3 = scout.rangefield('AB-7', 0, 9)
+          scout.setPitData("Weight", 100*weight1 + 10*weight2 + weight3)
           
           scout.setPitData("CPP", scout.boolfield('J-12'))
           scout.setPitData("Java", scout.boolfield('K-12'))
