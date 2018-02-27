@@ -159,7 +159,7 @@ class ScoutServer(object):
                           <p style="font-size: 40pt;">{1}</p>
                       </div>
                       <div id="stats">
-                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldAverages['APR'])
+                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldAverages['apr'])
                   for key in game.AVERAGE_FIELDS:
                       if (key != 'team') and (key != 'apr'):
                           statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldAverages[key])
@@ -183,7 +183,7 @@ class ScoutServer(object):
                             <p style="font-size: 40pt;">{0}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(averages['APR'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(averages['apr'])
         for key in game.AVERAGE_FIELDS:
           if (key != 'team') and (key != 'apr'):
               statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, averages[key])
