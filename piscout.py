@@ -315,9 +315,10 @@ class PiScout:
               if os.path.isfile('queue.txt'):
                   with open("queue.txt", "r") as file:
                       for line in file:
-                          requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
+                          requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
                           print("Uploaded an entry from the queue")
                   os.remove('queue.txt')
+              requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.matchData), 'auth':serverinfo.AUTH})
             elif self.type == game.SheetType.PIT:
               requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
               print("Uploading this match was successful")
@@ -327,6 +328,7 @@ class PiScout:
                           requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'pitData': line, 'auth':serverinfo.AUTH})
                           print("Uploaded an entry from the queue")
                   os.remove('queue.txt')
+              requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
         except:
             print("Failed miserably")
             r = self.message("Upload Failed", 'Upload failed. Retry? Otherwise, data will be stored in the queue for upload later.', type=5)
