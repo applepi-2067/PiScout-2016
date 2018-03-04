@@ -564,6 +564,10 @@ class ScoutServer(object):
                 match['num'] = match['comp_level'].upper() + ' ' + str(match['match_number'])
             else:
                 match['num'] = match['match_number']
+                if match['alliances']['blue']['score'] == -1:
+                  match['alliances']['blue']['score'] = ""
+                if match['alliances']['red']['score'] == -1:
+                  match['alliances']['red']['score'] = ""
             output += '''
                 <tr role="row">
                     <td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
