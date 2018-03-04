@@ -230,7 +230,6 @@ class PiScout:
           if self.matchData['Team'] == 0:
             print("Found an empty match, skipping")
             self.matchData = dict(game.SCOUT_FIELDS)
-            self.pitData = dict(game.PIT_SCOUT_FIELDS)
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
           #Open the database and check if the match has already been processed
@@ -247,10 +246,19 @@ class PiScout:
         elif(self.type == game.SheetType.PIT):
           if self.pitData['Team'] == 0:
               print("Found an empty pit sheet, skipping")
-              self.matchData = dict(game.SCOUT_FIELDS)
               self.pitData = dict(game.PIT_SCOUT_FIELDS)
               self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
               return
+          datapath = 'data_' + CURRENT_EVENT + '.db'
+          conn = sql.connect(datapath)
+          conn.row_factory = sql.Row
+          cursor = conn.cursor()
+          history = cursor.execute('SELECT * FROM pitScout WHERE Team=?', (str(self.pitData['Team']),)).fetchall()
+          if history:
+            print("Already processed this team, skipping")
+            self.pitData = dict(game.PIT_SCOUT_FIELDS)
+            self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
+            return
 
         #Create and open the GUI to verify  data
         print("Found new data, opening")
@@ -325,7 +333,7 @@ class PiScout:
               if os.path.isfile('pitQueue.txt'):
                   with open("pitQueue.txt", "r") as file:
                       for line in file:
-                          requests.post(serverinfo.server + "/submit", data={'event':CURRENT_EVENT, 'pitData': line, 'auth':serverinfo.AUTH})
+                          requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'pitData': line, 'auth':serverinfo.AUTH})
                           print("Uploaded an entry from the queue")
                   os.remove('queue.txt')
               requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
