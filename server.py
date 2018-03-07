@@ -240,11 +240,11 @@ class ScoutServer(object):
 
         #Grab the image from the blue alliance
         imcode = ''
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
+        headers = {"X-TBA-Auth-Key": "n8QdCIF7LROZiZFI7ymlX0fshMBL15uAzEkBgtP1JgUpconm2Wf49pjYgbYMstBF"}
         m = []
         try:
             #get the picture for a given team
-            m = self.get("http://www.thebluealliance.com/api/v2/team/frc{0}/media".format(n), params=headers).json()
+            m = self.get("http://www.thebluealliance.com/api/v3/team/frc{0}/media/2018".format(n), params=headers).json()
             if m.status_code == 400:
                 m = []
         except:
@@ -606,10 +606,10 @@ class ScoutServer(object):
                     <td class="rankingColumn rankColumn7 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{7}</td>
                     <td class="rankingColumn rankColumn8 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{8}</td>
                 </tr>
-            '''.format(match['num'], match['alliances']['blue']['teams'][0][3:],
-                        match['alliances']['blue']['teams'][1][3:], match['alliances']['blue']['teams'][2][3:],
-                        match['alliances']['red']['teams'][0][3:], match['alliances']['red']['teams'][1][3:],
-                        match['alliances']['red']['teams'][2][3:], match['alliances']['blue']['score'],
+            '''.format(match['num'], match['alliances']['blue']['team_keys'][0][3:],
+                        match['alliances']['blue']['team_keys'][1][3:], match['alliances']['blue']['team_keys'][2][3:],
+                        match['alliances']['red']['team_keys'][0][3:], match['alliances']['red']['team_keys'][1][3:],
+                        match['alliances']['red']['team_keys'][2][3:], match['alliances']['blue']['score'],
                         match['alliances']['red']['score'])
         
         with open('web/matches.html', 'r') as file:
@@ -744,14 +744,14 @@ class ScoutServer(object):
         return cherrypy.session['event']
     
     def getMatches(self, event, team=''):
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
+        headers = {"X-TBA-Auth-Key": "n8QdCIF7LROZiZFI7ymlX0fshMBL15uAzEkBgtP1JgUpconm2Wf49pjYgbYMstBF"}
         try:
             if team:
                 #request a specific team
-                m = requests.get("http://www.thebluealliance.com/api/v2/team/frc{0}/event/{1}/matches".format(team, event), params=headers)
+                m = requests.get("http://www.thebluealliance.com/api/v3/team/frc{0}/event/{1}/matches".format(team, event), params=headers)
             else:
                 #get all the matches from this event
-                m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
+                m = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/matches".format(event), params=headers)
             if m.status_code == 400 or m.status_code == 404:
                 raise Exception
             if m.text != '[]':
@@ -892,9 +892,9 @@ class ScoutServer(object):
         rankings = {}
         
         #Grab latest rankings and match data from TBA
-        headers = {"X-TBA-App-Id": "frc2067:scouting-system:v02"}
-        m = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/matches".format(event), params=headers)
-        r = requests.get("http://www.thebluealliance.com/api/v2/event/{0}/rankings".format(event), params=headers)
+        headers = {"X-TBA-Auth-Key": "n8QdCIF7LROZiZFI7ymlX0fshMBL15uAzEkBgtP1JgUpconm2Wf49pjYgbYMstBF"}
+        m = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/matches".format(event), params=headers)
+        r = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/rankings".format(event), params=headers)
         if 'feed' in m:
             raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
         if r.text != '[]':
@@ -907,9 +907,8 @@ class ScoutServer(object):
             raise cherrypy.HTTPError(503, "Unable to retrieve match data for this event.")
  
         #Process current rankings into dict
-        del r[0]
-        for item in r:
-            rankings[str(item[1])] = {'rp': round(item[2]*item[9],0), 'matchScore': item[3], 'currentRP': round(item[2]*item[9],0), 'currentMatchScore': item[3]}
+        for item in r["rankings"]:
+            rankings[item["team_key"][3:]] = {'rp': round(item["sort_orders"][0]*item["matches_played"],0), 'matchScore': item["sort_orders"][1], 'currentRP': round(item["sort_orders"][0]*item["matches_played"],0), 'currentMatchScore': item["sort_orders"][1]}
             
         #Iterate through all matches
         for match in m:
