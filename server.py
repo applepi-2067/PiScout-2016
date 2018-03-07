@@ -426,9 +426,26 @@ class ScoutServer(object):
                 graph{0}.balloonText = "{1}<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph{0});
                 '''.format(n + "_2", "Team " + n + stat2, "team" + n + "stat2", colors[4+idx])
+       
+        statSelector = '''<div id="statSelect" style="margin:auto;">
+                    <form method="post" action="" style="display:inline-block; margin:5px">
+                            <select class="fieldsm" name="stat1">'''
+        for key in game.CHART_FIELDS:
+          if (key != "match"):
+            statSelector += '''<option id="{0}" value="{0}">{0}</option>'''.format(key)
+        statSelector +='''</select>
+                          <select class="fieldsm" name="stat2">
+                              <option id="none" value="none">None</option>'''
+        for key in game.CHART_FIELDS:
+          if (key != "match"):
+            statSelector += '''<option id="{0}2" value="{0}">{0}</option>'''.format(key)
+        statSelector += '''</select>
+                          <button class="submit" type="submit">Submit</button>
+                          </form>
+                          </div>'''
         with open('web/teams.html', 'r') as file:
             page = file.read()
-        return page.format(str(dataset).replace("'",'"'), teamCharts, stat1, stat2 + "2", output)
+        return page.format(str(dataset).replace("'",'"'), teamCharts, stat1, stat2 + "2", output, statSelector)
 
     # Output for alliance comparison
     @cherrypy.expose()
