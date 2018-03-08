@@ -50,6 +50,7 @@ class ScoutServer(object):
         sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY apr DESC"
         data = conn.cursor().execute(sqlCommand).fetchall()
         conn.close()
+        columns = len(game.AVERAGE_FIELDS)
         #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
             if key != "team":
@@ -58,11 +59,13 @@ class ScoutServer(object):
                 
                 <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
         if cherrypy.session['auth'] == serverinfo.AUTH:
+          columns += len(game.HIDDEN_AVERAGE_FIELDS)
+          j = len(game.AVERAGE_FIELDS)
           for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
             table += '''
             <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
             
-            <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
+            <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i+j)
         table += '''                            </tr>
                         </thead>
                         <tbody aria-live="polite" aria-relevant="all">'''
@@ -79,16 +82,17 @@ class ScoutServer(object):
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                         '''.format(team[key], i)
             if cherrypy.session['auth'] == serverinfo.AUTH:
+              j = len(game.AVERAGE_FIELDS)
               for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
                 table += '''
                     <td class="hidden-xs">{0}</td>
                     <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
-                    '''.format(team[key], i)
+                    '''.format(team[key], i+j)
             table += '''</tr>'''
         
         with open('web/index.html', 'r') as file:
             page = file.read()
-        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'])
+        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], columns-3)
         
     #Page for creating picklist
     @cherrypy.expose
