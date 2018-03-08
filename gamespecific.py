@@ -265,9 +265,9 @@ def calcTotals(entries):
     
     #Calculate APRs. This is an approximate average points contribution to the match
     for key in retVal:
-        CubeScore = round(retVal[key]['TXch']*prop.EXCHANGE + retVal[key]['TOwnSwitch']*prop.OWN_SWITCH + retVal[key]['TScale']*prop.SCALE + retVal[key]['TOppSwitch']*prop.OPP_SWITCH, 2)
-        FirstPick = round(retVal[key]['ASwitch']*prop.FIRST_AUTO_SWITCH+retVal[key]['AScale']*prop.FIRST_AUTO_SCALE + CubeScore*prop.FIRST_CUBE_SCORE + retVal[key]['Climb']*prop.FIRST_CLIMB, 2)
-        SecondPick = round(retVal[key]['ASwitch']*prop.SECOND_AUTO_SWITCH+retVal[key]['AScale']*prop.SECOND_AUTO_SCALE + CubeScore*prop.SECOND_CUBE_SCORE + retVal[key]['Climb']*prop.SECOND_CLIMB, 2)
+        CubeScore = round(retVal[key]['AScale']*prop.AUTO_SCALE + retVal[key]['ASwitch']*prop.AUTO_SWITCH + retVal[key]['TXch']*prop.EXCHANGE + retVal[key]['TOwnSwitch']*prop.OWN_SWITCH + retVal[key]['TScale']*prop.SCALE + retVal[key]['TOppSwitch']*prop.OPP_SWITCH, 2)
+        FirstPick = round(retVal[key]['ASwitch']*prop.FIRST_AUTO_SWITCH+retVal[key]['AScale']*prop.FIRST_AUTO_SCALE + retVal[key]['TXch']*prop.FIRST_EXCHANGE + retVal[key]['TOwnSwitch']*prop.FIRST_OWN_SWITCH + retVal[key]['TScale']*prop.FIRST_SCALE + retVal[key]['TOppSwitch']*prop.FIRST_OPP_SWITCH + retVal[key]['Climb']*prop.FIRST_CLIMB, 2)
+        SecondPick = round(retVal[key]['ASwitch']*prop.SECOND_AUTO_SWITCH+retVal[key]['AScale']*prop.SECOND_AUTO_SCALE + retVal[key]['TXch']*prop.SECOND_EXCHANGE + retVal[key]['TOwnSwitch']*prop.SECOND_OWN_SWITCH + retVal[key]['TScale']*prop.SECOND_SCALE + retVal[key]['TOppSwitch']*prop.SECOND_OPP_SWITCH + retVal[key]['Climb']*prop.SECOND_CLIMB, 2)
         apr = round(retVal[key]['TXch'] + retVal[key]['TOwnSwitch'] + retVal[key]['TScale'] + retVal[key]['TOppSwitch'], 2)
         
         retVal[key]['CubeScore'] = CubeScore
