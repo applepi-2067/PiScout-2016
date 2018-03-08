@@ -8,6 +8,7 @@
         <link href="./static/css/site.css" rel="stylesheet" type="text/css">
         <script src="./static/js/jquery.js"></script>
         <script src="./static/js/jquery-ui.min.js"></script>
+        <script src="./static/js/jquery.ui.touch-punch.min.js"></script>
         <script>
             $( document ).ready(function() {{
                 $('.titleColumn3').removeClass("hidden-xs");
@@ -126,8 +127,9 @@
         <div id="body_bg">
             <div class="container clearfix">
                 <div id="page_title" align="center">Home - {1}</div>
-                <div id="table_container">                
-                    <script>
+                
+                <div id="table_container">       
+                <script>
                         $(function () {{
                             var i = 1;
                             var j = 2;
@@ -137,7 +139,7 @@
                                 $('.titleColumn' + i).addClass("hidden-xs");
                                 $('.rankColumn' + i).addClass("hidden-xs");
                                 i++;
-                                if (i > 6) {{
+                                if (i > {5}) {{
                                     i = 1;
                                 }}
                                 $('.titleColumn').hide();
@@ -166,7 +168,10 @@
                             $('.rankColumn' + j).removeClass("hidden-xs");
                             $('.rankColumn' + j).show();
                         }});
-                    </script>
+                </script>
+                    <div class="row visible-xs">
+                        <button type="button" class="btn btn-primary col-xs-offset-5 col-xs-4 rotateButton" style="font-size:11px;">Cycle Columns</button>
+                    </div>
                     <table class="table table-striped table-hover text-center" role="grid">
                       <thead>
                         <tr role="row" class="tablesorter-headerRow">
@@ -176,10 +181,7 @@
                       <td id="team_0">Drop teams here</td>
                       </tr>
                     </table>
-                    
-                    <div class="row visible-xs">
-                        <button type="button" class="btn btn-primary col-xs-offset-5 col-xs-4 rotateButton" style="font-size:11px;">Cycle Columns</button>
-                    </div>
+                   
                     <table class="table table-striped table-hover text-center tablesorter tablesorter-default" role="grid">
                         <thead>
                             <tr role="row" class="tablesorter-headerRow">

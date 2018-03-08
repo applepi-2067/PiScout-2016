@@ -151,12 +151,12 @@ class ScoutServer(object):
                 <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
                 
                 <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
-        if cherrypy.session['auth'] == serverinfo.AUTH:
-          for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
-            tableHeaders += '''
-            <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
-            
-            <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
+        j = len(game.AVERAGE_FIELDS)
+        for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+          tableHeaders += '''
+          <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+          
+          <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i+j)
 
         tableHeaders += '''                            </tr>
                         </thead>'''
@@ -179,11 +179,12 @@ class ScoutServer(object):
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                         '''.format(teamData[key], i)
+            j = len(game.AVERAGE_FIELDS)
             for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
               tableHeaders += '''
                   <td class="hidden-xs">{0}</td>
                   <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
-                  '''.format(teamData[key], i)
+                  '''.format(teamData[key], i+j)
             tableHeaders += '''</tr>'''
           
         if dnpList:
@@ -199,11 +200,12 @@ class ScoutServer(object):
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                         '''.format(teamData[key], i)
+            j = len(game.AVERAGE_FIELDS)
             for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
               dnpTable += '''
                   <td class="hidden-xs">{0}</td>
                   <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
-                  '''.format(teamData[key], i)
+                  '''.format(teamData[key], i+j)
             dnpTable += '''</tr>'''
         conn.close()
           
@@ -219,17 +221,17 @@ class ScoutServer(object):
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                         '''.format(team[key], i)
-            if cherrypy.session['auth'] == serverinfo.AUTH:
-              for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
-                table += '''
-                    <td class="hidden-xs">{0}</td>
-                    <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
-                    '''.format(team[key], i)
+            j = len(game.AVERAGE_FIELDS)
+            for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+              table += '''
+                  <td class="hidden-xs">{0}</td>
+                  <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                  '''.format(team[key], i+j)
             table += '''</tr>'''
         
         with open('web/picklist.html', 'r') as file:
             page = file.read()
-        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders, dnpTable)
+        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders, dnpTable, len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS) - 3)
 
     # Page to show result of login attempt
     @cherrypy.expose()
