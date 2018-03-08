@@ -9,6 +9,7 @@ from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
 import sys
+import re
 
 DEFAULT_MODE = 'averages'
 localInstance = False;
@@ -88,6 +89,102 @@ class ScoutServer(object):
         with open('web/index.html', 'r') as file:
             page = file.read()
         return page.format(table, cherrypy.session['event'], cherrypy.session['mode'])
+        
+    #Page for creating picklist
+    @cherrypy.expose
+    def picklist(self, m='', list=''):          
+        if not cherrypy.session['auth'] == serverinfo.AUTH:
+          raise cherrypy.HTTPError(401, "Not authorized to view picklist. Please log in and try again.")      
+        
+        #Handle mode selection. When the mode is changed, a POST request is sent here.
+        if m != '':
+            cherrypy.session['mode'] = m
+        if 'mode' not in cherrypy.session:
+            cherrypy.session['mode'] = DEFAULT_MODE
+            
+        if list:
+          pattern = re.compile('team\[\]=(\d*)')
+          pickList = pattern.findall(list)
+          with open(self.getevent() + "pickList.txt", "w+") as file:
+            for team in pickList:
+              file.write(str(team) + '\n')
+        else:
+          with open(self.getevent() + "pickList.txt", "r") as file:
+            pickList = file.readlines()
+            for i, item in enumerate(pickList):
+              pickList[i] = item[:-1]
+
+        #This section generates the table of averages
+        table = ''
+        tableHeaders = ''
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY apr DESC"
+        data = conn.cursor().execute(sqlCommand).fetchall()
+        #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
+        for i,key in enumerate(game.AVERAGE_FIELDS):
+            if key != "team":
+                tableHeaders += '''
+                <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+                
+                <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
+        if cherrypy.session['auth'] == serverinfo.AUTH:
+          for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+            tableHeaders += '''
+            <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
+            
+            <th class="titleColumn titleColumn{1} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>'''.format(key, i)
+
+        tableHeaders += '''                            </tr>
+                        </thead>'''
+        table = tableHeaders                      
+        table += '''<tbody id="main_table" aria-live="polite" aria-relevant="all">'''
+        tableHeaders += '''<tbody class="picklist">'''
+        
+        if pickList:
+          for team in pickList:
+            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY apr DESC"
+            teamData = conn.cursor().execute(sqlCommand, (team,)).fetchone()
+            tableHeaders += '''
+                <tr role="row" id="team_{0}">
+                    <td><a href="team?n={0}">{0}</a></td>'''.format(int(teamData['Team']))
+            for i,key in enumerate(game.AVERAGE_FIELDS):
+                if key!= 'team':
+                    tableHeaders += '''
+                        <td class="hidden-xs">{0}</td>
+                        <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                        '''.format(teamData[key], i)
+            for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+              tableHeaders += '''
+                  <td class="hidden-xs">{0}</td>
+                  <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                  '''.format(teamData[key], i)
+            tableHeaders += '''</tr>'''
+          conn.close()
+          
+        #Generate a row for each team
+        for team in data:
+          if str(team['Team'])[:-2] not in pickList:
+            table += '''
+                <tr role="row" id="team_{0}">
+                    <td><a href="team?n={0}">{0}</a></td>'''.format(int(team['Team']))
+            for i,key in enumerate(game.AVERAGE_FIELDS):
+                if key!= 'team':
+                    table += '''
+                        <td class="hidden-xs">{0}</td>
+                        <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                        '''.format(team[key], i)
+            if cherrypy.session['auth'] == serverinfo.AUTH:
+              for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+                table += '''
+                    <td class="hidden-xs">{0}</td>
+                    <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                    '''.format(team[key], i)
+            table += '''</tr>'''
+        
+        with open('web/picklist.html', 'r') as file:
+            page = file.read()
+        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders)
 
     # Page to show result of login attempt
     @cherrypy.expose()
