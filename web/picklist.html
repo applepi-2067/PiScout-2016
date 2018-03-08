@@ -32,8 +32,15 @@
                     $.post('picklist', {{'list': order}});
                     }}                  
                 }}).disableSelection();
+                $(".dnp").sortable({{
+                  connectWith: "#main_table",
+                  update: function (event, ui) {{
+                    var order = $(this).sortable('serialize');
+                    $.post('picklist', {{'dnp':order}});
+                    }}
+                  }}).disableSelection();
                 $("#main_table").sortable({{
-                  connectWith: ".picklist"
+                  connectWith: ".picklist, .dnp",
                 }}).disableSelection();
             }});
         </script>
@@ -227,6 +234,15 @@
                             <-->
                             {0}
                         </tbody>
+                    </table>
+                    <table class="table table-striped table-hover text-center" role="grid">
+                      <thead>
+                        <tr role="row" class="tablesorter-headerRow">
+                          <th class="col-xs-3 col-sm-1 tablesorter-header tablesorter-headerAsc text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="ascending" aria-label="Team: Ascending sort applied, activate to apply a descending sort"><div class="tablesorter-header-inner">Team</div></th>
+                        {4}
+                      <tr>
+                      <td id="team_0">Drop teams here</td>
+                      </tr>
                     </table>
                 </div>
             </div>

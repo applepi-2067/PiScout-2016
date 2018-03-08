@@ -96,7 +96,7 @@ class ScoutServer(object):
         
     #Page for creating picklist
     @cherrypy.expose
-    def picklist(self, m='', list=''):          
+    def picklist(self, m='', list='', dnp=''):          
         if not cherrypy.session['auth'] == serverinfo.AUTH:
           raise cherrypy.HTTPError(401, "Not authorized to view picklist. Please log in and try again.")      
         
@@ -113,10 +113,29 @@ class ScoutServer(object):
             for team in pickList:
               file.write(str(team) + '\n')
         else:
-          with open(self.getevent() + "pickList.txt", "r") as file:
-            pickList = file.readlines()
-            for i, item in enumerate(pickList):
-              pickList[i] = item[:-1]
+          try:
+            with open(self.getevent() + "pickList.txt", "r+") as file:
+              pickList = file.readlines()
+              for i, item in enumerate(pickList):
+                pickList[i] = item[:-1]     
+          except:
+            pickList = []
+        
+        if dnp:
+          pattern = re.compile('team\[\]=(\d*)')
+          dnpList = pattern.findall(dnp)
+          with open(self.getevent() + "dnpList.txt", "w+") as file:
+            for team in dnpList:
+              file.write(str(team) + '\n')
+        else:
+          try:
+            with open(self.getevent() + "dnpList.txt", "r+") as file:
+              dnpList = file.readlines()
+              for i, item in enumerate(dnpList):
+                dnpList[i] = item[:-1] 
+          except:
+            dnpList = []
+
 
         #This section generates the table of averages
         table = ''
@@ -141,9 +160,11 @@ class ScoutServer(object):
 
         tableHeaders += '''                            </tr>
                         </thead>'''
-        table = tableHeaders                      
+        table = tableHeaders    
+        dnpTable = tableHeaders
         table += '''<tbody id="main_table" aria-live="polite" aria-relevant="all">'''
         tableHeaders += '''<tbody class="picklist">'''
+        dnpTable += '''<tbody class="dnp">'''
         
         if pickList:
           for team in pickList:
@@ -164,11 +185,31 @@ class ScoutServer(object):
                   <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
                   '''.format(teamData[key], i)
             tableHeaders += '''</tr>'''
-          conn.close()
+          
+        if dnpList:
+          for team in dnpList:
+            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY apr DESC"
+            teamData = conn.cursor().execute(sqlCommand, (team,)).fetchone()
+            dnpTable += '''
+                <tr role="row" id="team_{0}">
+                    <td><a href="team?n={0}">{0}</a></td>'''.format(int(teamData['Team']))
+            for i,key in enumerate(game.AVERAGE_FIELDS):
+                if key!= 'team':
+                    dnpTable += '''
+                        <td class="hidden-xs">{0}</td>
+                        <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                        '''.format(teamData[key], i)
+            for i,key in enumerate(game.HIDDEN_AVERAGE_FIELDS):
+              dnpTable += '''
+                  <td class="hidden-xs">{0}</td>
+                  <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
+                  '''.format(teamData[key], i)
+            dnpTable += '''</tr>'''
+        conn.close()
           
         #Generate a row for each team
         for team in data:
-          if str(team['Team'])[:-2] not in pickList:
+          if str(team['Team'])[:-2] not in pickList + dnpList:
             table += '''
                 <tr role="row" id="team_{0}">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(int(team['Team']))
@@ -188,7 +229,7 @@ class ScoutServer(object):
         
         with open('web/picklist.html', 'r') as file:
             page = file.read()
-        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders)
+        return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders, dnpTable)
 
     # Page to show result of login attempt
     @cherrypy.expose()
