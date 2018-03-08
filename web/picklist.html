@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="./static/bootstrap-3.3.7/css/bootstrap.min.css">
         <link href="./static/css/site.css" rel="stylesheet" type="text/css">
         <script src="./static/js/jquery.js"></script>
+        <script src="./static/js/jquery-ui.min.js"></script>
         <script>
             $( document ).ready(function() {{
                 $('.titleColumn3').removeClass("hidden-xs");
@@ -21,9 +22,19 @@
                     document.getElementById("{2}").setAttribute("class", "active");
                 }}
                 catch (err){{}}
-                $('table').tablesorter({{
+                $('.tablesorter').tablesorter({{
                     sortList: [[1, 1]]
                 }});
+                $(".picklist").sortable({{
+                  connectWith: "#main_table",
+                  update: function (event, ui) {{
+                    var order = $(this).sortable('serialize');
+                    $.post('picklist', {{'list': order}});
+                    }}                  
+                }}).disableSelection();
+                $("#main_table").sortable({{
+                  connectWith: ".picklist"
+                }}).disableSelection();
             }});
         </script>
         <script src="./static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -65,16 +76,6 @@
                                         <li id="last3"><a href="?m=lastThree">Last 3</a></li>
                                     </ul>
                                 </li>
-                                <li class="dropdown">
-                                    <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Set Event<span class="caret"></span></a>
-                                    <ul class="dropdown-menu">
-                                        <li id="2018week0"><a href="?e=2018week0">Week 0</a></li>
-                                        <li id="2018nhgrs"><a href="?e=2018nhgrs">Granite State</a></li>
-                                        <li id="2018marea"><a href="?e=2018marea">North Shore</a></li>
-                                        <li id="2018mabos"><a href="?e=2018mabos">Greater Boston</a></li>
-                                        <li id="2018necmp"><a href="?e=2018necmp">NE Champs</a></li>
-                                    </ul>
-                                </li>
                                 <li><a href="rankings">Rankings</a></li>
                                 <li class="dropdown">
                                     <a href="#" class="dropdown-toggle hidden-sm" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Compare<span class="caret"></span></a>
@@ -92,7 +93,6 @@
                                 </li>
                                 <li><a href="edit" class="hidden-sm hidden-xs hidden-md">Edit</a></li>
                                 <li><a href="recalculate" class="hidden-sm hidden-xs hidden-md">Recalculate</a></li>
-                                <li><a href="picklist" class="hidden-sm hidden-xs hidden-md">Pick List</a></li>
                                 <li class="dropdown">
                                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Login<span class="caret"></span></a>
                                   <ul class="dropdown-menu">
@@ -160,6 +160,15 @@
                             $('.rankColumn' + j).show();
                         }});
                     </script>
+                    <table class="table table-striped table-hover text-center" role="grid">
+                      <thead>
+                        <tr role="row" class="tablesorter-headerRow">
+                          <th class="col-xs-3 col-sm-1 tablesorter-header tablesorter-headerAsc text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="ascending" aria-label="Team: Ascending sort applied, activate to apply a descending sort"><div class="tablesorter-header-inner">Team</div></th>
+                        {3}
+                      <tr>
+                      <td id="team_0">Drop teams here</td>
+                      </tr>
+                    </table>
                     
                     <div class="row visible-xs">
                         <button type="button" class="btn btn-primary col-xs-offset-5 col-xs-4 rotateButton" style="font-size:11px;">Cycle Columns</button>
