@@ -699,7 +699,7 @@ class ScoutServer(object):
         cursor = conn.cursor()
         
         #Get match data
-        m = self.getMatches(event, n)
+        m = self.getMatches(event)
 
         output = ''
 
@@ -722,7 +722,7 @@ class ScoutServer(object):
         #For each match, generate a row in the table
         for match in m:
             if match['comp_level'] != 'qm':
-                match['num'] = match['comp_level'].upper() + ' ' + str(match['match_number'])
+                match['num'] = match['comp_level'].upper() + str(match['set_number']) + '_' + str(match['match_number'])
             else:
                 match['num'] = match['match_number']
                 if match['alliances']['blue']['score'] == -1:
@@ -730,14 +730,14 @@ class ScoutServer(object):
                 if match['alliances']['red']['score'] == -1:
                   match['alliances']['red']['score'] = ""
             output += '''
-                <tr role="row">
+                <tr role="row" id="match_{0}">
                     <td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
-                    <td class="hidden-xs">{1}</td>
-                    <td class="hidden-xs">{2}</td>
-                    <td class="hidden-xs">{3}</td>
-                    <td class="hidden-xs">{4}</td>
-                    <td class="hidden-xs">{5}</td>
-                    <td class="hidden-xs">{6}</td>
+                    <td id="team1_{0}" class="hidden-xs">{1}</td>
+                    <td id="team2_{0}" class="hidden-xs">{2}</td>
+                    <td id="team3_{0}" class="hidden-xs">{3}</td>
+                    <td id="team4_{0}" class="hidden-xs">{4}</td>
+                    <td id="team5_{0}" class="hidden-xs">{5}</td>
+                    <td id="team6_{0}" class="hidden-xs">{6}</td>
                     <td class="hidden-xs">{7}</td>
                     <td class="hidden-xs">{8}</td>
                     
@@ -758,7 +758,7 @@ class ScoutServer(object):
         
         with open('web/matches.html', 'r') as file:
             page = file.read()
-        return page.format(": {0}".format(n) if n else "", output)
+        return page.format(output)
 
     # Used by the scanning program to submit data, and used by comment system to submit dat
     @cherrypy.expose()

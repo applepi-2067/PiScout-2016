@@ -155,10 +155,31 @@
   vertical-align:top;
 }
 
+#teamFilter
+{
+  width: 200px;
+  float: right;
+  padding-bottom: 5px;
+}
+
 .alliance_compare_cell
 {
   display:table-cell;
   text-align:center;
+}
+
+.btn-danger, .btn-danger:hover, .btn-danger:focus, .btn-danger:active
+{
+  color: #000;
+  background-color: #ee0;
+  border-color: #ee0;
+}
+
+.btn-danger:active:hover, .btn-danger:active:focus
+{
+  color: #fff;
+  background-color: #000;
+  border-color: #000;
 }
 
 .clearfix::after

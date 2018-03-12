@@ -67,64 +67,145 @@
         </div>
         <div id="body_bg">
             <div class="container clearfix">
-                <div id="page_title" align="center">Matches{0}</div>
+                <div id="page_title" align="center">Matches</div>
                 <div id="table_container">                
                     <script>
-                        $(function () {{
-                            var i = 1;
-                            
-                            $('.rotateButton').click(function () {{
-                                
-                                $('.titleColumn' + i).addClass("hidden-xs");
-                                $('.rankColumn' + i).addClass("hidden-xs");
-                                $('.titleColumn' + (i+1)).addClass("hidden-xs");
-                                $('.rankColumn' + (i+1)).addClass("hidden-xs");
-                                if (i < 7) {{
-                                    $('.titleColumn' + (i+2)).addClass("hidden-xs");
-                                    $('.rankColumn' + (i+2)).addClass("hidden-xs");
+                      $(document).ready(function () {{
+                          $("#teamNumberFilter").keyup(function () {{
+                              processFilter();
+                              return false;
+                          }});
+                          $("#teamFilter").submit(function () {{
+                              processFilter();
+                              return false;
+                          }});
+                          $('#teamFilter').on('reset', function (e) {{
+                              resetFilter();
+                          }});
+                          $('#noTeamsInFilter').attr("style", "display: none !important");//hide on load
+                          var urlTeamFilter = getUrlParameter('n');
+                          if (urlTeamFilter != null && urlTeamFilter.length > 0) {{
+                              $('#teamNumberFilter').val(urlTeamFilter);
+                              processFilter();
+                          }}
+                      }});
+                      
+                      function processFilter() {{
+                        var ttf = $('#teamNumberFilter').val();
+                        if (ttf == "") {{
+                            resetFilter();
+                            return false;
+                        }}
+                        $('#matches > tbody  > tr').each(function () {{
+                            var showRow = false;
+                            var targetID = $(this).attr('id');
+                            $("td[id^=team]", this).each(function () {{
+                                var m = $(this).text().trim();
+                                if (m == ttf) {{
+                                    showRow = true;
                                 }}
-                                i = i+3;
-                                if (i > 7) {{
-                                    i = 1;
-                                }}
-                                $('.titleColumn').hide();
-                                $('.titleColumn' + i).removeClass("hidden-xs");
-                                $('.titleColumn' + i).show();
-                                $('.titleColumn' + (i+1)).removeClass("hidden-xs");
-                                $('.titleColumn' + (i+1)).show();
-
-                                $('.rankingColumn').hide();
-                                $('.rankColumn' + i).removeClass("hidden-xs");
-                                $('.rankColumn' + i).show();
-                                $('.rankColumn' + (i+1)).removeClass("hidden-xs");
-                                $('.rankColumn' + (i+1)).show();
-                                
-                                if (i < 7) {{
-                                    $('.titleColumn' + (i+2)).removeClass("hidden-xs");
-                                    $('.titleColumn' + (i+2)).show();
-                                    $('.rankColumn' + (i+2)).removeClass("hidden-xs");
-                                    $('.rankColumn' + (i+2)).show();
-                                }}
-                                }});
-                            $('.titleColumn' + i).removeClass("hidden-xs");
-                            $('.titleColumn' + i).show();
-                            $('.rankColumn' + i).removeClass("hidden-xs");
-                            $('.rankColumn' + i).show();
-                            $('.titleColumn' + (i+1)).removeClass("hidden-xs");
-                            $('.titleColumn' + (i+1)).show();
-                            $('.rankColumn' + (i+1)).removeClass("hidden-xs");
-                            $('.rankColumn' + (i+1)).show();
-                            $('.titleColumn' + (i+2)).removeClass("hidden-xs");
-                            $('.titleColumn' + (i+2)).show();
-                            $('.rankColumn' + (i+2)).removeClass("hidden-xs");
-                            $('.rankColumn' + (i+2)).show();
                             }});
+                            if (!showRow) {{//end of row
+                                $('#' + targetID).attr("style", "display: none !important");
+                            }}
+                            else {{
+                                $('#' + targetID).attr("style", "display: inline-list-item !important");
+                            }}
+                            showRow = false;//reset
+                        }});
+                        var totalRow = $('#matches tr:visible').length;
+                        if (totalRow <= 1) {{//1=header
+                            $('#noTeamsInFilterNumber').html(ttf);
+                            $('#noTeamsInFilter').attr("style", "display: inline-list-item !important");
+                        }}
+                        else {{
+                            $('#noTeamsInFilter').attr("style", "display: none !important");
+                        }}
+                      }}
+                      function resetFilter() {{
+                        $('#matches > tbody  > tr').each(function () {{
+                            var targetID = $(this).attr('id');
+                            $('#' + targetID).attr("style", "display: inline-list-item !important");
+                            $('#noTeamsInFilter').attr("style", "display: none !important");
+                        }});
+                      }}
+                      function getUrlParameter(sParam) {{
+                        var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                            sURLVariables = sPageURL.split('&'),
+                            sParameterName,
+                            i;
+                        for (i = 0; i < sURLVariables.length; i++) {{
+                            sParameterName = sURLVariables[i].split('=');
+
+                            if (sParameterName[0] === sParam) {{
+                                return sParameterName[1] === undefined ? true : sParameterName[1];
+                            }}
+                        }}
+                      }};
+                                                      
+                      $(function () {{
+                          var i = 1;
+                          
+                          $('.rotateButton').click(function () {{
+                              
+                              $('.titleColumn' + i).addClass("hidden-xs");
+                              $('.rankColumn' + i).addClass("hidden-xs");
+                              $('.titleColumn' + (i+1)).addClass("hidden-xs");
+                              $('.rankColumn' + (i+1)).addClass("hidden-xs");
+                              if (i < 7) {{
+                                  $('.titleColumn' + (i+2)).addClass("hidden-xs");
+                                  $('.rankColumn' + (i+2)).addClass("hidden-xs");
+                              }}
+                              i = i+3;
+                              if (i > 7) {{
+                                  i = 1;
+                              }}
+                              $('.titleColumn').hide();
+                              $('.titleColumn' + i).removeClass("hidden-xs");
+                              $('.titleColumn' + i).show();
+                              $('.titleColumn' + (i+1)).removeClass("hidden-xs");
+                              $('.titleColumn' + (i+1)).show();
+
+                              $('.rankingColumn').hide();
+                              $('.rankColumn' + i).removeClass("hidden-xs");
+                              $('.rankColumn' + i).show();
+                              $('.rankColumn' + (i+1)).removeClass("hidden-xs");
+                              $('.rankColumn' + (i+1)).show();
+                              
+                              if (i < 7) {{
+                                  $('.titleColumn' + (i+2)).removeClass("hidden-xs");
+                                  $('.titleColumn' + (i+2)).show();
+                                  $('.rankColumn' + (i+2)).removeClass("hidden-xs");
+                                  $('.rankColumn' + (i+2)).show();
+                              }}
+                              }});
+                          $('.titleColumn' + i).removeClass("hidden-xs");
+                          $('.titleColumn' + i).show();
+                          $('.rankColumn' + i).removeClass("hidden-xs");
+                          $('.rankColumn' + i).show();
+                          $('.titleColumn' + (i+1)).removeClass("hidden-xs");
+                          $('.titleColumn' + (i+1)).show();
+                          $('.rankColumn' + (i+1)).removeClass("hidden-xs");
+                          $('.rankColumn' + (i+1)).show();
+                          $('.titleColumn' + (i+2)).removeClass("hidden-xs");
+                          $('.titleColumn' + (i+2)).show();
+                          $('.rankColumn' + (i+2)).removeClass("hidden-xs");
+                          $('.rankColumn' + (i+2)).show();
+                          }});
                     </script>
 
                     <div class="row visible-xs">
                         <button type="button" class="btn btn-primary col-xs-offset-5 col-xs-4 rotateButton" style="font-size:11px;">Cycle Columns</button>
                     </div>
-                    <table class="table table-striped table-hover text-center match_table" role="grid">
+                    <form id="teamFilter">
+                    <div class="input-group">
+                      <input pattern="[0-9]*" id="teamNumberFilter" class="form-control" placeholder="Team #" maxlength="4" type="number">
+                      <div class="input-group-btn">
+                          <button class="btn btn-danger" type="reset">Reset</button>
+                      </div>
+                    </div>
+                    </form>
+                    <table id="matches" class="table table-striped table-hover text-center match_table" role="grid">
                         <thead>
                             <tr role="row">
                                 <th class="col-xs-3 col-sm-1 text-center" data-column="0" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-label="Match"><div>Match</div></th>
@@ -195,7 +276,7 @@
 
                             </tr>
                             -->
-                            {1}
+                            {0}
                         </tbody>
                     </table>
                 </div>
