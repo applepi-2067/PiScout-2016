@@ -166,9 +166,10 @@ def predictScore(datapath, teams, level='quals'):
             average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
-                entry = average[0]
+              entry = average[0]
             else:
-                entry = [0]*len(AVERAGE_FIELDS + HIDDEN_AVERAGE_FIELDS)
+              entry = dict(AVERAGE_FIELDS)
+              entry.update(HIDDEN_AVERAGE_FIELDS)
             
             aprTotal += entry['apr']
             

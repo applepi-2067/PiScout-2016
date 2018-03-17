@@ -303,14 +303,14 @@ class ScoutServer(object):
                           <p style="font-size: 40pt;">{1}</p>
                       </div>
                       <div id="stats">
-                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldAverages['apr'])
+                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldData['apr'])
                   for key in game.AVERAGE_FIELDS:
                       if (key != 'team') and (key != 'apr'):
-                          statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldAverages[key])
+                          statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldData[key])
                   if cherrypy.session['auth'] == serverinfo.AUTH:
                     for key in game.HIDDEN_AVERAGE_FIELDS:
-                      output += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldAverages[key])
-                  output += '''       </div>
+                      statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldData[key])
+                  statbox += '''       </div>
                                   </div>
                                </div>'''
           except:
@@ -630,7 +630,7 @@ class ScoutServer(object):
                             <p style="font-size: 40pt;">{1}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['APR'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['apr'])
             for key in game.AVERAGE_FIELDS:
                 if (key != 'team') and (key != 'apr'):
                     blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
@@ -663,7 +663,7 @@ class ScoutServer(object):
                             <p style="font-size: 40pt;">{1}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['APR'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['apr'])
             for key in game.AVERAGE_FIELDS:
                 if (key != 'team') and (key != 'apr'):
                     redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
