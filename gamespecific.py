@@ -171,7 +171,7 @@ def predictScore(datapath, teams, level='quals'):
               entry = dict(AVERAGE_FIELDS)
               entry.update(HIDDEN_AVERAGE_FIELDS)
             
-            aprTotal += entry['apr']
+            aprTotal += entry['CubeScore']
             
             if(entry['Climb'] > 1):
               climbRP = 1
