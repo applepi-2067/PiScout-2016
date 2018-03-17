@@ -732,12 +732,12 @@ class ScoutServer(object):
             output += '''
                 <tr role="row" id="match_{0}">
                     <td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
-                    <td id="team1_{0}" class="hidden-xs">{1}</td>
-                    <td id="team2_{0}" class="hidden-xs">{2}</td>
-                    <td id="team3_{0}" class="hidden-xs">{3}</td>
-                    <td id="team4_{0}" class="hidden-xs">{4}</td>
-                    <td id="team5_{0}" class="hidden-xs">{5}</td>
-                    <td id="team6_{0}" class="hidden-xs">{6}</td>
+                    <td id="team1_{0}" class="hidden-xs"><a href="/team?n={1}">{1}</a></td>
+                    <td id="team2_{0}" class="hidden-xs"><a href="/team?n={2}">{2}</a></td>
+                    <td id="team3_{0}" class="hidden-xs"><a href="/team?n={3}">{3}</a></td>
+                    <td id="team4_{0}" class="hidden-xs"><a href="/team?n={4}">{4}</a></td>
+                    <td id="team5_{0}" class="hidden-xs"><a href="/team?n={5}">{5}</a></td>
+                    <td id="team6_{0}" class="hidden-xs"><a href="/team?n={6}">{6}</a></td>
                     <td class="hidden-xs">{7}</td>
                     <td class="hidden-xs">{8}</td>
                     

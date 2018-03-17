@@ -91,7 +91,7 @@
   }
 
   /* Sets the color of links in tables */
-  #table_container a:link,#table_container a:visited,#table_container a:hover,#table_container a:active,a:link,a:visited,a:hover,a:active
+  #table_container a:link,#table_container a:visited,#table_container a:hover
   {
     color:#666;
     text-decoration:underline;
@@ -245,14 +245,14 @@
   text-align:center;
 }
 
-.match_table td:nth-child(n+2):nth-child(-n+4),.match_table td:nth-child(8),.match_table td:nth-child(n+10):nth-child(-n+12),.match_table td:nth-child(16)
+#matches td:nth-child(n+2):nth-child(-n+4) a,#matches td:nth-child(8),#matches td:nth-child(n+10):nth-child(-n+12) a,#matches td:nth-child(16)
 {
-  color:#0000B8;
+  color:#0000B8 !important;
 }
 
-.match_table td:nth-child(n+5):nth-child(-n+7),.match_table td:nth-child(9),.match_table td:nth-child(n+13):nth-child(-n+15),.match_table td:nth-child(17)
+#matches td:nth-child(n+5):nth-child(-n+7) a,#matches td:nth-child(9),#matches td:nth-child(n+13):nth-child(-n+15) a,#matches td:nth-child(17)
 {
-  color:#B20000;
+  color:#B20000 !important;
 }
 
 .navbar
