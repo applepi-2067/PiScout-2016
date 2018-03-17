@@ -770,7 +770,9 @@ class ScoutServer(object):
 
         if data == 'json':
             return '[]' #bogus json for local version
-
+        
+        if not event:
+            event = self.getevent()
         datapath = 'data_' + event + '.db'
         self.database_exists(event)
         conn = sql.connect(datapath)
