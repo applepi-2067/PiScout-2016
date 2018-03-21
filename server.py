@@ -801,12 +801,15 @@ class ScoutServer(object):
               flag = game.autoFlag(d)
               
               #If match schedule is available, check if this is a real match and flag if bad
-              m = self.getMatches(event)    
-              if m:
-                  match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
-                  teams = match['alliances']['blue']['teams'] + match['alliances']['red']['teams']
-                  if not 'frc' + str(d['Team']) in teams:
-                      flag = 1   
+              try:
+                m = self.getMatches(event)    
+                if m:
+                    match = next((item for item in m if (item['match_number'] == d['Match']) and (item['comp_level'] == 'qm')))
+                    teams = match['alliances']['blue']['team_keys'] + match['alliances']['red']['team_keys']
+                    if not 'frc' + str(d['Team']) in teams:
+                        flag = 1   
+              except:
+                pass
               
               #If replay is marked, replace previous data
               if d['Replay']:   #replay
