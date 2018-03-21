@@ -729,6 +729,24 @@ class ScoutServer(object):
                   match['alliances']['blue']['score'] = ""
                 if match['alliances']['red']['score'] == -1:
                   match['alliances']['red']['score'] = ""
+            blueTeams = [match['alliances']['blue']['team_keys'][0][3:], match['alliances']['blue']['team_keys'][1][3:], match['alliances']['blue']['team_keys'][2][3:]]
+            blueResult = game.predictScore(self.datapath(), blueTeams)
+            blueRP = blueResult['RP1'] + blueResult['RP2']
+            redTeams = [match['alliances']['red']['team_keys'][0][3:], match['alliances']['red']['team_keys'][1][3:], match['alliances']['red']['team_keys'][2][3:]]
+            redResult = game.predictScore(self.datapath(), redTeams)
+            redRP = redResult['RP1'] + redResult['RP2']
+            if(redResult['score'] > blueResult['score']):
+              prediction = "Red +" + str(round(redResult['score']-blueResult['score'], 2))
+              prediction += "+" if (redResult['RP1']) else "" 
+              prediction += "+" if (redResult['RP2']) else "" 
+              prediction += "-" if (blueResult['RP1']) else "" 
+              prediction += "-" if (blueResult['RP2']) else ""
+            else:
+              prediction = "Blue +" + str(round(blueResult['score']-redResult['score'], 2)) 
+              prediction += "+" if (blueResult['RP1']) else "" 
+              prediction += "+" if (blueResult['RP2']) else "" 
+              prediction += "-" if (redResult['RP1']) else "" 
+              prediction += "-" if (redResult['RP2']) else ""
             output += '''
                 <tr role="row" id="match_{0}">
                     <td><a href="alliances?b1={1}&b2={2}&b3={3}&r1={4}&r2={5}&r3={6}">{0}</a></td>
@@ -740,6 +758,7 @@ class ScoutServer(object):
                     <td id="team6_{0}" class="hidden-xs"><a href="/team?n={6}">{6}</a></td>
                     <td class="hidden-xs">{7}</td>
                     <td class="hidden-xs">{8}</td>
+                    <td class="hidden-xs">{9}</td>
                     
                     <td class="rankingColumn rankColumn1 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{1}</td>
                     <td class="rankingColumn rankColumn2 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{2}</td>
@@ -749,12 +768,13 @@ class ScoutServer(object):
                     <td class="rankingColumn rankColumn6 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{6}</td>
                     <td class="rankingColumn rankColumn7 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{7}</td>
                     <td class="rankingColumn rankColumn8 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{8}</td>
+                    <td class="rankingColumn rankColumn9 hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{9}</td>
                 </tr>
             '''.format(match['num'], match['alliances']['blue']['team_keys'][0][3:],
                         match['alliances']['blue']['team_keys'][1][3:], match['alliances']['blue']['team_keys'][2][3:],
                         match['alliances']['red']['team_keys'][0][3:], match['alliances']['red']['team_keys'][1][3:],
                         match['alliances']['red']['team_keys'][2][3:], match['alliances']['blue']['score'],
-                        match['alliances']['red']['score'])
+                        match['alliances']['red']['score'], prediction)
         
         with open('web/matches.html', 'r') as file:
             page = file.read()
