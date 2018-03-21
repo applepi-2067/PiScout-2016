@@ -173,7 +173,7 @@ def predictScore(datapath, teams, level='quals'):
             
             aprTotal += entry['CubeScore']
             
-            if(entry['Climb'] > 1):
+            if(entry['Climb'] > 30):
               climbRP = 1
             else:
               climbTotal += entry['Climb']
@@ -181,7 +181,7 @@ def predictScore(datapath, teams, level='quals'):
             if(entry['ASwitch'] > 0.5):
               autoRP = 1
               
-        if (climbTotal > 1):
+        if (climbTotal > 30):
           climbRP = 1
               
         retVal = {'score': 0, 'RP1': 0, 'RP2': 0}
