@@ -47,13 +47,13 @@ class ScoutServer(object):
         table = ''
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
-        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY apr DESC"
+        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY Team DESC"
         data = conn.cursor().execute(sqlCommand).fetchall()
         conn.close()
         columns = len(game.AVERAGE_FIELDS)
         #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
-            if key != "team":
+            if key != "Team":
                 table += '''
                 <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
                 
@@ -76,7 +76,7 @@ class ScoutServer(object):
                 <tr role="row">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(int(team['Team']))
             for i,key in enumerate(game.AVERAGE_FIELDS):
-                if key!= 'team':
+                if key!= 'Team':
                     table += '''
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
@@ -142,11 +142,11 @@ class ScoutServer(object):
         tableHeaders = ''
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
-        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY apr DESC"
+        sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " ORDER BY Team DESC"
         data = conn.cursor().execute(sqlCommand).fetchall()
         #First generate a header for each column. There are two blocks, 1 for regular and 1 for mobile
         for i,key in enumerate(game.AVERAGE_FIELDS):
-            if key != "team":
+            if key != "Team":
                 tableHeaders += '''
                 <th class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="{1}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="{0}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">{0}</div></th>
                 
@@ -168,13 +168,13 @@ class ScoutServer(object):
         
         if pickList:
           for team in pickList:
-            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY apr DESC"
+            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY Team DESC"
             teamData = conn.cursor().execute(sqlCommand, (team,)).fetchone()
             tableHeaders += '''
                 <tr role="row" id="team_{0}">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(int(teamData['Team']))
             for i,key in enumerate(game.AVERAGE_FIELDS):
-                if key!= 'team':
+                if key!= 'Team':
                     tableHeaders += '''
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
@@ -189,13 +189,13 @@ class ScoutServer(object):
           
         if dnpList:
           for team in dnpList:
-            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY apr DESC"
+            sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE team=? ORDER BY Team DESC"
             teamData = conn.cursor().execute(sqlCommand, (team,)).fetchone()
             dnpTable += '''
                 <tr role="row" id="team_{0}">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(int(teamData['Team']))
             for i,key in enumerate(game.AVERAGE_FIELDS):
-                if key!= 'team':
+                if key!= 'Team':
                     dnpTable += '''
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
@@ -216,7 +216,7 @@ class ScoutServer(object):
                 <tr role="row" id="team_{0}">
                     <td><a href="team?n={0}">{0}</a></td>'''.format(int(team['Team']))
             for i,key in enumerate(game.AVERAGE_FIELDS):
-                if key!= 'team':
+                if key!= 'Team':
                     table += '''
                         <td class="hidden-xs">{0}</td>
                         <td class="rankingColumn rankColumn{1} hidden-sm hidden-md hidden-lg hidden-xs" style="display: none;">{0}</td>
@@ -256,7 +256,7 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
-        sql_averages = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+        sql_averages = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
         comments = cursor.execute('SELECT * FROM comments WHERE team=?', (n,)).fetchall()
         sql_pit = cursor.execute('SELECT * FROM pitScout WHERE team=?', (n,)).fetchall()
         conn.close()
@@ -291,21 +291,16 @@ class ScoutServer(object):
               oldconn = sql.connect('data_' + lastEventCode + '.db')
               oldconn.row_factory = sql.Row
               oldcursor = oldconn.cursor()
-              oldAverages = oldcursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+              oldAverages = oldcursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
               assert len(oldAverages) < 2 #ensure there aren't two entries for one team
               if len(oldAverages):
                   oldData = oldAverages[0]
                   statbox += '''<div class="comparebox_container">
                   <p><a href="/team?n={0}" style="font-size: 32px;">Last Event - {0}</a></p>
                   <div class="statbox_container">
-                      <div id="apr">
-                          <p style="font-size: 20pt;">APR</p>
-                          <p style="font-size: 40pt;">{1}</p>
-                      </div>
-                      <div id="stats">
-                          <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(lastEventCode, oldData['apr'])
+                      <div id="stats">'''.format(n)
                   for key in game.AVERAGE_FIELDS:
-                      if (key != 'team') and (key != 'apr'):
+                      if (key != 'Team'):
                           statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldData[key])
                   if cherrypy.session['auth'] == serverinfo.AUTH:
                     for key in game.HIDDEN_AVERAGE_FIELDS:
@@ -322,14 +317,9 @@ class ScoutServer(object):
         statbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">This Event</a></p>
                     <div class="statbox_container">
-                        <div id="apr">
-                            <p style="font-size: 20pt;">APR</p>
-                            <p style="font-size: 40pt;">{0}</p>
-                        </div>
-                        <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(averages['apr'])
+                        <div id="stats">'''.format(n)
         for key in game.AVERAGE_FIELDS:
-          if (key != 'team') and (key != 'apr'):
+          if (key != 'Team'):
               statbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, averages[key])
         if cherrypy.session['auth'] == serverinfo.AUTH:
           for key in game.HIDDEN_AVERAGE_FIELDS:
@@ -437,7 +427,7 @@ class ScoutServer(object):
         cursor = conn.cursor()
         if not cherrypy.session['auth'] == serverinfo.AUTH:
           raise cherrypy.HTTPError(401, "Not authorized to perform recalculate. Please log in and try again.")          
-        data = conn.cursor().execute('SELECT * FROM averages ORDER BY apr DESC').fetchall()
+        data = conn.cursor().execute('SELECT * FROM averages ORDER BY Team DESC').fetchall()
         for team in data:
             self.calcavg(team[0], self.getevent())
         with open('web/recalculate.html', 'r') as file:
@@ -480,7 +470,7 @@ class ScoutServer(object):
                 continue
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter NUMBERS, not letters.")
-            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
                 entry = average[0]
@@ -490,14 +480,10 @@ class ScoutServer(object):
             output += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
-                        <div id="apr">
-                            <p style="font-size: 20pt;">APR</p>
-                            <p style="font-size: 40pt;">{1}</p>
-                        </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(int(entry['team']), entry['apr'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(int(entry['Team']))
             for key in game.AVERAGE_FIELDS:
-                if (key != 'team') and (key != 'apr'):
+                if (key != 'Team'):
                     output += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             if cherrypy.session['auth'] == serverinfo.AUTH:
               for key in game.HIDDEN_AVERAGE_FIELDS:
@@ -613,9 +599,9 @@ class ScoutServer(object):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
             if mode == 'averages':
-                average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+                average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
             else:
-                average = cursor.execute('SELECT * FROM maxes WHERE team=?', (n,)).fetchall()
+                average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
                 entry = average[0]
@@ -625,14 +611,10 @@ class ScoutServer(object):
             blueStatbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
-                        <div id="apr">
-                            <p style="font-size: 20pt;">APR</p>
-                            <p style="font-size: 40pt;">{1}</p>
                         </div>
-                        <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['apr'])
+                        <div id="stats">'''.format(n)
             for key in game.AVERAGE_FIELDS:
-                if (key != 'team') and (key != 'apr'):
+                if (key != 'Team'):
                     blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             if cherrypy.session['auth'] == serverinfo.AUTH:
               for key in game.HIDDEN_AVERAGE_FIELDS:
@@ -646,9 +628,9 @@ class ScoutServer(object):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
             if mode == 'averages':
-                average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+                average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
             else:
-                average = cursor.execute('SELECT * FROM maxes WHERE team=?', (n,)).fetchall()
+                average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
             assert len(average) < 2
             if len(average):
                 entry = average[0]
@@ -663,7 +645,7 @@ class ScoutServer(object):
                             <p style="font-size: 40pt;">{1}</p>
                         </div>
                         <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n, entry['apr'])
+                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n)
             for key in game.AVERAGE_FIELDS:
                 if (key != 'team') and (key != 'apr'):
                     redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
@@ -896,7 +878,7 @@ class ScoutServer(object):
         if entries:
             totals = game.calcTotals(entries)
             for key in totals:
-                totals[key]['team'] = n
+                totals[key]['Team'] = n
                 #replace the data entries with new ones
                 cursor.execute('INSERT INTO ' + key + ' VALUES (' + ','.join([str(a) for a in totals[key].values()]) + ')')
         conn.commit()

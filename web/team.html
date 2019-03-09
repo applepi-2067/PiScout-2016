@@ -52,7 +52,7 @@
 
                 // GRAPH
                 graph = new AmCharts.AmGraph();
-                graph.title = "Auto Switch Cubes";
+                graph.title = "Sandstorm";
                 graph.valueAxis = valueAxis;
                 graph.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph.lineColor = "#637bb6";
@@ -62,12 +62,12 @@
                 graph.bulletBorderAlpha = 1;
                 graph.bulletBorderThickness = 2;
                 graph.lineThickness = 2;
-                graph.valueField = "ASwitch";
-                graph.balloonText = "Auto Switch Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph.valueField = "Sandstorm";
+                graph.balloonText = "Sandstorm:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph);
 
                 graph2 = new AmCharts.AmGraph();
-                graph2.title = "Auto Scale Cubes";
+                graph2.title = "Hab Climb";
                 graph2.valueAxis = valueAxis;
                 graph2.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph2.lineColor = "#187a2e";
@@ -77,12 +77,12 @@
                 graph2.bulletBorderAlpha = 1;
                 graph2.bulletBorderThickness = 2;
                 graph2.lineThickness = 2;
-                graph2.valueField = "AScale";
-                graph2.balloonText = "Auto Scale Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph2.valueField = "HabClimb";
+                graph2.balloonText = "Hab Climb:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph2);
 
                 graph3 = new AmCharts.AmGraph();
-                graph3.title = "Teleop Exchange Cubes";
+                graph3.title = "Cargo";
                 graph3.valueAxis = valueAxis;
                 graph3.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph3.lineColor = "#FF6600";
@@ -92,13 +92,13 @@
                 graph3.bulletBorderAlpha = 1;
                 graph3.bulletBorderThickness = 2;
                 graph3.lineThickness = 2;
-                graph3.valueField = "TXch";
-                graph3.balloonText = "Teleop Exchange Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph3.valueField = "Cargo";
+                graph3.balloonText = "Cargo:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph3);
 
                 graph4 = new AmCharts.AmGraph();
                 graph4.valueAxis = valueAxis;
-                graph4.title = "Teleop Own Switch Cubes";
+                graph4.title = "Hatches";
                 graph4.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph4.lineColor = "#FCD202";
                 graph4.bullet = "round";
@@ -107,13 +107,13 @@
                 graph4.bulletBorderAlpha = 1;
                 graph4.bulletBorderThickness = 2;
                 graph4.lineThickness = 2;
-                graph4.valueField = "TOwnSwitch";
-                graph4.balloonText = "Teleop Own Switch:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph4.valueField = "Hatches";
+                graph4.balloonText = "Hatches:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph4);
 
                 graph5 = new AmCharts.AmGraph();
                 graph5.valueAxis = valueAxis;
-                graph5.title = "Teleop Scale Cubes";
+                graph5.title = "Cycles";
                 graph5.type = "smoothedLine"; // this line makes the graph smoothed line.
                 graph5.lineColor = "#FF0000";
                 graph5.bullet = "round";
@@ -122,10 +122,10 @@
                 graph5.bulletBorderAlpha = 1;
                 graph5.bulletBorderThickness = 2;
                 graph5.lineThickness = 2;
-                graph5.valueField = "TScale";
-                graph5.balloonText = "Teleop Scale Cubes:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                graph5.valueField = "Cycles";
+                graph5.balloonText = "Cycles:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph5);
-                
+                /*
                 graph6 = new AmCharts.AmGraph();
                 graph6.valueAxis = valueAxis;
                 graph6.title = "Teleop Opp Switch Cubes";
@@ -170,6 +170,7 @@
                 graph8.valueField = "Climb";
                 graph8.balloonText = "Climb:<br><b><span style='font-size:14px;'>[[value]]</span></b>";
                 chart.addGraph(graph8);
+                */
                 
                 // CURSOR
                 var chartCursor = new AmCharts.ChartCursor();
