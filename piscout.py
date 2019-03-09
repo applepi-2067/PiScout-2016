@@ -12,6 +12,7 @@ from event import CURRENT_EVENT
 import gamespecific as game
 import serverinfo
 import json
+import sys
 
 # PiScout is a means of collecting match data in a scantron-like format
 # This program was designed to be easily configurable, and new sheets can be made rapidly
@@ -19,6 +20,7 @@ import json
 # Cory Lynch 2015
 
 SHADED_VAL = 45000
+fastMode = False;
 
 class PiScout:
     # Firstly, initializes the fields of a PiScout object
@@ -262,41 +264,44 @@ class PiScout:
 
         #Create and open the GUI to verify  data
         print("Found new data, opening")
-        output = ''
-        if self.type == game.SheetType.MATCH:
-          for key, value in self.matchData.items():
-              output += key + "=" + str(value) + '\n'
-        elif self.type == game.SheetType.PIT:
-          for key, value in self.pitData.items():
-              output += key + "=" + str(value) + '\n'
-        fig = plt.figure('PiScout')
-        fig.subplots_adjust(left=0, right=0.6)
-        plt.subplot(111)
-        plt.imshow(self.display)
-        plt.title('Scanned Sheet')
-        plt.text(600,784,output,fontsize=12)
-        upload = Button(plt.axes([0.68, 0.31, 0.15, 0.07]), 'Upload Data')
-        upload.on_clicked(self.upload)
-        save = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), 'Save Data Offline')
-        save.on_clicked(self.save)
-        edit = Button(plt.axes([0.68, 0.17, 0.15, 0.07]), 'Edit Data')
-        edit.on_clicked(self.edit)
-        cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
-        cancel.on_clicked(self.cancel)
-        mng = plt.get_current_fig_manager()
-        try:
-            mng.window.state('zoomed')
-        except AttributeError:
-            print("Window resizing exploded, oh well.")
-        plt.show()
-        self.matchData = dict(game.SCOUT_FIELDS)
-        self.pitData = dict(game.PIT_SCOUT_FIELDS)
-        self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
+        if fastMode:
+            self.save()
+        else:
+            output = ''
+            if self.type == game.SheetType.MATCH:
+              for key, value in self.matchData.items():
+                  output += key + "=" + str(value) + '\n'
+            elif self.type == game.SheetType.PIT:
+              for key, value in self.pitData.items():
+                  output += key + "=" + str(value) + '\n'
+            fig = plt.figure('PiScout')
+            fig.subplots_adjust(left=0, right=0.6)
+            plt.subplot(111)
+            plt.imshow(self.display)
+            plt.title('Scanned Sheet')
+            plt.text(600,784,output,fontsize=12)
+            upload = Button(plt.axes([0.68, 0.31, 0.15, 0.07]), 'Upload Data')
+            upload.on_clicked(self.upload)
+            save = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), 'Save Data Offline')
+            save.on_clicked(self.save)
+            edit = Button(plt.axes([0.68, 0.17, 0.15, 0.07]), 'Edit Data')
+            edit.on_clicked(self.edit)
+            cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), 'Cancel')
+            cancel.on_clicked(self.cancel)
+            mng = plt.get_current_fig_manager()
+            try:
+                mng.window.state('zoomed')
+            except AttributeError:
+                print("Window resizing exploded, oh well.")
+            plt.show()
+            self.matchData = dict(game.SCOUT_FIELDS)
+            self.pitData = dict(game.PIT_SCOUT_FIELDS)
+            self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
 
     # Invoked by the "Save Data Offline" button
     # Adds data to a queue to be uploaded online at a later time
     # Also stores in the local database
-    def save(self, event):
+    def save(self):
         print("Queueing match for upload later")
         if self.type == game.SheetType.MATCH:
           with open("queue.txt", "a+") as file:
@@ -375,4 +380,9 @@ class PiScout:
     def message(self, title, message, type=0):
         return ctypes.windll.user32.MessageBoxW(0, message, title, type)
 
+if len(sys.argv) > 1:
+    if sys.argv[1] == "-fast":
+        fastMode = True
+        print("Warp Speed!")
 PiScout()
+
