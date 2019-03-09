@@ -31,6 +31,7 @@
                   update: function (event, ui) {{
                     var order = $(this).sortable('serialize');
                     $.post('picklist', {{'list': order}});
+                    $("#main_table").trigger('update');
                     }}                  
                 }}).disableSelection();
                 $(".dnp").sortable({{
@@ -38,6 +39,7 @@
                   update: function (event, ui) {{
                     var order = $(this).sortable('serialize');
                     $.post('picklist', {{'dnp':order}});
+                    $("#main_table").trigger('update');
                     }}
                   }}).disableSelection();
                 $("#main_table").sortable({{
