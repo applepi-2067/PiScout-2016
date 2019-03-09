@@ -27,6 +27,8 @@ class ScoutServer(object):
         if 'auth' not in cherrypy.session:
           if localInstance:
             cherrypy.session['auth'] = serverinfo.AUTH
+            cherrypy.session['admin'] = serverinfo.ADMIN
+            cherrypy.session['admin'] = ""
           else:
             cherrypy.session['auth'] = ""
         
@@ -99,6 +101,11 @@ class ScoutServer(object):
     def picklist(self, m='', list='', dnp=''):          
         if not cherrypy.session['auth'] == serverinfo.AUTH:
           raise cherrypy.HTTPError(401, "Not authorized to view picklist. Please log in and try again.")      
+      
+        if cherrypy.session['admin'] == serverinfo.ADMIN:
+            fileName = "web/picklist.html"
+        else:
+            fileName = "web/picklistReadOnly.html"
         
         #Handle mode selection. When the mode is changed, a POST request is sent here.
         if m != '':
@@ -229,7 +236,7 @@ class ScoutServer(object):
                   '''.format(team[key], i+j)
             table += '''</tr>'''
         
-        with open('web/picklist.html', 'r') as file:
+        with open(fileName, 'r') as file:
             page = file.read()
         return page.format(table, cherrypy.session['event'], cherrypy.session['mode'], tableHeaders, dnpTable, len(game.AVERAGE_FIELDS) + len(game.HIDDEN_AVERAGE_FIELDS) - 3)
 
@@ -240,6 +247,11 @@ class ScoutServer(object):
       if auth == serverinfo.AUTH:
         cherrypy.session['auth'] = auth
         loginResult = "Login successful"
+      if auth == serverinfo.ADMIN:
+        cherrypy.session['admin'] = auth
+        cherrypy.session['auth'] = serverinfo.AUTH
+        loginResult = "Admin Login successful"
+        
       
       with open('web/login.html', 'r') as file:
             page = file.read()
@@ -406,7 +418,7 @@ class ScoutServer(object):
     # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
     @cherrypy.expose()
     def flag(self, num='', match='', flagval=0):
-        if not cherrypy.session['auth'] == serverinfo.AUTH:
+        if not cherrypy.session['admin'] == serverinfo.ADMIN:
           raise cherrypy.HTTPError(401, "Not authorized to flag match data. Please log in and try again")
         if not (num.isdigit() and match.isdigit()):
             return '<img src="http://goo.gl/eAs7JZ" style="width: 1200px"></img>'
@@ -425,7 +437,7 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        if not cherrypy.session['auth'] == serverinfo.AUTH:
+        if not cherrypy.session['admin'] == serverinfo.ADMIN:
           raise cherrypy.HTTPError(401, "Not authorized to perform recalculate. Please log in and try again.")          
         data = conn.cursor().execute('SELECT * FROM averages ORDER BY Team DESC').fetchall()
         for team in data:
