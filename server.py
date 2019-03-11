@@ -627,9 +627,9 @@ class ScoutServer(object):
             for key in game.AVERAGE_FIELDS:
                 if (key != 'Team'):
                     blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            if cherrypy.session['auth'] == serverinfo.AUTH:
-              for key in game.HIDDEN_AVERAGE_FIELDS:
-                blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            #if cherrypy.session['auth'] == serverinfo.AUTH:
+            #  for key in game.HIDDEN_AVERAGE_FIELDS:
+            #    blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             blueStatbox += '''       </div>
                             </div>
                          </div>'''
@@ -655,9 +655,9 @@ class ScoutServer(object):
             for key in game.AVERAGE_FIELDS:
                 if (key != 'Team'):
                     redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            if cherrypy.session['auth'] == serverinfo.AUTH:
-              for key in game.HIDDEN_AVERAGE_FIELDS:
-                redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+            #if cherrypy.session['auth'] == serverinfo.AUTH:
+              #for key in game.HIDDEN_AVERAGE_FIELDS:
+              #  redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             redStatbox += '''       </div>
                             </div>
                             </div>'''
