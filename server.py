@@ -28,9 +28,9 @@ class ScoutServer(object):
           if localInstance:
             cherrypy.session['auth'] = serverinfo.AUTH
             cherrypy.session['admin'] = serverinfo.ADMIN
-            cherrypy.session['admin'] = ""
           else:
             cherrypy.session['auth'] = ""
+            cherrypy.session['admin'] = ""
         
         #Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
