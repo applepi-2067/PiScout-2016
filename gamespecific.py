@@ -169,7 +169,7 @@ def predictScore(datapath, teams, level='quals'):
               entry = dict(AVERAGE_FIELDS)
               entry.update(HIDDEN_AVERAGE_FIELDS)
             
-            pointsTotal += entry['Hatches']*2 + entry['Cargo']*3 + entry['Sandstorm'] + entry['HabClimb'] + entry['SupportClimb']
+            pointsTotal += entry['Hatches']*2 + entry['Cargo']*3 + entry['Sandstorm'] + entry['HabClimb']
             rocketHatches += entry['HighHatches']
             rocketCargo += entry['HighCargo']
             
@@ -178,7 +178,7 @@ def predictScore(datapath, teams, level='quals'):
             else:
               climbTotal += entry['HabClimb']
               
-        if(entry['rocketHatches'] > 3 and entry['rocketCargo'] > 3):
+        if(rocketHatches > 3 and rocketCargo > 3):
           rocketRP = 1
               
         if (climbTotal > 15):

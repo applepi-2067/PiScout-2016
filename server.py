@@ -623,7 +623,6 @@ class ScoutServer(object):
             blueStatbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
-                        </div>
                         <div id="stats">'''.format(n)
             for key in game.AVERAGE_FIELDS:
                 if (key != 'Team'):
@@ -652,21 +651,16 @@ class ScoutServer(object):
             redStatbox += '''<div class="comparebox_container">
                     <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
                     <div class="statbox_container">
-                        <div id="apr">
-                            <p style="font-size: 20pt;">APR</p>
-                            <p style="font-size: 40pt;">{1}</p>
-                        </div>
-                        <div id="stats">
-                            <p class="statbox" style="font-weight:bold">Average match:</p>'''.format(n)
+                        <div id="stats">'''.format(n)
             for key in game.AVERAGE_FIELDS:
-                if (key != 'team') and (key != 'apr'):
+                if (key != 'Team'):
                     redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             if cherrypy.session['auth'] == serverinfo.AUTH:
               for key in game.HIDDEN_AVERAGE_FIELDS:
                 redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
             redStatbox += '''       </div>
                             </div>
-                         </div>'''
+                            </div>'''
         
         #Predict scores
         blue_score = game.predictScore(self.datapath(), numsBlue, level)['score']
