@@ -692,57 +692,124 @@ class ScoutServer(object):
         for i,n in enumerate(numsBlue):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
-            if mode == 'averages':
-                average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
-            else:
-                average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
-            assert len(average) < 2
-            if len(average):
-                entry = average[0]
-            else:
-              entry = dict(game.AVERAGE_FIELDS)
-              entry.update(game.HIDDEN_AVERAGE_FIELDS)
-            blueStatbox += '''<div class="comparebox_container">
-                    <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+            entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
+            prevEvent = 0
+            if len(entries) < 3:
+              globalconn = sql.connect('global.db')
+              globalconn.row_factory = sql.Row
+              globalcursor = globalconn.cursor()
+              teamEvents = globalcursor.execute('SELECT * FROM teamEvents WHERE Team=?', (n,)).fetchone()
+              if teamEvents:
+                  for i in range(1,10):
+                      if teamEvents['Event' + str(i)]:
+                          if teamEvents['Event' + str(i)] != cherrypy.session['event']:
+                              lastEventCode = teamEvents['Event' + str(i)]
+                              lastEvent = 1         
+              if lastEvent:
+                oldconn = sql.connect('data_' + lastEventCode + '.db')
+                oldconn.row_factory = sql.Row
+                oldcursor = oldconn.cursor()
+                oldAverages = oldcursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
+                assert len(oldAverages) < 2 #ensure there aren't two entries for one team
+                if len(oldAverages):
+                    oldData = oldAverages[0]
+                    blueStatbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Last Event - {0}</a></p>
                     <div class="statbox_container">
                         <div id="stats">'''.format(n)
-            for key in game.AVERAGE_FIELDS:
-                if (key != 'Team'):
-                    blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            #if cherrypy.session['auth'] == serverinfo.AUTH:
-            #  for key in game.HIDDEN_AVERAGE_FIELDS:
-            #    blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            blueStatbox += '''       </div>
-                            </div>
-                         </div>'''
+                    for key in game.AVERAGE_FIELDS:
+                        if (key != 'Team'):
+                            blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldData[key])
+                    blueStatbox += '''       </div>
+                                    </div>
+                                 </div>'''
+                    prevEvent = 1
+                    
+            if prevEvent == 0:
+              if mode == 'averages':
+                  average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
+              else:
+                  average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
+              assert len(average) < 2
+              if len(average):
+                  entry = average[0]
+              else:
+                entry = dict(game.AVERAGE_FIELDS)
+                entry.update(game.HIDDEN_AVERAGE_FIELDS)
+              blueStatbox += '''<div class="comparebox_container">
+                      <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+                      <div class="statbox_container">
+                          <div id="stats">'''.format(n)
+              for key in game.AVERAGE_FIELDS:
+                  if (key != 'Team'):
+                      blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+              #if cherrypy.session['auth'] == serverinfo.AUTH:
+              #  for key in game.HIDDEN_AVERAGE_FIELDS:
+              #    blueStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+              blueStatbox += '''       </div>
+                              </div>
+                           </div>'''
          
         redStatbox = ""
         for i,n in enumerate(numsRed):
             if not n.isdigit():
-                raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")
-            if mode == 'averages':
-                average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
-            else:
-                average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
-            assert len(average) < 2
-            if len(average):
-                entry = average[0]
-            else:
-              entry = dict(game.AVERAGE_FIELDS)
-              entry.update(game.HIDDEN_AVERAGE_FIELDS)
-            redStatbox += '''<div class="comparebox_container">
-                    <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+                raise cherrypy.HTTPError(400, "You fool! Enter six valid team numbers!")      
+            entries = cursor.execute('SELECT * FROM scout WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
+            prevEvent = 0
+            if len(entries) < 3:
+              globalconn = sql.connect('global.db')
+              globalconn.row_factory = sql.Row
+              globalcursor = globalconn.cursor()
+              teamEvents = globalcursor.execute('SELECT * FROM teamEvents WHERE Team=?', (n,)).fetchone()
+              if teamEvents:
+                  for i in range(1,10):
+                      if teamEvents['Event' + str(i)]:
+                          if teamEvents['Event' + str(i)] != cherrypy.session['event']:
+                              lastEventCode = teamEvents['Event' + str(i)]
+                              lastEvent = 1         
+              if lastEvent:
+                oldconn = sql.connect('data_' + lastEventCode + '.db')
+                oldconn.row_factory = sql.Row
+                oldcursor = oldconn.cursor()
+                oldAverages = oldcursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
+                assert len(oldAverages) < 2 #ensure there aren't two entries for one team
+                if len(oldAverages):
+                    oldData = oldAverages[0]
+                    redStatbox += '''<div class="comparebox_container">
+                    <p><a href="/team?n={0}" style="font-size: 32px;">Last Event - {0}</a></p>
                     <div class="statbox_container">
                         <div id="stats">'''.format(n)
-            for key in game.AVERAGE_FIELDS:
-                if (key != 'Team'):
-                    redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            #if cherrypy.session['auth'] == serverinfo.AUTH:
-              #for key in game.HIDDEN_AVERAGE_FIELDS:
-              #  redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
-            redStatbox += '''       </div>
-                            </div>
-                            </div>'''
+                    for key in game.AVERAGE_FIELDS:
+                        if (key != 'Team'):
+                            redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, oldData[key])
+                    redStatbox += '''       </div>
+                                    </div>
+                                 </div>'''
+                    prevEvent = 1  
+            if prevEvent == 0:
+              if mode == 'averages':
+                  average = cursor.execute('SELECT * FROM averages WHERE Team=?', (n,)).fetchall()
+              else:
+                  average = cursor.execute('SELECT * FROM maxes WHERE Team=?', (n,)).fetchall()
+              assert len(average) < 2
+              if len(average):
+                  entry = average[0]
+              else:
+                entry = dict(game.AVERAGE_FIELDS)
+                entry.update(game.HIDDEN_AVERAGE_FIELDS)
+              redStatbox += '''<div class="comparebox_container">
+                      <p><a href="/team?n={0}" style="font-size: 32px;">Team {0}</a></p>
+                      <div class="statbox_container">
+                          <div id="stats">'''.format(n)
+              for key in game.AVERAGE_FIELDS:
+                  if (key != 'Team'):
+                      redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+              #if cherrypy.session['auth'] == serverinfo.AUTH:
+                #for key in game.HIDDEN_AVERAGE_FIELDS:
+                #  redStatbox += '''<p class="statbox">{0}: {1}</p>'''.format(key, entry[key])
+              redStatbox += '''       </div>
+                              </div>
+                              </div>'''
         
         #Predict scores
         blue_score = game.predictScore(self.datapath(), numsBlue, level)['score']
