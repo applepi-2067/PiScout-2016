@@ -262,17 +262,15 @@ def calcTotals(entries):
             maxes[key] = round(np.max(sums[key]), 2)
     retVal = {'averages':average, 'median':median, 'maxes':maxes, 'noDefense':noDefense, 'lastThree':lastThree}
     
-    #Calculate APRs. This is an approximate average points contribution to the match
-    #for key in retVal:
-        #CubeScore = round(retVal[key]['AScale']*prop.AUTO_SCALE + retVal[key]['ASwitch']*prop.AUTO_SWITCH + retVal[key]['TXch']*prop.EXCHANGE + retVal[key]['TOwnSwitch']*prop.OWN_SWITCH + retVal[key]['TScale']*prop.SCALE + retVal[key]['TOppSwitch']*prop.OPP_SWITCH, 2)
-        #FirstPick = round(retVal[key]['ASwitch']*prop.FIRST_AUTO_SWITCH+retVal[key]['AScale']*prop.FIRST_AUTO_SCALE + retVal[key]['TXch']*prop.FIRST_EXCHANGE + retVal[key]['TOwnSwitch']*prop.FIRST_OWN_SWITCH + retVal[key]['TScale']*prop.FIRST_SCALE + retVal[key]['TOppSwitch']*prop.FIRST_OPP_SWITCH + retVal[key]['Climb']*prop.FIRST_CLIMB, 2)
-        #SecondPick = round(retVal[key]['ASwitch']*prop.SECOND_AUTO_SWITCH+retVal[key]['AScale']*prop.SECOND_AUTO_SCALE + retVal[key]['TXch']*prop.SECOND_EXCHANGE + retVal[key]['TOwnSwitch']*prop.SECOND_OWN_SWITCH + retVal[key]['TScale']*prop.SECOND_SCALE + retVal[key]['TOppSwitch']*prop.SECOND_OPP_SWITCH + retVal[key]['Climb']*prop.SECOND_CLIMB, 2)
-        #apr = round(retVal[key]['TXch'] + retVal[key]['TOwnSwitch'] + retVal[key]['TScale'] + retVal[key]['TOppSwitch'], 2)
+    #Calculate Proprietary metrics.
+    for key in retVal:
+        CycleScore = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.LOW_HATCHES + retVal[key]['HighHatches']*prop.HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.LOW_CARGO + retVal[key]['HighCargo']*prop.HIGH_CARGO, 2)
+        FirstPick = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.FIRST_LOW_HATCHES + retVal[key]['HighHatches']*prop.FIRST_HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.FIRST_LOW_CARGO + retVal[key]['HighCargo']*prop.FIRST_HIGH_CARGO + retVal[key]['Sandstorm']*prop.FIRST_SANDSTORM + retVal[key]['HabClimb']*prop.FIRST_HAB_CLIMB, 2)
+        SecondPick = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.SECOND_LOW_HATCHES + retVal[key]['HighHatches']*prop.SECOND_HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.SECOND_LOW_CARGO + retVal[key]['HighCargo']*prop.SECOND_HIGH_CARGO + retVal[key]['Sandstorm']*prop.SECOND_SANDSTORM + retVal[key]['HabClimb']*prop.SECOND_HAB_CLIMB + retVal[key]['Defense']*prop.SECOND_DEFENSE, 2)
         
-        #retVal[key]['CubeScore'] = CubeScore
-        #retVal[key]['FirstP'] = FirstPick
-        #retVal[key]['SecondP'] = SecondPick
-        #retVal[key]['apr'] = apr
+        retVal[key]['CycleScore'] = CycleScore
+        retVal[key]['FirstP'] = FirstPick
+        retVal[key]['SecondP'] = SecondPick
     
     return retVal
             
