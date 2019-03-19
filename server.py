@@ -244,10 +244,10 @@ class ScoutServer(object):
         if dnpList:
           for team in dnpList:
             if cherrypy.session['mode'] == "trends":
-                sqlCommand = "SELECT * FROM averages WHERE Team=? ORDER BY Team DESC"
+                sqlCommand = "SELECT * FROM averages WHERE Team=?"
                 lastThreeData = conn.cursor().execute("SELECT * FROM lastThree WHERE Team=? ORDER BY Team DESC", (team,)).fetchone()
             else:
-                sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + "WHERE Team=? ORDER BY Team DESC"
+                sqlCommand = "SELECT * FROM " + cherrypy.session['mode'] + " WHERE Team=?"
             teamData = conn.cursor().execute(sqlCommand, (team,)).fetchone()
             dnpTable += '''
                 <tr role="row" id="team_{0}">
