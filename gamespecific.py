@@ -50,7 +50,7 @@ def processSheet(scout):
 
           scout.setMatchData("Sandstorm", scout.rangefield('J-12',0,2)*3)
           habClimbLevel = scout.rangefield('J-14', 0, 3)
-          scout.setMatchData("HabClimb", habClimbLevel * 3 if habClimbLevel < 2 else 12)
+          scout.setMatchData("HabClimb", habClimbLevel * 3 if habClimbLevel < 3 else 12)
           supportClimbLevel = scout.rangefield('J-15', 0, 3)
           scout.setMatchData("SupportClimb", supportClimbLevel * 3 if supportClimbLevel < 2 else 12)
           
