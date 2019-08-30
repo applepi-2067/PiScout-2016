@@ -24,13 +24,7 @@ class ScoutServer(object):
     def index(self, m='', e=''):
     
         #Add auth value to session if not present
-        if 'auth' not in cherrypy.session:
-          if localInstance:
-            cherrypy.session['auth'] = serverinfo.AUTH
-            cherrypy.session['admin'] = serverinfo.ADMIN
-          else:
-            cherrypy.session['auth'] = ""
-            cherrypy.session['admin'] = ""
+        authCheck()
         
         #Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
@@ -342,6 +336,7 @@ class ScoutServer(object):
     # Show a detailed summary for a given team
     @cherrypy.expose()
     def team(self, n="238"):
+        authCheck()
         if not n.isdigit():
             raise cherrypy.HTTPRedirect('/')
 
@@ -532,6 +527,7 @@ class ScoutServer(object):
     # Input interface to choose teams to compare
     @cherrypy.expose()
     def compareTeams(self):
+        authCheck()
         with open('web/compareTeams.html', 'r') as file:
             page = file.read()
         return page
@@ -539,6 +535,7 @@ class ScoutServer(object):
     #Input interface to choose alliances to compare
     @cherrypy.expose
     def compareAlliances(self):
+        authCheck()
         with open('web/compareAlliances.html', 'r') as file:
             page = file.read()
         return page
@@ -546,6 +543,7 @@ class ScoutServer(object):
     # Output for team comparison
     @cherrypy.expose()
     def teams(self, n1='', n2='', n3='', n4='', stat1='', stat2=''):
+        authCheck()
         nums = [n1, n2, n3, n4]
         if stat2 == 'none':
             stat2 = ''      
@@ -674,6 +672,7 @@ class ScoutServer(object):
     # Output for alliance comparison
     @cherrypy.expose()
     def alliances(self, b1='', b2='', b3='', r1='', r2='', r3='', mode='', level=''):
+        authCheck()
         if mode == '':
             mode = 'averages'
         if level == '':
@@ -827,6 +826,7 @@ class ScoutServer(object):
     # Lists schedule data from TBA
     @cherrypy.expose()
     def matches(self, n=0):
+        authCheck()
         n = int(n)
         event = self.getevent()
         datapath = 'data_' + event + '.db'
@@ -1273,6 +1273,15 @@ datapath = 'data_' + CURRENT_EVENT + '.db'
 #Helper function used in rankings sorting
 def keyFromItem(func):
     return lambda item: func(*item)
+    
+def authCheck():
+    if 'auth' not in cherrypy.session:
+      if localInstance:
+        cherrypy.session['auth'] = serverinfo.AUTH
+        cherrypy.session['admin'] = serverinfo.ADMIN
+      else:
+        cherrypy.session['auth'] = ""
+        cherrypy.session['admin'] = ""
 
     
 #Configuration used for local instance of the server
