@@ -326,11 +326,22 @@ class PiScout:
               requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': str(self.matchData), 'auth':serverinfo.AUTH})
               print("Uploading this match was successful")
               if os.path.isfile('queue.txt'):
-                  with open("queue.txt", "r") as file:
-                      for line in file:
-                          requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
-                          print("Uploaded an entry from the queue")
-                  os.remove('queue.txt')
+                try:
+                    with open("queue.txt", "r") as file:
+                        lines = file.readlines()
+                        total = lines.len()
+                        for num, line in enumerate(lines[:]):
+                            print("Uploading match " + str(num+1) + "of " + str(total))
+                            requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'data': line, 'auth':serverinfo.AUTH})
+                            lines.remove(line)
+                    os.remove("queue.txt")
+                except:
+                    with open("queue.txt", "w") as file:
+                        file.seek(0)
+                        for line in lines:
+                            file.write(line)
+                        file.truncate()
+                        raise
               requests.post("http://127.0.0.1:8000/submit", data={'event':CURRENT_EVENT, 'data': str(self.matchData), 'auth':serverinfo.AUTH})
             elif self.type == game.SheetType.PIT:
               requests.post(serverinfo.SERVER + "/submit", data={'event':CURRENT_EVENT, 'pitData': str(self.pitData), 'auth':serverinfo.AUTH})
