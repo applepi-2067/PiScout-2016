@@ -438,6 +438,29 @@ class ScoutServer(object):
               commentstr += '<div class="commentbox"><p>{0}</p></div>'.format(comment[1])
 
         output = ''
+        
+        teamChart = ''
+        colors = ["#FF0000", "#000FFF", "#1DD300", "#C100E3", "#AF0000", "#000666", "#0D5B000", "#610172"]
+        
+        for index, field in enumerate(game.CHART_FIELDS):
+            if field != 'match':
+                teamChart += '''// GRAPH
+                graph{0} = new AmCharts.AmGraph();
+                graph{0}.title = "{1}";
+                graph{0}.valueAxis = valueAxis;
+                graph{0}.type = "smoothedLine"; // this line makes the graph smoothed line.
+                graph{0}.lineColor = "{2}";
+                graph{0}.bullet = "round";
+                graph{0}.bulletSize = 8;
+                graph{0}.bulletBorderColor = "#FFFFFF";
+                graph{0}.bulletBorderAlpha = 1;
+                graph{0}.bulletBorderThickness = 2;
+                graph{0}.lineThickness = 2;
+                graph{0}.valueField = "{1}";
+                graph{0}.balloonText = "{1}<br><b><span style='font-size:14px;'>[[value]]</span></b>";
+                chart.addGraph(graph{0});
+                '''.format(index, field, colors[index])        
+        
         dataset = []
         for e in entries:
             #Generate chart data and table text for this match entry
@@ -490,7 +513,7 @@ class ScoutServer(object):
                 
         with open('web/team.html', 'r') as file:
             page = file.read()
-        return page.format(n, output, statbox, str(dataset).replace("'",'"'), imcode, commentstr)
+        return page.format(n, output, statbox, str(dataset).replace("'",'"'), imcode, commentstr, teamChart)
 
     # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
     @cherrypy.expose()
