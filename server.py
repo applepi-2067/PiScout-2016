@@ -385,7 +385,7 @@ class ScoutServer(object):
               if len(oldAverages):
                   oldData = oldAverages[0]
                   statbox += '''<div class="comparebox_container">
-                  <p><a href="/team?n={0}" style="font-size: 32px;">Last Event - {0}</a></p>
+                  <p style="font-size: 32px;">Last Event - {0}</p>
                   <div class="statbox_container">
                       <div id="stats">'''.format(n)
                   for key in game.AVERAGE_FIELDS:
@@ -401,10 +401,9 @@ class ScoutServer(object):
             pass #swallow the error
 
 
-
         # Generate Statbox
         statbox += '''<div class="comparebox_container">
-                    <p><a href="/team?n={0}" style="font-size: 32px;">This Event</a></p>
+                    <p style="font-size: 32px;">This Event</a></p>
                     <div class="statbox_container">
                         <div id="stats">'''.format(n)
         for key in game.AVERAGE_FIELDS:

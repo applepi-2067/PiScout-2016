@@ -1,9 +1,15 @@
 /* Team specific section */
 
+:root {
+--team-primary-color: #ee0; /*Should be a bright color, has dark grey text on top*/
+--team-secondary-color: #000; /* Should be a darker color, has white text on top*/
+--body-bg-color: #dbdbdb;
+}
+
   /* Border at the very bottom of the page, below the footer */
   #bottom_border
   {
-    background-color:#2f2f2f;
+    background-color:#666;
     height:48px;
   }
 
@@ -11,10 +17,9 @@
   #page_header
   {
     background-attachment:scroll;
-    background-color:#fff;
-    background-image:url(../img/bg-header.png);
+    background-color:var(--team-secondary-color);
     background-repeat:repeat;
-    color:#ee0;
+    color:var(--team-primary-color);
     font-size:24pt;
     font-weight:700;
     position:relative;
@@ -23,44 +28,45 @@
   /* Page title (underneath header). Change color to set text color */
   #page_title
   {
-    color:#EE0;
+    color:var(--team-primary-color);
     font-size:36pt;
     font-weight:700;
     padding:25px 0;
+    background-color: #9d9d9d
   }
 
   /* Top menu bar. Color sets text color of menu items. Border-bottom-color sets the color of the border below the menu (note that most of the current stripe width comes from the body_bg image */
   #top_menu
   {
     background-attachment:scroll;
-    background-color:#fff;
-    background-image:url(../img/bg-nav.gif);
+    background-color:var(--team-secondary-color);
     background-repeat:repeat-x;
-    border-bottom-color:#EE0;
+    border-bottom-color:var(--team-primary-color);
     border-bottom-style:solid;
-    border-bottom-width:1px;
-    color:#FFF;
-    height:38px;
+    border-bottom-width:5px;
+    color:#fff;
+    height:42px;
   }
 
   /* Sets the background color and text color of dropdown menu items when selected */
   .dropdown-menu > .active a,.dropdown-menu > .active a:focus,.dropdown-menu > .active a:hover
   {
-    background-color:#EE0;
-    color:#000;
+    background-color:var(--team-primary-color);
+    color:var(--team-secondary-color);
   }
 
   /* Sets the background and text color of top menu bar items and rotate button when selected */
   .navbar-inverse .navbar-nav > .active > a,.navbar-inverse .navbar-nav > .active > a:focus,.navbar-inverse .navbar-nav > .active > a:hover,.navbar-inverse .navbar-nav > .open > a:focus,.navbar-inverse .navbar-nav > .open > a:hover,.rotateButton,.rotateButton:hover,.rotateButton:focus,.rotateButton.focus,.rotateButton:active,.rotateButton.active,.rotateButton:visited,.rotateButton:active:hover,.rotateButton.active:hover,.rotateButton:active:focus
   {
-    background:#EE0;
-    color:#000;
+    background:var(--team-primary-color);
+    color:var(--team-secondary-color);
+    
   }
 
   /* Sets the un-selected text color of menu items in the top menu bar */
   .navbar-inverse .navbar-nav > li > a
   {
-    color:#FFF;
+    color:#fff;
   }
 
   /* Sets the text color of menu items in the top menu bar when hovered */
@@ -68,12 +74,17 @@
   {
     color:#9d9d9d;
   }
+  
+  .navbar-inverse
+  {
+    border-color: var(--team-secondary-color);
+  }
 
   /* Sets the background and text colors of the table headers */
   th
   {
-    background:#000;
-    border:1px solid #000;
+    background:var(--team-secondary-color);
+    border:1px solid var(--team-secondary-color);
     color:#FFF;
     padding:4px;
   }
@@ -81,7 +92,7 @@
   /* Sets the background color of even rows of tables. Can also add a color property here if different text colors are desired (but may need some modification to handle links correctly) */
   tr:nth-child(even)
   {
-    background:#EE0;
+    background:var(--team-primary-color);
   }
 
   /* Sets the background color of odd rows of tables. Can also add a color property here if different text colors are desired (but may need some modification to handle links correctly)*/
@@ -120,9 +131,7 @@
 }
 
 #body_bg {
-    background-image: url("../img/bg-body_header.png");
-    background-repeat: repeat-x;
-    background-position: center top;
+    background-color: var(--body-header-color);
 }
 
 #footer
@@ -170,16 +179,16 @@
 
 .btn-danger, .btn-danger:hover, .btn-danger:focus, .btn-danger:active
 {
-  color: #000;
-  background-color: #ee0;
-  border-color: #ee0;
+  color: var(--team-secondary-color);
+  background-color: var(--team-primary-color);
+  border-color: var(--team-primary-color);
 }
 
 .btn-danger:active:hover, .btn-danger:active:focus
 {
   color: #fff;
-  background-color: #000;
-  border-color: #000;
+  background-color: var(--team-secondary-color);
+  border-color: var(--team-secondary-color);
 }
 
 .clearfix::after
@@ -300,7 +309,7 @@
 
 .navbar-toggle
 {
-  background-color:#EE0;
+  background-color:var(--team-primary-color);
   height:30px;
   margin-top:3px;
 }
@@ -336,10 +345,7 @@
 
 body
 {
-  background-attachment:scroll;
-  background-color:#dfe1e1;
-  background-image:url(../img/bg-body.png);
-  background-repeat:repeat;
+  background-color:var(--body-bg-color);
   color:#666;
   font-family:verdana;
   margin:0;
@@ -398,7 +404,7 @@ td
   
   .navbar-collapse
   {
-    background-color:#000;
+    background-color:var(--team-secondary-color);
     position:relative;
     z-index:1000;
   }
