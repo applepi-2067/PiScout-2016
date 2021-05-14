@@ -16,7 +16,9 @@
 					<script>
 						$(document).ready(function() {
 							$('.tablesorter').tablesorter({
-								sortList: [[1, 1]]
+								sortList: [[1, 1]],
+                        emptyTo: "bottom",
+                        stringTo: "bottom"
 							});
 							var auth = $("#auth").val()
 							if (auth == 'admin') {
@@ -86,12 +88,12 @@
                     </table>
                    
 					<!--Main teams table-->
-                    <table class="table table-striped table-hover text-center tablesorter tablesorter-default" role="grid">
+                    <table class="table table-striped table-hover text-center  tablesorter tablesorter-default" role="grid">
                         <thead>
 							<tr role="row" class="tablesorter-headerRow">								
-								<th py:for="i,title in enumerate(columns)" class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted" data-column="${i}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="${title}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">${title}</div></th>
+								<th py:for="i,title in enumerate(columns)" class="text-center hidden-xs col-sm-1 tablesorter-header tablesorter-headerUnSorted sorter-digit" data-column="${i}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none;" aria-sort="none" aria-label="${title}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">${title}</div></th>
            
-								<th py:for="i,title in enumerate(columns)" class="titleColumn titleColumn${i} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs" data-column="${i}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="${title}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">${title}</div></th>                   
+								<th py:for="i,title in enumerate(columns)" class="titleColumn titleColumn${i} text-center hidden-sm hidden-md hidden-lg col-xs-3 tablesorter-header tablesorter-headerUnSorted hidden-xs sorter-digit" data-column="${i}" tabindex="0" scope="col" role="columnheader" aria-disabled="false" unselectable="on" style="-moz-user-select: none; display: none; color: #EEEE00;" aria-sort="none" aria-label="${title}: No sort applied, activate to apply an ascending sort"><div class="tablesorter-header-inner">${title}</div></th>                   
 							</tr>
 						</thead>
 						<tbody id="main_table" aria-live="polite" aria-relevant="all">
