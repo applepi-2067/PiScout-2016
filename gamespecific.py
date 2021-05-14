@@ -8,11 +8,11 @@ SCOUT_FIELDS = {"Team":0, "Match":0, "Sandstorm":0, "HabClimb":0, "SupportClimb"
                 "H_R2":0, "H_R3":0, "C_Ship":0, "C_R1":0, "C_R2":0, "C_R3":0, "Replay":0, "Flag":0}
 
 #Defines the fields that are stored in the "averages" and similar tables of the database. These are the fields displayed on the home page of the website. Hidden average fields are only displayed when logged in or on local.
-AVERAGE_FIELDS = {"Team":0, "Cycles":0, "Sandstorm":0, "HabClimb":0, "Cargo":0, "Hatches":0, "HighCargo":0, "HighHatches":0, "Defense":0}
-HIDDEN_AVERAGE_FIELDS = {"CycleScore":0, "FirstP":0, "SecondP":0}
+DISPLAY_FIELDS = {"Team":0, "Cycles":0, "Sandstorm":0, "HabClimb":0, "Cargo":0, "Hatches":0, "HighCargo":0, "HighHatches":0, "Defense":0}
+HIDDEN_DISPLAY_FIELDS = {"CycleScore":0, "FirstP":0, "SecondP":0}
 
 #Define the fields collected from Pit Scouting to display on the team page
-PIT_SCOUT_FIELDS = {"Team":0, "Weight":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "Pro775s":0, "Swerve":0, 
+PIT_SCOUT_FIELDS = {"TeamNumber":0, "Weight":0, "PitOrganization":0, "WiringQuality":0, "BumperQuality":0, "Batteries":0, "SillyWheels":0, "Pro775s":0, "Swerve":0,
                     "Sandstorm2": 0, "ShipCenter":0, "ShipSide":0, "RocketBack":0, "RocketFront":0, "FloorPickup":0, "Cargo":0, "Hatches":0, "RocketLevel":0}
 
 #Defines the fields displayed on the charts on the team and compare pages
@@ -21,8 +21,15 @@ CHART_FIELDS = {"match":0, "Sandstorm":0, "HabClimb":0, "Cargo":0, "Hatches":0, 
 class SheetType(IntEnum):
   MATCH = 0
   PIT = 1
-        
-     
+
+def getDisplayFieldCreate():
+    retVal = "HighCargo AS (C_R2+C_R3) STORED, "
+    retVal += "HighHatches AS (H_R2+H_R3) STORED, "
+    retVal += "Cargo AS (HighCargo+C_Ship+C_R1) STORED, "
+    retVal += "Hatches AS (HighHatches+H_Ship+H_R1) STORED, "
+    retVal += "Cycles AS (Cargo+Hatches) STORED, "
+    return retVal
+
 # Main method to process a full-page sheet
 # Submits three times, because there are three matches on one sheet
 # The sheet is developed in Google Sheets and the coordinates are defined in terms on the row and column numbers from the sheet.
@@ -166,8 +173,8 @@ def predictScore(datapath, teams, level='quals'):
             if len(average):
               entry = average[0]
             else:
-              entry = dict(AVERAGE_FIELDS)
-              entry.update(HIDDEN_AVERAGE_FIELDS)
+              entry = dict(DISPLAY_FIELDS)
+              entry.update(HIDDEN_DISPLAY_FIELDS)
             
             pointsTotal += entry['Hatches']*2 + entry['Cargo']*3 + entry['Sandstorm'] + entry['HabClimb']
             rocketHatches += entry['HighHatches']
@@ -198,12 +205,12 @@ def autoFlag(entry):
 
 #Takes a list of Scout table entries and returns a nested dictionary of the statistical calculations (average, maxes, median, etc.) of each field in the AVERAGE_FIELDS definition
 def calcTotals(entries):
-    sums = dict(AVERAGE_FIELDS)
-    sums.update(HIDDEN_AVERAGE_FIELDS)
-    noDefense = dict(AVERAGE_FIELDS)
-    noDefense.update(HIDDEN_AVERAGE_FIELDS)
-    lastThree = dict(AVERAGE_FIELDS)
-    lastThree.update(HIDDEN_AVERAGE_FIELDS)
+    sums = dict(DISPLAY_FIELDS)
+    sums.update(HIDDEN_DISPLAY_FIELDS)
+    noDefense = dict(DISPLAY_FIELDS)
+    noDefense.update(HIDDEN_DISPLAY_FIELDS)
+    lastThree = dict(DISPLAY_FIELDS)
+    lastThree.update(HIDDEN_DISPLAY_FIELDS)
     noDCount = 0
     lastThreeCount = 0
     for key in sums:
@@ -252,10 +259,10 @@ def calcTotals(entries):
         for key,val in noDefense.items():
             noDefense[key] = round(val/noDCount, 2)
             
-    average = dict(AVERAGE_FIELDS)
-    median = dict(AVERAGE_FIELDS)
-    maxes = dict(AVERAGE_FIELDS)
-    trends = dict(AVERAGE_FIELDS)
+    average = dict(DISPLAY_FIELDS)
+    median = dict(DISPLAY_FIELDS)
+    maxes = dict(DISPLAY_FIELDS)
+    trends = dict(DISPLAY_FIELDS)
     for key in sums:
         if key != 'Team':
             average[key] = round(np.mean(sums[key]), 2)

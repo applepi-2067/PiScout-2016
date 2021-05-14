@@ -97,9 +97,9 @@
 				</script>
 				
             <div class="container clearfix">
-                <div id="page_title" align="center">Team - ${int(averages['Team'])}</div>
+                <div id="page_title" align="center">Team - ${int(averages['Team'])} - ${session['mode']}</div>
                 <div py:if="old_averages" class="comparebox_container">
-					<p style="font-size: 32px;">Last Event - ${int(old_averages['Team'])}</p>
+					<p style="font-size: 32px;">Season - ${int(old_averages['Team'])}</p>
 					<div class="statbox_container">
 						<div id="stats">
 							<py:for each="key in columns">
@@ -123,7 +123,7 @@
 					<div class="statbox_container">
 						<div id="stats">
 							<py:for each="key in pitColumns">
-								<p py:if="key != 'Team'" class="statbox">${key}: ${pitScout[key]}</p>
+								<p py:if="key != 'TeamNumber'" class="statbox">${key}: ${pitScout[key]}</p>
 							</py:for>
 						</div>
 					</div>
@@ -174,9 +174,7 @@
                     <p style="font-size: 32px; font-weight: bold">Comments</p>
                     <br />
 					<py:if test="comments">
-						<py:for each="comment in comments">
-							<div class="commentbox"><p>${comment[1]}</p></div>
-						</py:for>
+							<div class="commentbox"><p>${comments[0]}</p></div>
 					</py:if>
 					<div>
 						<form style="width: 100%;" method="post" action="submit">
