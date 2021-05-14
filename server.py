@@ -75,7 +75,7 @@ class ScoutServer(object):
             pattern = re.compile('team\[\]=(\d*)')
             pickList = pattern.findall(list)
             for order, team in enumerate(pickList):
-                sqlCommand = "UPDATE picklist(list,rank) values (?,?) WHERE TeamNumber=? AND EventCode=?"
+                sqlCommand = "UPDATE Picklist SET list=?, rank=? WHERE TeamNumber=? AND EventCode=?"
                 conn.cursor().execute(sqlCommand, ('Pick', order+1, team, getEvent()))
             conn.commit()
             conn.close()
@@ -86,7 +86,7 @@ class ScoutServer(object):
             pattern = re.compile('team\[\]=(\d*)')
             dnpList = pattern.findall(dnp)
             for order, team in enumerate(dnpList):
-                sqlCommand = "UPDATE picklist(list,rank) values (?,?) WHERE TeamNumber=? AND EventCode=?"
+                sqlCommand = "UPDATE Picklist SET list=?, rank=? WHERE TeamNumber=? AND EventCode=?"
                 conn.cursor().execute(sqlCommand, ('DNP', order+1, team, getEvent()))
             conn.commit()
             conn.close()
@@ -97,7 +97,7 @@ class ScoutServer(object):
             pattern = re.compile('team\[\]=(\d*)')
             orderedList = pattern.findall(unassigned)
             for order, team in enumerate(orderedList):
-                sqlCommand = "UPDATE picklist(list,rank) values (?,?) WHERE TeamNumber=? AND EventCode=?"
+                sqlCommand = "UPDATE Picklist SET list=?, rank=? WHERE TeamNumber=? AND EventCode=?"
                 conn.cursor().execute(sqlCommand, ('Unassigned', order + 1, team, getEvent()))
             conn.commit()
             conn.close()
@@ -224,7 +224,7 @@ class ScoutServer(object):
         columns = game.DISPLAY_FIELDS
         tmpl = loader.load('picklist.xhtml')
         page = tmpl.generate(columns=columns, session=cherrypy.session, teams=teamData,
-                             dnp=dnpData, picklist=pickListData, auth="user")
+                             dnp=dnpData, picklist=pickListData, auth=auth)
         return page.render('html', doctype='html')
 
     # Page to show result of login attempt

@@ -38,6 +38,11 @@
 								  }).disableSelection();
 								$("#main_table").sortable({
 								  connectWith: ".picklist, .dnp",
+                          update: function (event, ui) {
+									var order = $(this).sortable('serialize');
+									$.post('picklist', {'unassigned':order});
+									$("#main_table").trigger('update');
+									}
 								}).disableSelection();
 							}
 						});
@@ -104,6 +109,9 @@
 									</py:choose>
 								</py:for>
                             </tr>
+                     <tr>
+							  <td id="team_01">Drop teams here</td>
+							</tr>
 						</tbody>
                     </table>
 					
@@ -131,6 +139,9 @@
 									</py:choose>
 								</py:for>
                             </tr>
+                     <tr>
+							  <td id="team_02">Drop teams here</td>
+							</tr>
 						</tbody>
                     </table>
                 </div>
