@@ -42,7 +42,7 @@ class ScoutServer(object):
             if 'Referer' in cherrypy.request.headers:
                 raise cherrypy.HTTPRedirect(cherrypy.request.headers['Referer'])
 
-        data = self.getAggregateData(Event=getEvent())
+        data = getAggregateData(Event=getEvent())
 
         # Pass off the normal set of columns or columns with the hidden fields depending on authentication
         if checkAuth(False):
@@ -260,7 +260,7 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC', (n, getEvent())).fetchall()
-        sql_averages = self.getAggregateData(Team=n, Event=getEvent())
+        sql_averages = getAggregateData(Team=n, Event=getEvent())
         comments = cursor.execute('SELECT Comments FROM Teams WHERE TeamNumber=?', (n,)).fetchone()
         sqlCommand = "SELECT "
         for key in game.PIT_SCOUT_FIELDS:
@@ -287,7 +287,7 @@ class ScoutServer(object):
         if (len(entries) < 4):
             seasonEntries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,).fetchall())
             if (len(seasonEntries >= 4)):
-                oldAverages = self.getAggregateData(Team=n)
+                oldAverages = getAggregateData(Team=n)
 
         # Clear out comments if not logged in
         if not checkAuth(False):
@@ -403,7 +403,7 @@ class ScoutServer(object):
                 continue
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "You fool! Enter NUMBERS, not letters.")
-            average = self.getAggregateData(Team=n, Event=getEvent())
+            average = getAggregateData(Team=n, Event=getEvent())
             assert len(average) < 2
             if len(average):
                 entry = average[0]
@@ -467,14 +467,14 @@ class ScoutServer(object):
             if len(entries) < 3:
                 seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,))
                 if(len(seasonEntries >= 3)):
-                    oldAverages = self.getAggregateData(Team=n)
+                    oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
                         blueData.append(oldAverages[0])
                         prevEvent = 1
 
             if prevEvent == 0:
-                average = self.getAggregateData(Team=n, Event=getEvent())
+                average = getAggregateData(Team=n, Event=getEvent(), Mode="Averages")
                 if not len(average):
                     average = dict(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
@@ -489,14 +489,14 @@ class ScoutServer(object):
             if len(entries) < 3:
                 seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,))
                 if (len(seasonEntries >= 3)):
-                    oldAverages = self.getAggregateData(Team=n)
+                    oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
                         blueData.append(oldAverages[0])
                         prevEvent = 1
 
             if prevEvent == 0:
-                average = self.getAggregateData(Team=n, Event=getEvent())
+                average = getAggregateData(Team=n, Event=getEvent(), Mode="Averages")
                 if not len(average):
                     average = dict(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
@@ -806,60 +806,6 @@ class ScoutServer(object):
             a = '[]'
         return a
 
-    def getAggregateData(self, Team="", Event=""):
-        # This section grabs the averages data from the database to hand to the webpage
-        conn = sql.connect(self.datapath())
-        conn.row_factory = sql.Row
-
-        sqlAvgCommandBase = "SELECT "
-        sqlMaxCommandBase = "SELECT "
-        for key in game.DISPLAY_FIELDS:
-            sqlMaxCommandBase += "MAX(" + key + ") AS " + key + ", "
-        for key in game.DISPLAY_FIELDS:
-            sqlAvgCommandBase += "round(AVG(" + key + "),2) AS " + key + ", "
-        sqlMaxCommandBase = sqlMaxCommandBase[:-2]
-        sqlAvgCommandBase = sqlAvgCommandBase[:-2]
-        if getMode() == 'Variance':
-            sqlCommandBase = sqlMaxCommandBase
-        else:
-            sqlCommandBase = sqlAvgCommandBase
-        noDefense = " AND Defense=0" if getMode() == 'NoDefense' else ""
-        teamString = (" AND Team=" + Team) if Team else ""
-        eventString = (" AND EventCode='" + Event + "'") if Event else ""
-        table = " FROM (Select * from (SELECT *, row_number() over (partition by Team order by match desc) as match_rank from ScoutRecords WHERE Flag=0" + eventString + teamString + ") where match_rank <= 3)" if getMode() == 'Trends' else " FROM ScoutRecords WHERE Flag=0" + eventString + teamString
-        sqlCommand = sqlCommandBase + table + noDefense + " GROUP BY Team ORDER BY Team DESC"
-        data = conn.cursor().execute(sqlCommand).fetchall()
-        if getMode() == 'Trends':
-            avgData = conn.cursor().execute(
-                sqlCommandBase + " FROM ScoutRecords WHERE Flag=0" + eventString + " GROUP BY Team ORDER BY Team DESC",
-                ).fetchall()
-            latestData = data.copy()
-            data = []
-            for i, row in enumerate(latestData):
-                rowData = dict(game.DISPLAY_FIELDS)
-                for key in rowData:
-                    if key == 'Team':
-                        rowData[key] = row[key]
-                    else:
-                        rowData[key] = round(row[key] - avgData[i][key], 2)
-                data.append(rowData)
-        if getMode() == 'Variance':
-            avgData = conn.cursor().execute(
-                sqlAvgCommandBase + " FROM ScoutRecords WHERE Flag=0" + eventString + " GROUP BY Team ORDER BY Team DESC",
-                ).fetchall()
-            maxData = data.copy()
-            data = []
-            for i, row in enumerate(maxData):
-                rowData = dict(game.DISPLAY_FIELDS)
-                for key in rowData:
-                    if key == 'Team':
-                        rowData[key] = row[key]
-                    else:
-                        rowData[key] = round(row[key] - avgData[i][key], 2)
-                data.append(rowData)
-        conn.close()
-        return data
-
     def database_exists(self):
         datapath = 'data.db'
         if not os.path.isfile(datapath):
@@ -875,7 +821,7 @@ class ScoutServer(object):
             cursor.execute('''CREATE TABLE "Teams" ("TeamNumber" INTEGER, "Name" TEXT, "Comments" TEXT, ''' + tableFields + ''' PRIMARY KEY("TeamNumber"))''')
             cursor.execute('''CREATE TABLE "Matches" ("EventCode" TEXT, "MatchNumber" INTEGER, PRIMARY KEY("EventCode","MatchNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
             cursor.execute('''CREATE TABLE "Participation" ("TeamNumber" INTEGER, "EventCode" TEXT, "key" INTEGER, FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"), FOREIGN KEY("TeamNumber") REFERENCES "Teams"("TeamNumber"), PRIMARY KEY("key"))''')
-            cursor.execute(''' CREATE TABLE "Picklist" ( "EventCode" TEXT, "TeamNumber" INTEGER, "List" TEXT, "Rank" INTEGER, PRIMARY KEY("EventCode","TeamNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
+            cursor.execute('''CREATE TABLE "Picklist" ( "EventCode" TEXT, "TeamNumber" INTEGER, "List" TEXT, "Rank" INTEGER, PRIMARY KEY("EventCode","TeamNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
             
             tableFields = ""
             for key in game.SCOUT_FIELDS:
@@ -890,6 +836,60 @@ class ScoutServer(object):
 # Execution starts here
 datapath = 'data.db'
 
+
+def getAggregateData(Team="", Event="", Mode=getMode()):
+    # This section grabs the averages data from the database to hand to the webpage
+    conn = sql.connect(self.datapath())
+    conn.row_factory = sql.Row
+
+    sqlAvgCommandBase = "SELECT "
+    sqlMaxCommandBase = "SELECT "
+    for key in game.DISPLAY_FIELDS:
+        sqlMaxCommandBase += "MAX(" + key + ") AS " + key + ", "
+    for key in game.DISPLAY_FIELDS:
+        sqlAvgCommandBase += "round(AVG(" + key + "),2) AS " + key + ", "
+    sqlMaxCommandBase = sqlMaxCommandBase[:-2]
+    sqlAvgCommandBase = sqlAvgCommandBase[:-2]
+    if Mode == 'Variance':
+        sqlCommandBase = sqlMaxCommandBase
+    else:
+        sqlCommandBase = sqlAvgCommandBase
+    noDefense = " AND Defense=0" if Mode == 'NoDefense' else ""
+    teamString = (" AND Team=" + Team) if Team else ""
+    eventString = (" AND EventCode='" + Event + "'") if Event else ""
+    table = " FROM (Select * from (SELECT *, row_number() over (partition by Team order by match desc) as match_rank from ScoutRecords WHERE Flag=0" + eventString + teamString + ") where match_rank <= 3)" if Mode == 'Trends' else " FROM ScoutRecords WHERE Flag=0" + eventString + teamString
+    sqlCommand = sqlCommandBase + table + noDefense + " GROUP BY Team ORDER BY Team DESC"
+    data = conn.cursor().execute(sqlCommand).fetchall()
+    if Mode == 'Trends':
+        avgData = conn.cursor().execute(
+            sqlCommandBase + " FROM ScoutRecords WHERE Flag=0" + eventString + " GROUP BY Team ORDER BY Team DESC",
+        ).fetchall()
+        latestData = data.copy()
+        data = []
+        for i, row in enumerate(latestData):
+            rowData = dict(game.DISPLAY_FIELDS)
+            for key in rowData:
+                if key == 'Team':
+                    rowData[key] = row[key]
+                else:
+                    rowData[key] = round(row[key] - avgData[i][key], 2)
+            data.append(rowData)
+    if Mode == 'Variance':
+        avgData = conn.cursor().execute(
+            sqlAvgCommandBase + " FROM ScoutRecords WHERE Flag=0" + eventString + " GROUP BY Team ORDER BY Team DESC",
+        ).fetchall()
+        maxData = data.copy()
+        data = []
+        for i, row in enumerate(maxData):
+            rowData = dict(game.DISPLAY_FIELDS)
+            for key in rowData:
+                if key == 'Team':
+                    rowData[key] = row[key]
+                else:
+                    rowData[key] = round(row[key] - avgData[i][key], 2)
+            data.append(rowData)
+    conn.close()
+    return data
 
 # Helper function used in rankings sorting
 def keyFromItem(func):

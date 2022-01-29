@@ -2,6 +2,7 @@ import numpy as np
 import sqlite3 as sql
 from enum import IntEnum
 import proprietary as prop
+import server as server
 
 #Defines the fields stored in the "Scout" table of the database. This database stores the record for each match scan
 SCOUT_FIELDS = {"Team":0, "Match":0, "Sandstorm":0, "HabClimb":0, "SupportClimb":0, "Defense":0, "Defended":0, "H_Ship":0, "H_R1":0, 
@@ -154,11 +155,7 @@ def generateChartData(e):
     return dp
     
 #Takes a set of team numbers and a string indicating quals or playoffs and returns a prediction for the alliances score and whether or not they will achieve any additional ranking points
-def predictScore(datapath, teams, level='quals'):
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
-        
+def predictScore(event, teams, level='quals'):
         rocketRP = 0
         climbRP = 0
         climbTotal = 0
@@ -168,7 +165,7 @@ def predictScore(datapath, teams, level='quals'):
         pointsTotal = 0
 
         for n in teams:
-            average = cursor.execute('SELECT * FROM averages WHERE team=?', (n,)).fetchall()
+            average = server.getAggregateData(Team=n, Event=event, Mode="Averages")
             assert len(average) < 2
             if len(average):
               entry = average[0]
@@ -202,85 +199,3 @@ def predictScore(datapath, teams, level='quals'):
 #Takes an entry from the Scout table and returns whether or not the entry should be flagged based on contradictory data.
 def autoFlag(entry):
     return 0
-
-#Takes a list of Scout table entries and returns a nested dictionary of the statistical calculations (average, maxes, median, etc.) of each field in the AVERAGE_FIELDS definition
-def calcTotals(entries):
-    sums = dict(DISPLAY_FIELDS)
-    sums.update(HIDDEN_DISPLAY_FIELDS)
-    noDefense = dict(DISPLAY_FIELDS)
-    noDefense.update(HIDDEN_DISPLAY_FIELDS)
-    lastThree = dict(DISPLAY_FIELDS)
-    lastThree.update(HIDDEN_DISPLAY_FIELDS)
-    noDCount = 0
-    lastThreeCount = 0
-    for key in sums:
-        sums[key] = []
-    #For each entry, add components to the running total if appropriate
-    for i, e in enumerate(entries):
-        sums['Sandstorm'].append(e['Sandstorm'])
-        sums['HabClimb'].append(e['HabClimb'] + e['SupportClimb'])
-        sums['Cargo'].append(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'])
-        sums['Hatches'].append(e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-        sums['HighCargo'].append(e['C_R2'] + e['C_R3'])
-        sums['HighHatches'].append(e['H_R2'] + e['H_R3'])
-        sums['Cycles'].append(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'] + e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-        sums['Defense'].append(e['Defense'])
-        sums['CycleScore'].append(0)
-        sums['FirstP'].append(0)
-        sums['SecondP'].append(0)
-        if not e['Defense']:
-          noDefense['Sandstorm']+=(e['Sandstorm'])
-          noDefense['HabClimb']+=(e['HabClimb'] + e['SupportClimb'])
-          noDefense['Cargo']+=(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'])
-          noDefense['Hatches']+=(e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-          noDefense['HighCargo']+=(e['C_R2'] + e['C_R3'])
-          noDefense['HighHatches']+=(e['H_R2'] + e['H_R3'])
-          noDefense['Cycles']+=(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'] + e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-          noDefense['Defense']+=(e['Defense'])
-          noDCount += 1
-        if i < 3:
-          lastThree['Sandstorm']+=(e['Sandstorm'])
-          lastThree['HabClimb']+=(e['HabClimb'] + e['SupportClimb'])
-          lastThree['Cargo']+=(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'])
-          lastThree['Hatches']+=(e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-          lastThree['HighCargo']+=(e['C_R2'] + e['C_R3'])
-          lastThree['HighHatches']+=(e['H_R2'] + e['H_R3'])
-          lastThree['Cycles']+=(e['C_Ship'] + e['C_R1'] + e['C_R2'] + e['C_R3'] + e['H_Ship'] + e['H_R1'] + e['H_R2'] + e['H_R3'])
-          lastThree['Defense']+=(e['Defense'])
-          lastThreeCount += 1
-    
-    #If there is data, average out the last 3 or less matches
-    if(lastThreeCount):
-        for key,val in lastThree.items():
-            lastThree[key] = round(val/lastThreeCount, 2)
-          
-    #If there were matches where the team didn't play D, average those out
-    if(noDCount):
-        for key,val in noDefense.items():
-            noDefense[key] = round(val/noDCount, 2)
-            
-    average = dict(DISPLAY_FIELDS)
-    median = dict(DISPLAY_FIELDS)
-    maxes = dict(DISPLAY_FIELDS)
-    trends = dict(DISPLAY_FIELDS)
-    for key in sums:
-        if key != 'Team':
-            average[key] = round(np.mean(sums[key]), 2)
-            median[key] = round(np.median(sums[key]), 2)
-            maxes[key] = round(np.max(sums[key]), 2)
-            trends[key] = round(lastThree[key]-average[key], 2)
-    retVal = {'averages':average, 'median':median, 'maxes':maxes, 'noDefense':noDefense, 'lastThree':lastThree, 'trends':trends}
-    
-    #Calculate Proprietary metrics.
-    for key in retVal:
-        CycleScore = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.LOW_HATCHES + retVal[key]['HighHatches']*prop.HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.LOW_CARGO + retVal[key]['HighCargo']*prop.HIGH_CARGO, 2)
-        FirstPick = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.FIRST_LOW_HATCHES + retVal[key]['HighHatches']*prop.FIRST_HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.FIRST_LOW_CARGO + retVal[key]['HighCargo']*prop.FIRST_HIGH_CARGO + retVal[key]['Sandstorm']*prop.FIRST_SANDSTORM + retVal[key]['HabClimb']*prop.FIRST_HAB_CLIMB, 2)
-        SecondPick = round((retVal[key]['Hatches']-retVal[key]['HighHatches'])*prop.SECOND_LOW_HATCHES + retVal[key]['HighHatches']*prop.SECOND_HIGH_HATCHES + (retVal[key]['Cargo']-retVal[key]['HighCargo'])*prop.SECOND_LOW_CARGO + retVal[key]['HighCargo']*prop.SECOND_HIGH_CARGO + retVal[key]['Sandstorm']*prop.SECOND_SANDSTORM + retVal[key]['HabClimb']*prop.SECOND_HAB_CLIMB + retVal[key]['Defense']*prop.SECOND_DEFENSE, 2)
-        
-        retVal[key]['CycleScore'] = CycleScore
-        retVal[key]['FirstP'] = FirstPick
-        retVal[key]['SecondP'] = SecondPick
-    
-    return retVal
-            
-        
