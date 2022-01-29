@@ -31,7 +31,7 @@ class ScoutServer(object):
 
         # Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
-            if os.path.isfile('data_' + e + '.db'): #TODO update check to check Event table instead
+            if os.path.isfile('data_' + e + '.db'):  # TODO update check to check Event table instead
                 cherrypy.session['event'] = e
                 if 'Referer' in cherrypy.request.headers:
                     raise cherrypy.HTTPRedirect(cherrypy.request.headers['Referer'])
@@ -54,7 +54,8 @@ class ScoutServer(object):
         conn.row_factory = sql.Row
         eventName = conn.cursor().execute("SELECT Name from Events WHERE EventCode=?", (getEvent(),)).fetchall()
         tmpl = loader.load('index.xhtml')
-        page = tmpl.generate(columns=columns, title="Home", eventName=eventName[0]['Name'], session=cherrypy.session, data=data)
+        page = tmpl.generate(columns=columns, title="Home", eventName=eventName[0]['Name'], session=cherrypy.session,
+                             data=data)
         return page.render('html', doctype='html')
 
     # Page for creating picklist
@@ -65,9 +66,9 @@ class ScoutServer(object):
             raise cherrypy.HTTPError(401, "Not authorized to view picklist. Please log in and try again.")
 
         if checkAuth(True):
-            auth="admin"
+            auth = "admin"
         else:
-            auth="user"
+            auth = "user"
 
         if list:
             conn = sql.connect(self.datapath())
@@ -76,7 +77,7 @@ class ScoutServer(object):
             pickList = pattern.findall(list)
             for order, team in enumerate(pickList):
                 sqlCommand = "UPDATE Picklist SET list=?, rank=? WHERE TeamNumber=? AND EventCode=?"
-                conn.cursor().execute(sqlCommand, ('Pick', order+1, team, getEvent()))
+                conn.cursor().execute(sqlCommand, ('Pick', order + 1, team, getEvent()))
             conn.commit()
             conn.close()
 
@@ -87,7 +88,7 @@ class ScoutServer(object):
             dnpList = pattern.findall(dnp)
             for order, team in enumerate(dnpList):
                 sqlCommand = "UPDATE Picklist SET list=?, rank=? WHERE TeamNumber=? AND EventCode=?"
-                conn.cursor().execute(sqlCommand, ('DNP', order+1, team, getEvent()))
+                conn.cursor().execute(sqlCommand, ('DNP', order + 1, team, getEvent()))
             conn.commit()
             conn.close()
 
@@ -240,7 +241,7 @@ class ScoutServer(object):
             cherrypy.session['auth'] = serverinfo.AUTH
             loginResult = "Admin Login successful"
 
-        referrer=""
+        referrer = ""
         if 'Referer' in cherrypy.request.headers:
             referer = cherrypy.request.headers['Referer']
         tmpl = loader.load('login.xhtml')
@@ -259,7 +260,8 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        entries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC', (n, getEvent())).fetchall()
+        entries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC',
+                                 (n, getEvent())).fetchall()
         sql_averages = getAggregateData(Team=n, Event=getEvent())
         comments = cursor.execute('SELECT Comments FROM Teams WHERE TeamNumber=?', (n,)).fetchone()
         sqlCommand = "SELECT "
@@ -285,7 +287,8 @@ class ScoutServer(object):
         lastEvent = 0
         oldAverages = []
         if (len(entries) < 4):
-            seasonEntries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,).fetchall())
+            seasonEntries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? ORDER BY Match DESC',
+                                           (n,).fetchall())
             if (len(seasonEntries >= 4)):
                 oldAverages = getAggregateData(Team=n)
 
@@ -310,7 +313,7 @@ class ScoutServer(object):
                 dp[key] = round(val, 2)
             if not e['Flag']:
                 dataset.append(dp)  # add it to dataset, which is an array of data that is fed into the graphs
-        #dataset.reverse()  # reverse data so that graph is in the correct order
+        # dataset.reverse()  # reverse data so that graph is in the correct order
 
         # Grab the image from the blue alliance
         headers = {"X-TBA-Auth-Key": "n8QdCIF7LROZiZFI7ymlX0fshMBL15uAzEkBgtP1JgUpconm2Wf49pjYgbYMstBF"}
@@ -325,7 +328,7 @@ class ScoutServer(object):
             pass  # swallow the error
         image_url = ""
         for media in m:
-            #media['type'] == 'instagram-image' does not currently work correctly on TBA
+            # media['type'] == 'instagram-image' does not currently work correctly on TBA
             if media['type'] == 'imgur':
                 image_url = media['view_url'] + "m.jpg"
                 break
@@ -333,7 +336,7 @@ class ScoutServer(object):
                 image_url = media['direct_url']
                 break
 
-        if(checkAuth(False)):
+        if (checkAuth(False)):
             auth = 1
             columns = game.DISPLAY_FIELDS
         else:
@@ -358,7 +361,8 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        cursor.execute('UPDATE ScoutRecords SET Flag=? WHERE Team=? AND Match=? AND EventCode=?', (int(not int(flagval)), num, match, getEvent()))
+        cursor.execute('UPDATE ScoutRecords SET Flag=? WHERE Team=? AND Match=? AND EventCode=?',
+                       (int(not int(flagval)), num, match, getEvent()))
         conn.commit()
         conn.close()
         return ''
@@ -396,7 +400,7 @@ class ScoutServer(object):
         cursor = conn.cursor()
         output = '<div>'
 
-        stats_data=[]
+        stats_data = []
         # Grab data for each team, and generate a statbox
         for index, n in enumerate(nums):
             if not n:
@@ -417,7 +421,8 @@ class ScoutServer(object):
         for idx, n in enumerate(nums):
             if not n:
                 continue
-            entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC', (n, getEvent())).fetchall()
+            entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC',
+                                     (n, getEvent())).fetchall()
 
             for index, e in enumerate(entries):
                 if (not isinstance(e, tuple)):
@@ -439,7 +444,8 @@ class ScoutServer(object):
                                 dataset[index]["team" + n + "stat2"] = dp[stat2]
 
         tmpl = loader.load('teams.xhtml')
-        page = tmpl.generate(session=cherrypy.session, chart_data=str(dataset).replace("'", '"'), columns=game.DISPLAY_FIELDS,
+        page = tmpl.generate(session=cherrypy.session, chart_data=str(dataset).replace("'", '"'),
+                             columns=game.DISPLAY_FIELDS,
                              chartColumns=game.CHART_FIELDS, stat1=stat1, stat2=stat2, teams=nums, stat_data=stats_data)
         return page.render('html', doctype='html')
 
@@ -462,11 +468,12 @@ class ScoutServer(object):
         for i, n in enumerate(numsBlue):
             if not n.isdigit():
                 raise cherrypy.HTTPError(400, "Enter six valid team numbers!")
-            entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match DESC', (n,getEvent())).fetchall()
+            entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match DESC',
+                                     (n, getEvent())).fetchall()
             prevEvent = 0
             if len(entries) < 3:
                 seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,))
-                if(len(seasonEntries >= 3)):
+                if (len(seasonEntries >= 3)):
                     oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
@@ -513,7 +520,7 @@ class ScoutServer(object):
         conn.close()
 
         tmpl = loader.load('alliances.xhtml')
-        page = tmpl.generate(session=cherrypy.session, red_win=round(prob_red*100, 1), red_score=red_score,
+        page = tmpl.generate(session=cherrypy.session, red_win=round(prob_red * 100, 1), red_score=red_score,
                              blue_score=blue_score, red_data=redData, blue_data=blueData, columns=game.DISPLAY_FIELDS)
         return page.render('html', doctype='html')
 
@@ -545,10 +552,10 @@ class ScoutServer(object):
 
         # For each match, generate a row in the table
         for match in m:
-            level="quals"
+            level = "quals"
             if match['comp_level'] != 'qm':
                 match['num'] = match['comp_level'].upper() + str(match['set_number']) + '_' + str(match['match_number'])
-                level="playoffs"
+                level = "playoffs"
             else:
                 match['num'] = match['match_number']
                 if match['alliances']['blue']['score'] == -1:
@@ -598,7 +605,7 @@ class ScoutServer(object):
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
 
         # If team is not defined, this should be scout data. First check auth key
-        if checkAuth(False):
+        if auth == serverinfo.AUTH:
             if data:
                 d = literal_eval(data)
 
@@ -619,13 +626,16 @@ class ScoutServer(object):
 
                 # If replay is marked, replace previous data
                 if d['Replay']:  # replay
-                    cursor.execute('DELETE from ScoutRecords WHERE Team=? AND Match=? AND Event=?', (str(d['Team']), str(d['Match']), event))
+                    cursor.execute('DELETE from ScoutRecords WHERE Team=? AND Match=? AND Event=?',
+                                   (str(d['Team']), str(d['Match']), event))
 
                 # Insert data into database
                 cursor.execute('INSERT OR IGNORE INTO Teams(TeamNumber) VALUES(?)', (d['Team'],))
-                cursor.execute('INSERT OR IGNORE INTO Participation VALUES (?,?)', (d['Team'], event))
-                cursor.execute('INSERT OR IGNORE INTO Picklist(EventCode, TeamNumber) VALUES(?,?)', (event, (d['Team'])))
-                cursor.execute('INSERT INTO ScoutRecords VALUES ('+event+',' + ','.join([str(a) for a in d.values()]) + ')')
+                cursor.execute('INSERT OR IGNORE INTO Participation VALUES (NULL,?,?)', (d['Team'], event))
+                cursor.execute('INSERT OR IGNORE INTO Picklist(EventCode,TeamNumber,List) VALUES(?,?,?)',
+                               (event, (d['Team']), 'Unassigned'))
+                cursor.execute(
+                    'INSERT INTO ScoutRecords VALUES (?,' + ','.join([str(a) for a in d.values()]) + ')',(event,))
                 conn.commit()
                 conn.close()
 
@@ -669,7 +679,9 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
-        entries = cursor.execute('SELECT rowid,* from ScoutRecords WHERE EventCode=? ORDER BY flag DESC, Team ASC, Match ASC', (getEvent(),)).fetchall()
+        entries = cursor.execute(
+            'SELECT rowid,* from ScoutRecords WHERE EventCode=? ORDER BY flag DESC, Team ASC, Match ASC',
+            (getEvent(),)).fetchall()
 
         if key == '':
             key = entries[0][0]
@@ -695,8 +707,9 @@ class ScoutServer(object):
 
         # Grab latest rankings and match data from TBA
         headers = {"X-TBA-Auth-Key": "n8QdCIF7LROZiZFI7ymlX0fshMBL15uAzEkBgtP1JgUpconm2Wf49pjYgbYMstBF"}
-        m = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/matches".format(getEvent()()), params=headers)
-        r = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/rankings".format(getEvent()()), params=headers)
+        m = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/matches".format(getEvent()), params=headers)
+        r = requests.get("http://www.thebluealliance.com/api/v3/event/{0}/rankings".format(getEvent()),
+                         params=headers)
         if 'feed' in m:
             raise cherrypy.HTTPError(503, "Unable to retrieve data about this event.")
         if r.text != '[]':
@@ -745,7 +758,8 @@ class ScoutServer(object):
                         rankings[team]['matchScore'] += redResult['score']
 
         # Sort rankings, then output into table
-        sorted_rankings = sorted(rankings.items(), key=keyFromItem(lambda k, v: (v['rp'], v['matchScore'])), reverse=True)
+        sorted_rankings = sorted(rankings.items(), key=keyFromItem(lambda k, v: (v['rp'], v['matchScore'])),
+                                 reverse=True)
         tmpl = loader.load('rankings.xhtml')
         page = tmpl.generate(rankings=sorted_rankings, session=cherrypy.session)
         return page.render('html', doctype='html')
@@ -808,20 +822,26 @@ class ScoutServer(object):
             cursor = conn.cursor()
             tableFields = ""
             for key in game.PIT_SCOUT_FIELDS:
-                if(key != 'Team'):
-                    tableFields += key + " integer, "
+                if (key != 'Team'):
+                    tableFields += key + " INTEGER, "
 
-            cursor.execute('''CREATE TABLE "Events" ("EventCode" TEXT, "StartDate" TEXT, "EndDate" TEXT, "Name" TEXT, PRIMARY KEY("EventCode"))''')
-            cursor.execute('''CREATE TABLE "Teams" ("TeamNumber" INTEGER, "Name" TEXT, "Comments" TEXT, ''' + tableFields + ''' PRIMARY KEY("TeamNumber"))''')
-            cursor.execute('''CREATE TABLE "Matches" ("EventCode" TEXT, "MatchNumber" INTEGER, PRIMARY KEY("EventCode","MatchNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
-            cursor.execute('''CREATE TABLE "Participation" ("TeamNumber" INTEGER, "EventCode" TEXT, "key" INTEGER, FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"), FOREIGN KEY("TeamNumber") REFERENCES "Teams"("TeamNumber"), PRIMARY KEY("key"))''')
-            cursor.execute('''CREATE TABLE "Picklist" ( "EventCode" TEXT, "TeamNumber" INTEGER, "List" TEXT, "Rank" INTEGER, PRIMARY KEY("EventCode","TeamNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
-            
+            cursor.execute(
+                '''CREATE TABLE "Events" ("EventCode" TEXT, "StartDate" TEXT, "EndDate" TEXT, "Name" TEXT, PRIMARY KEY("EventCode"))''')
+            cursor.execute(
+                '''CREATE TABLE "Teams" ("Name" TEXT, "Comments" TEXT, ''' + tableFields + ''' PRIMARY KEY("TeamNumber"))''')
+            cursor.execute(
+                '''CREATE TABLE "Matches" ("EventCode" TEXT, "MatchNumber" INTEGER, PRIMARY KEY("EventCode","MatchNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
+            cursor.execute(
+                '''CREATE TABLE "Participation" (key INTEGER PRIMARY KEY, "TeamNumber" INTEGER, "EventCode" TEXT, FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"), FOREIGN KEY("TeamNumber") REFERENCES "Teams"("TeamNumber"))''')
+            cursor.execute(
+                '''CREATE TABLE "Picklist" ( "EventCode" TEXT, "TeamNumber" INTEGER, "List" TEXT, "Rank" INTEGER, PRIMARY KEY("EventCode","TeamNumber"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"))''')
+
             tableFields = ""
             for key in game.SCOUT_FIELDS:
                 tableFields += key + " integer, "
             tableFields += game.getDisplayFieldCreate()
-            cursor.execute('''CREATE TABLE "ScoutRecords" ("EventCode" TEXT, ''' + tableFields + ''' PRIMARY KEY("Match","EventCode","Team"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"), FOREIGN KEY("Team") REFERENCES "Teams"("TeamNumber"))''')
+            cursor.execute(
+                '''CREATE TABLE "ScoutRecords" ("EventCode" TEXT, ''' + tableFields + ''' PRIMARY KEY("Match","EventCode","Team"), FOREIGN KEY("EventCode") REFERENCES "Events"("EventCode"), FOREIGN KEY("Team") REFERENCES "Teams"("TeamNumber"))''')
 
             conn.close()
         # END OF CLASS
@@ -831,10 +851,40 @@ class ScoutServer(object):
 datapath = 'data.db'
 
 
-def getAggregateData(Team="", Event="", Mode=getMode()):
+# Helper function used in rankings sorting
+def keyFromItem(func):
+    return lambda item: func(*item)
+
+
+def sessionCheck():
+    getMode()
+    getEvent()
+
+
+def checkAuth(AdminRequired):
+    if 'auth' not in cherrypy.session:
+        if localInstance:
+            cherrypy.session['auth'] = serverinfo.AUTH
+            cherrypy.session['admin'] = serverinfo.ADMIN
+            return True
+        else:
+            cherrypy.session['auth'] = ""
+            cherrypy.session['admin'] = ""
+            return False
+    else:
+        if AdminRequired:
+            return cherrypy.session['admin'] == serverinfo.ADMIN
+        else:
+            return cherrypy.session['auth'] == serverinfo.AUTH
+
+
+def getAggregateData(Team="", Event="", Mode=""):
     # This section grabs the averages data from the database to hand to the webpage
-    conn = sql.connect(self.datapath())
+    conn = sql.connect(datapath)
     conn.row_factory = sql.Row
+
+    if Mode=="":
+        Mode = getMode()
 
     sqlAvgCommandBase = "SELECT "
     sqlMaxCommandBase = "SELECT "
@@ -885,39 +935,17 @@ def getAggregateData(Team="", Event="", Mode=getMode()):
     conn.close()
     return data
 
-# Helper function used in rankings sorting
-def keyFromItem(func):
-    return lambda item: func(*item)
-
-def sessionCheck():
-    getMode()
-    getEvent()
-
-def checkAuth(AdminRequired):
-    if 'auth' not in cherrypy.session:
-        if localInstance:
-            cherrypy.session['auth'] = serverinfo.AUTH
-            cherrypy.session['admin'] = serverinfo.ADMIN
-            return True
-        else:
-            cherrypy.session['auth'] = ""
-            cherrypy.session['admin'] = ""
-            return False
-    else:
-        if AdminRequired:
-            return cherrypy.session['admin'] == serverinfo.ADMIN
-        else:
-            return cherrypy.session['auth'] == serverinfo.AUTH
-
 def getMode():
     if 'mode' not in cherrypy.session:
         cherrypy.session['mode'] = "Averages"
     return cherrypy.session['mode']
 
+
 def getEvent():
     if 'event' not in cherrypy.session:
         cherrypy.session['event'] = CURRENT_EVENT
     return cherrypy.session['event']
+
 
 # Configuration used for local instance of the server
 localConf = {
@@ -958,15 +986,19 @@ remoteConf = {
     }
 }
 
-# Determine which config to launch based on command line args
-if len(sys.argv) > 1:
-    if sys.argv[1] == "-local":
-        print("Starting local server")
-        localInstance = True
-        cherrypy.quickstart(ScoutServer(), '/', localConf)
+def main():
+    # Determine which config to launch based on command line args
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-local":
+            print("Starting local server")
+            localInstance = True
+            cherrypy.quickstart(ScoutServer(), '/', localConf)
+        else:
+            print("Starting remote server")
+            cherrypy.quickstart(ScoutServer(), '/', remoteConf)
     else:
         print("Starting remote server")
         cherrypy.quickstart(ScoutServer(), '/', remoteConf)
-else:
-    print("Starting remote server")
-    cherrypy.quickstart(ScoutServer(), '/', remoteConf)
+
+if __name__ == "__main__":
+    main()

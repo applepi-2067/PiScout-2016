@@ -235,11 +235,11 @@ class PiScout:
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
             return
           #Open the database and check if the match has already been processed
-          datapath = 'data_' + CURRENT_EVENT + '.db'
+          datapath = 'data.db'
           conn = sql.connect(datapath)
           conn.row_factory = sql.Row
           cursor = conn.cursor()
-          history = cursor.execute('SELECT * FROM scout WHERE Team=? AND Match=?', (str(self.matchData['Team']),str(self.matchData['Match']))).fetchall()
+          history = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND Match=? AND EventCode=?', (str(self.matchData['Team']),str(self.matchData['Match']),str(CURRENT_EVENT))).fetchall()
           if history and not self.matchData['Replay']:
               print("Already processed this match, skipping")
               self.data = dict(game.SCOUT_FIELDS)
@@ -251,7 +251,7 @@ class PiScout:
               self.pitData = dict(game.PIT_SCOUT_FIELDS)
               self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
               return
-          datapath = 'data_' + CURRENT_EVENT + '.db'
+          datapath = 'data.db'
           conn = sql.connect(datapath)
           conn.row_factory = sql.Row
           cursor = conn.cursor()
