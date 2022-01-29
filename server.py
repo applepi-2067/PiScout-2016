@@ -59,7 +59,7 @@ class ScoutServer(object):
 
     # Page for creating picklist
     @cherrypy.expose
-    def picklist(self, list='', dnp='', unassigned=''): #TODO update for new DB architecture
+    def picklist(self, list='', dnp='', unassigned=''):
         sessionCheck()
         if not checkAuth(False):
             raise cherrypy.HTTPError(401, "Not authorized to view picklist. Please log in and try again.")
@@ -521,15 +521,9 @@ class ScoutServer(object):
     @cherrypy.expose()
     def matches(self, n=''):
         sessionCheck()
-        event = getEvent()()
-        datapath = 'data_' + event + '.db'
-        self.database_exists()
-        conn = sql.connect(datapath)
-        conn.row_factory = sql.Row
-        cursor = conn.cursor()
 
         # Get match data
-        m = self.getMatches(event)
+        m = self.getMatches(getEvent())
 
         output = ''
 
@@ -563,10 +557,10 @@ class ScoutServer(object):
                     match['alliances']['red']['score'] = ""
             blueTeams = [match['alliances']['blue']['team_keys'][0][3:], match['alliances']['blue']['team_keys'][1][3:],
                          match['alliances']['blue']['team_keys'][2][3:]]
-            match['bluePredict'] = game.predictScore(self.datapath(), blueTeams, level)
+            match['bluePredict'] = game.predictScore(getEvent(), blueTeams, level)
             redTeams = [match['alliances']['red']['team_keys'][0][3:], match['alliances']['red']['team_keys'][1][3:],
                         match['alliances']['red']['team_keys'][2][3:]]
-            match['redPredict'] = game.predictScore(self.datapath(), redTeams, level)
+            match['redPredict'] = game.predictScore(getEvent(), redTeams, level)
 
         tmpl = loader.load('matches.xhtml')
         page = tmpl.generate(session=cherrypy.session, matches=m)
@@ -586,7 +580,7 @@ class ScoutServer(object):
         if not event:
             event = getEvent()
         self.database_exists()
-        conn = sql.connect('data.db')
+        conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
 
@@ -653,7 +647,7 @@ class ScoutServer(object):
     @cherrypy.expose()
     def edit(self, key='', **params):
         sessionCheck()
-        conn = sql.connect(datapath)
+        conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
 
@@ -672,7 +666,7 @@ class ScoutServer(object):
             conn.close()
 
         # Grab all match data entries from the event, with flagged entries first, then sorted by team, then match
-        conn = sql.connect(datapath)
+        conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
         entries = cursor.execute('SELECT rowid,* from ScoutRecords WHERE EventCode=? ORDER BY flag DESC, Team ASC, Match ASC', (getEvent(),)).fetchall()
@@ -729,12 +723,12 @@ class ScoutServer(object):
                     blueTeams = [match['alliances']['blue']['team_keys'][0][3:],
                                  match['alliances']['blue']['team_keys'][1][3:],
                                  match['alliances']['blue']['team_keys'][2][3:]]
-                    blueResult = game.predictScore(self.datapath(), blueTeams)
+                    blueResult = game.predictScore(getEvent(), blueTeams)
                     blueRP = blueResult['RP1'] + blueResult['RP2']
                     redTeams = [match['alliances']['red']['team_keys'][0][3:],
                                 match['alliances']['red']['team_keys'][1][3:],
                                 match['alliances']['red']['team_keys'][2][3:]]
-                    redResult = game.predictScore(self.datapath(), redTeams)
+                    redResult = game.predictScore(getEvent(), redTeams)
                     redRP = redResult['RP1'] + redResult['RP2']
                     if blueResult['score'] > redResult['score']:
                         blueRP += 2
