@@ -270,7 +270,6 @@ class ScoutServer(object):
         sqlCommand = sqlCommand[:-2]
         sqlCommand += " FROM Teams WHERE TeamNumber=?"
         sql_pit = cursor.execute(sqlCommand, (n,)).fetchall()
-        conn.close()
         assert len(sql_averages) < 2  # ensure there aren't two entries for one team
         assert len(sql_pit) < 2
         if len(sql_averages):
@@ -288,9 +287,11 @@ class ScoutServer(object):
         oldAverages = []
         if (len(entries) < 4):
             seasonEntries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? ORDER BY Match DESC',
-                                           (n,).fetchall())
-            if (len(seasonEntries >= 4)):
+                                           (n,)).fetchall()
+            if (len(seasonEntries) >= 4):
                 oldAverages = getAggregateData(Team=n)
+
+        conn.close()
 
         # Clear out comments if not logged in
         if not checkAuth(False):
