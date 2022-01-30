@@ -68,76 +68,101 @@ class PiScout:
             return 0
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        arucoParams = cv2.aruco.DetectorParameters_create()
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(imgray, arucoDict,
+                                                           parameters=arucoParams)
+
+        marks = [(0,0),(0,0),(0,0),(0,0)]
+        if len(corners) == 4:
+            # flatten the ArUco IDs list
+            ids = ids.flatten()
+            # loop over the detected ArUCo corners
+            for (markerCorner, markerID) in zip(corners, ids):
+                # extract the marker corners (which are always returned in
+                # top-left, top-right, bottom-right, and bottom-left order)
+                corners = markerCorner.reshape((4, 2))
+                (topLeft, topRight, bottomRight, bottomLeft) = corners
+                # convert each of the (x, y)-coordinate pairs to integers
+                topRight = (int(topRight[0]), int(topRight[1]))
+                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+                topLeft = (int(topLeft[0]), int(topLeft[1]))
+                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                marks[markerID]=(cX,cY)
+
         # The first step is to figure out the four markers on the corners of the page
         # The next two lines will blur the image and extract the edges from the shapes
-        blur = cv2.medianBlur(imgray, 2*b + 1)
+        #blur = cv2.medianBlur(imgray, 2*b + 1)
         #cv2.imwrite('Output/' + imgpath[7:] + '.b' + str(b) + '.jpg', blur)
-        retVal, edges = cv2.threshold(blur,200,255, cv2.THRESH_BINARY)
+        #retVal, edges = cv2.threshold(blur,200,255, cv2.THRESH_BINARY)
         #cv2.imwrite('Output/' + imgpath[7:] + '.thresh.jpg', edges)
 
         # Next, we use the edges to find the contours of the shapes
         # Once the contours are found, we use approxPolyDP to resolve the contours into polygon approximations
         # If the polygons have 4 sides and are relatively large, save the center coordinates in sq[]
-        contours, hierarchy = cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        sq = []
-        sqsize = []
-        for cont in contours:
-                poly = cv2.approxPolyDP(np.array(cont), 64, True)
-                if len(poly) == 4 and cv2.contourArea(cont) > 4000:
-                    xpos = 0; ypos = 0
-                    for a in poly:
-                        xpos += a[0][0]
-                        ypos += a[0][1]
-                    sq.append((int(xpos/4), int(ypos/4)))
-                    sqsize.append(cv2.contourArea(cont))
+        #contours, hierarchy = cv2.findContours(edges,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        #sq = []
+        #sqsize = []
+
+        #for cont in contours:
+        #        poly = cv2.approxPolyDP(np.array(cont), 64, True)
+        #        if len(poly) == 4 and cv2.contourArea(cont) > 4000:
+        #            xpos = 0; ypos = 0
+        #            for a in poly:
+        #                xpos += a[0][0]
+        #                ypos += a[0][1]
+        #            sq.append((int(xpos/4), int(ypos/4)))
+        #            sqsize.append(cv2.contourArea(cont))
 
         # Here, we determine which four elements of sq[] are the marks
         # To do this, we iterate through each corner of the sheet
         # On each iteration, we find the element of sq[] with the shortest distance to the corner being examined
-        marks = []
-        marksize = []
-        h, w, c  = img.shape
-        corners = [(0, 0), (0, h), (w, 0), (w,h)]
-        for corner in corners:
-            try:
-                ind = np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])
-            except:
-                print("No markers found. Is this an empty image?")
-                return -1
-            marks.append(sq[ind])
-            marksize.append(sqsize[ind])
-            print('Corner: ' + str(corner) + "  Size:" + str(sqsize[ind]))
+        #marks = []
+        #marksize = []
+        #h, w, c  = img.shape
+        #corners = [(0, 0), (0, h), (w, 0), (w,h)]
+        #for corner in corners:
+        #    try:
+        #        ind = np.argmin([(corner[0] - a[0])**2 + (corner[1] - a[1])**2 for a in sq])
+        #    except:
+        #        print("No markers found. Is this an empty image?")
+        #        return -1
+        #    marks.append(sq[ind])
+        #    marksize.append(sqsize[ind])
+        #    print('Corner: ' + str(corner) + "  Size:" + str(sqsize[ind]))
 
         #Make a copy of the list, sort the original, then calculate the median by averaging the middle 2 elements (of 4)
-        u_marksize = marksize[:] #clone the list
-        marksize.sort()
-        median = (marksize[1] + marksize[2]) / 2
+        #u_marksize = marksize[:] #clone the list
+        #marksize.sort()
+        #median = (marksize[1] + marksize[2]) / 2
 
         #This block contains code to attempt to recover a sheet where the marks are not properly detected. First it will try increasing blur, then a really small blur, before finally trying to guess the location of the final mark based on the other marks
-        for i,m in enumerate(u_marksize):
-            if abs(1 - m/median) > 0.1: #if there is a size anomaly in markers, try some things
-                print("Damaged marker detected, attempting fix: " + str(abs(1-m/median)))
-                if b < 13 and b != 1 and not guess:
-                    print("Increasing gaussian blur to " + str(b+2))
-                    return self.loadsheet(imgpath, b=b+2)
-                if b != 1 and not guess:
-                    print("Trying a really small blur")
-                    return self.loadsheet(imgpath, b=1)
-                if not guess:
-                    print("Attempting to guess the location of the last one")
-                    return self.loadsheet(imgpath, b=3, guess=True)
-                if i == 0: #geometry to calculate approximate position of damaged marker
-                    marks[0] = (marks[1][0] - (marks[3][0]-marks[2][0]), marks[2][1] + (marks[1][1]-marks[3][1]))
-                    print('Guessing top left corner')
-                elif i == 1:
-                    marks[1] = (marks[0][0] + (marks[3][0]-marks[2][0]), marks[3][1] + (marks[0][1]-marks[2][1]))
-                    print('Guessing Bottom left corner')
-                elif i == 2:
-                    marks[2] = (marks[3][0] - (marks[1][0]-marks[0][0]), marks[0][1] - (marks[1][1]-marks[3][1]))
-                    print('Guessing top right corner')
-                elif i == 3:
-                    marks[3] = (marks[2][0] + (marks[1][0]-marks[0][0]), marks[1][1] - (marks[0][1]-marks[2][1]))
-                    print('Guessing bottom right corner')
+        # for i,m in enumerate(u_marksize):
+        #     if abs(1 - m/median) > 0.1: #if there is a size anomaly in markers, try some things
+        #         print("Damaged marker detected, attempting fix: " + str(abs(1-m/median)))
+        #         if b < 13 and b != 1 and not guess:
+        #             print("Increasing gaussian blur to " + str(b+2))
+        #             return self.loadsheet(imgpath, b=b+2)
+        #         if b != 1 and not guess:
+        #             print("Trying a really small blur")
+        #             return self.loadsheet(imgpath, b=1)
+        #         if not guess:
+        #             print("Attempting to guess the location of the last one")
+        #             return self.loadsheet(imgpath, b=3, guess=True)
+        #         if i == 0: #geometry to calculate approximate position of damaged marker
+        #             marks[0] = (marks[1][0] - (marks[3][0]-marks[2][0]), marks[2][1] + (marks[1][1]-marks[3][1]))
+        #             print('Guessing top left corner')
+        #         elif i == 1:
+        #             marks[1] = (marks[0][0] + (marks[3][0]-marks[2][0]), marks[3][1] + (marks[0][1]-marks[2][1]))
+        #             print('Guessing Bottom left corner')
+        #         elif i == 2:
+        #             marks[2] = (marks[3][0] - (marks[1][0]-marks[0][0]), marks[0][1] - (marks[1][1]-marks[3][1]))
+        #             print('Guessing top right corner')
+        #         elif i == 3:
+        #             marks[3] = (marks[2][0] + (marks[1][0]-marks[0][0]), marks[1][1] - (marks[0][1]-marks[2][1]))
+        #             print('Guessing bottom right corner')
 
 
         # Apply a perspective transform
