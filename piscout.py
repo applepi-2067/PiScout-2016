@@ -265,7 +265,7 @@ class PiScout:
         #Create and open the GUI to verify  data
         print("Found new data, opening")
         if fastMode:
-            self.save(event)
+            self.save()
         else:
             output = ''
             if self.type == game.SheetType.MATCH:
@@ -301,7 +301,7 @@ class PiScout:
     # Invoked by the "Save Data Offline" button
     # Adds data to a queue to be uploaded online at a later time
     # Also stores in the local database
-    def save(self, event):
+    def save(self):
         print("Queueing match for upload later")
         if self.type == game.SheetType.MATCH:
           with open("queue.txt", "a+") as file:
