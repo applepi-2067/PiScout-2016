@@ -326,7 +326,7 @@ class PiScout:
     # Invoked by the "Save Data Offline" button
     # Adds data to a queue to be uploaded online at a later time
     # Also stores in the local database
-    def save(self):
+    def save(self, event):
         print("Queueing match for upload later")
         if self.type == game.SheetType.MATCH:
           with open("queue.txt", "a+") as file:

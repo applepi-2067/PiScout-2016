@@ -31,10 +31,9 @@ class ScoutServer(object):
 
         # Handle event selection. When the event is changed, a POST request is sent here.
         if e != '':
-            if os.path.isfile('data_' + e + '.db'):  # TODO update check to check Event table instead
-                cherrypy.session['event'] = e
-                if 'Referer' in cherrypy.request.headers:
-                    raise cherrypy.HTTPRedirect(cherrypy.request.headers['Referer'])
+            cherrypy.session['event'] = e
+            if 'Referer' in cherrypy.request.headers:
+                raise cherrypy.HTTPRedirect(cherrypy.request.headers['Referer'])
 
         # Handle mode selection. When the mode is changed, a POST request is sent here.
         if m != '':
@@ -48,14 +47,16 @@ class ScoutServer(object):
         if checkAuth(False):
             columns = game.DISPLAY_FIELDS
         else:
-            columns = game.DISPLAY_FIELDS
+            columns = {**game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
 
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         eventName = conn.cursor().execute("SELECT Name from Events WHERE EventCode=?", (getEvent(),)).fetchall()
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('index.xhtml')
         page = tmpl.generate(columns=columns, title="Home", eventName=eventName[0]['Name'], session=cherrypy.session,
-                             data=data)
+                             data=data, events=events)
         return page.render('html', doctype='html')
 
     # Page for creating picklist
@@ -106,12 +107,13 @@ class ScoutServer(object):
         # This section generates the table of averages
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
+        columns = {**game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
 
         sqlAvgCommandBase = "SELECT "
         sqlMaxCommandBase = "SELECT "
-        for key in game.DISPLAY_FIELDS:
+        for key in columns:
             sqlMaxCommandBase += "MAX(" + key + ") AS " + key + ", "
-        for key in game.DISPLAY_FIELDS:
+        for key in columns:
             sqlAvgCommandBase += "round(AVG(" + key + "),2) AS " + key + ", "
         sqlMaxCommandBase = sqlMaxCommandBase[:-2]
         sqlAvgCommandBase = sqlAvgCommandBase[:-2]
@@ -134,7 +136,7 @@ class ScoutServer(object):
             latestData = pickListData.copy()
             pickListData = []
             for i, row in enumerate(latestData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -148,7 +150,7 @@ class ScoutServer(object):
             maxData = pickListData.copy()
             picklistData = []
             for i, row in enumerate(maxData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -167,7 +169,7 @@ class ScoutServer(object):
             latestData = dnpData.copy()
             dnpData = []
             for i, row in enumerate(latestData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -181,7 +183,7 @@ class ScoutServer(object):
             maxData = dnpData.copy()
             dnpData = []
             for i, row in enumerate(maxData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -200,7 +202,7 @@ class ScoutServer(object):
             latestData = teamData.copy()
             teamData = []
             for i, row in enumerate(latestData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -214,7 +216,7 @@ class ScoutServer(object):
             maxData = teamData.copy()
             teamData = []
             for i, row in enumerate(maxData):
-                rowData = dict(game.DISPLAY_FIELDS)
+                rowData = dict(columns)
                 for key in rowData:
                     if key == 'Team':
                         rowData[key] = row[key]
@@ -222,10 +224,11 @@ class ScoutServer(object):
                         rowData[key] = round(row[key] - avgData[i][key], 2)
                 teamData.append(rowData)
 
-        columns = game.DISPLAY_FIELDS
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('picklist.xhtml')
         page = tmpl.generate(columns=columns, session=cherrypy.session, teams=teamData,
-                             dnp=dnpData, picklist=pickListData, auth=auth)
+                             dnp=dnpData, picklist=pickListData, auth=auth, events=events)
         return page.render('html', doctype='html')
 
     # Page to show result of login attempt
@@ -244,8 +247,12 @@ class ScoutServer(object):
         referrer = ""
         if 'Referer' in cherrypy.request.headers:
             referer = cherrypy.request.headers['Referer']
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('login.xhtml')
-        page = tmpl.generate(result=loginResult, session=cherrypy.session, referer=referer)
+        page = tmpl.generate(result=loginResult, session=cherrypy.session, referer=referer, events=events)
         return page.render('html', doctype='html')
 
         # Show a detailed summary for a given team
@@ -263,7 +270,11 @@ class ScoutServer(object):
         entries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match ASC',
                                  (n, getEvent())).fetchall()
         sql_averages = getAggregateData(Team=n, Event=getEvent())
-        comments = cursor.execute('SELECT Comments FROM Teams WHERE TeamNumber=?', (n,)).fetchone()
+        commentsRow = cursor.execute('SELECT Comments FROM Teams WHERE TeamNumber=?', (n,)).fetchone()
+        if commentsRow[0] is not None:
+            comments = convertStringToArray(commentsRow[0])
+        else:
+            comments = []
         sqlCommand = "SELECT "
         for key in game.PIT_SCOUT_FIELDS:
             sqlCommand += key + ", "
@@ -285,12 +296,13 @@ class ScoutServer(object):
         # If we have less than 4 entries, see if we can grab data from a previous event
         lastEvent = 0
         oldAverages = []
-        if (len(entries) < 4):
+        if (len(entries) < 3):
             seasonEntries = cursor.execute('SELECT rowid,* FROM ScoutRecords WHERE Team=? ORDER BY Match DESC',
                                            (n,)).fetchall()
-            if (len(seasonEntries) >= 4):
-                oldAverages = getAggregateData(Team=n)
+            if (len(seasonEntries) >= 3):
+                oldAverages = getAggregateData(Team=n)[0]
 
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
         conn.close()
 
         # Clear out comments if not logged in
@@ -321,7 +333,7 @@ class ScoutServer(object):
         m = []
         try:
             # get the picture for a given team
-            m = self.get("http://www.thebluealliance.com/api/v3/team/frc{0}/media/2018".format(n),
+            m = self.get("http://www.thebluealliance.com/api/v3/team/frc{0}/media/2022".format(n),
                          params=headers).json()
             if m.status_code == 400:
                 m = []
@@ -331,7 +343,7 @@ class ScoutServer(object):
         for media in m:
             # media['type'] == 'instagram-image' does not currently work correctly on TBA
             if media['type'] == 'imgur':
-                image_url = media['view_url'] + "m.jpg"
+                image_url = "https://i.imgur.com/" + media['foreign_key'] + "m.jpg"
                 break
             elif media['type'] == 'cdphotothread':
                 image_url = media['direct_url']
@@ -339,7 +351,7 @@ class ScoutServer(object):
 
         if (checkAuth(False)):
             auth = 1
-            columns = game.DISPLAY_FIELDS
+            columns = {**game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
         else:
             auth = 0
             columns = game.DISPLAY_FIELDS
@@ -348,7 +360,7 @@ class ScoutServer(object):
         page = tmpl.generate(session=cherrypy.session, chartData=str(dataset).replace("'", '"'), image=image_url, \
                              auth=auth, old_averages=oldAverages, pitColumns=game.PIT_SCOUT_FIELDS, pitScout=pit, \
                              columns=columns, averages=averages, comments=comments, chartFields=game.CHART_FIELDS, \
-                             matches=tableData)
+                             matches=tableData, events=events)
         return page.render('html', doctype='html')
 
     # Called to toggle flag on a data entry. Also does a recalc to add/remove entry from stats
@@ -372,16 +384,24 @@ class ScoutServer(object):
     @cherrypy.expose()
     def compareTeams(self):
         sessionCheck()
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('compareTeams.xhtml')
-        page = tmpl.generate(session=cherrypy.session)
+        page = tmpl.generate(session=cherrypy.session, events=events)
         return page.render('html', doctype='html')
 
     # Input interface to choose alliances to compare
     @cherrypy.expose
     def compareAlliances(self):
         sessionCheck()
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('compareAlliances.xhtml')
-        page = tmpl.generate(session=cherrypy.session)
+        page = tmpl.generate(session=cherrypy.session, events=events)
         return page.render('html', doctype='html')
 
     # Output for team comparison
@@ -444,10 +464,12 @@ class ScoutServer(object):
                             if stat2:
                                 dataset[index]["team" + n + "stat2"] = dp[stat2]
 
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('teams.xhtml')
         page = tmpl.generate(session=cherrypy.session, chart_data=str(dataset).replace("'", '"'),
                              columns=game.DISPLAY_FIELDS,
-                             chartColumns=game.CHART_FIELDS, stat1=stat1, stat2=stat2, teams=nums, stat_data=stats_data)
+                             chartColumns=game.CHART_FIELDS, stat1=stat1, stat2=stat2, teams=nums, stat_data=stats_data, events=events)
         return page.render('html', doctype='html')
 
     # Output for alliance comparison
@@ -473,8 +495,8 @@ class ScoutServer(object):
                                      (n, getEvent())).fetchall()
             prevEvent = 0
             if len(entries) < 3:
-                seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,))
-                if (len(seasonEntries >= 3)):
+                seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
+                if (len(seasonEntries) >= 3):
                     oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
@@ -484,9 +506,13 @@ class ScoutServer(object):
             if prevEvent == 0:
                 average = getAggregateData(Team=n, Event=getEvent(), Mode="Averages")
                 if not len(average):
-                    average = dict(game.DISPLAY_FIELDS)
+                    average = dict(game.SCOUT_FIELDS)
+                    average.update(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
-                blueData.append(average)
+                    average['Team'] = n
+                    blueData.append(average)
+                else:
+                    blueData.append(average[0])
 
         for i, n in enumerate(numsRed):
             if not n.isdigit():
@@ -495,8 +521,8 @@ class ScoutServer(object):
                                      (n, getEvent())).fetchall()
             prevEvent = 0
             if len(entries) < 3:
-                seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,))
-                if (len(seasonEntries >= 3)):
+                seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
+                if (len(seasonEntries) >= 3):
                     oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
@@ -506,23 +532,30 @@ class ScoutServer(object):
             if prevEvent == 0:
                 average = getAggregateData(Team=n, Event=getEvent(), Mode="Averages")
                 if not len(average):
-                    average = dict(game.DISPLAY_FIELDS)
+                    average = dict(game.SCOUT_FIELDS)
+                    average.update(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
-                blueData.append(average)
+                    average['Team'] = n
+                    redData.append(average)
+                else:
+                    redData.append(average[0])
 
         # Predict scores
-        blue_score = game.predictScore(self.datapath(), numsBlue, level)['score']
-        red_score = game.predictScore(self.datapath(), numsRed, level)['score']
+        blue_score = game.predictScore(getEvent(), numsBlue, level)['score']
+        red_score = game.predictScore(getEvent(), numsRed, level)['score']
         blue_score = int(blue_score)
         red_score = int(red_score)
 
         # Calculate win probability. Currently uses regression from 2016 data, this should be updated
         prob_red = 1 / (1 + math.e ** (-0.08099 * (red_score - blue_score)))
+
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
         conn.close()
 
         tmpl = loader.load('alliances.xhtml')
         page = tmpl.generate(session=cherrypy.session, red_win=round(prob_red * 100, 1), red_score=red_score,
-                             blue_score=blue_score, red_data=redData, blue_data=blueData, columns=game.DISPLAY_FIELDS)
+                             blue_score=blue_score, red_data=redData, blue_data=blueData, columns=game.DISPLAY_FIELDS,
+                             events=events)
         return page.render('html', doctype='html')
 
     # Lists schedule data from TBA
@@ -570,8 +603,13 @@ class ScoutServer(object):
                         match['alliances']['red']['team_keys'][2][3:]]
             match['redPredict'] = game.predictScore(getEvent(), redTeams, level)
 
+
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         tmpl = loader.load('matches.xhtml')
-        page = tmpl.generate(session=cherrypy.session, matches=m)
+        page = tmpl.generate(session=cherrypy.session, matches=m, events=events)
         return page.render('html', doctype='html')
 
     # Used by the scanning program to submit data, and used by comment system to submit data
@@ -600,7 +638,13 @@ class ScoutServer(object):
             if not checkAuth(False):
                 conn.close()
                 raise cherrypy.HTTPError(401, "Error: Not authorized to submit comments. Please login and try again")
-            cursor.execute('UPDATE Teams SET Comments=Comments || ? WHERE TeamNumber=?', (" " + comment, team))
+            comments = cursor.execute('SELECT Comments FROM Teams WHERE TeamNumber=?', (team,)).fetchone()
+            if comments[0] is None:
+                cursor.execute('UPDATE Teams SET Comments=? WHERE TeamNumber=?', (comment, team))
+            else:
+                existing = convertStringToArray(comments[0])
+                existing.append(comment)
+                cursor.execute('UPDATE Teams SET Comments=? WHERE TeamNumber=?', (convertArrayToString(existing), team))
             conn.commit()
             conn.close()
             raise cherrypy.HTTPRedirect('/team?n=' + str(team))
@@ -689,10 +733,12 @@ class ScoutServer(object):
 
         # Grab the currently selected entry
         entry = cursor.execute('SELECT rowid,* from ScoutRecords WHERE rowid=?', (key,)).fetchone()
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
         conn.close()
 
         tmpl = loader.load('edit.xhtml')
-        page = tmpl.generate(session=cherrypy.session, entries=entries, entry=entry, scout_fields=game.SCOUT_FIELDS)
+        page = tmpl.generate(session=cherrypy.session, entries=entries, entry=entry, scout_fields=game.SCOUT_FIELDS, events=events)
         return page.render('html', doctype='html')
 
     # Page to show current rankings, and predict final rankings
@@ -703,6 +749,8 @@ class ScoutServer(object):
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
         cursor = conn.cursor()
+        events = conn.cursor().execute("SELECT * from Events").fetchall()
+        conn.close()
 
         rankings = {}
 
@@ -762,7 +810,7 @@ class ScoutServer(object):
         sorted_rankings = sorted(rankings.items(), key=keyFromItem(lambda k, v: (v['rp'], v['matchScore'])),
                                  reverse=True)
         tmpl = loader.load('rankings.xhtml')
-        page = tmpl.generate(rankings=sorted_rankings, session=cherrypy.session)
+        page = tmpl.generate(rankings=sorted_rankings, session=cherrypy.session, events=events)
         return page.render('html', doctype='html')
 
     # Return the path to the database for this event
@@ -889,9 +937,10 @@ def getAggregateData(Team="", Event="", Mode=""):
 
     sqlAvgCommandBase = "SELECT "
     sqlMaxCommandBase = "SELECT "
-    for key in game.DISPLAY_FIELDS:
+    columns = {** game.SCOUT_FIELDS, **game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
+    for key in columns:
         sqlMaxCommandBase += "MAX(" + key + ") AS " + key + ", "
-    for key in game.DISPLAY_FIELDS:
+    for key in columns:
         sqlAvgCommandBase += "round(AVG(" + key + "),2) AS " + key + ", "
     sqlMaxCommandBase = sqlMaxCommandBase[:-2]
     sqlAvgCommandBase = sqlAvgCommandBase[:-2]
@@ -912,7 +961,7 @@ def getAggregateData(Team="", Event="", Mode=""):
         latestData = data.copy()
         data = []
         for i, row in enumerate(latestData):
-            rowData = dict(game.DISPLAY_FIELDS)
+            rowData = dict(columns)
             for key in rowData:
                 if key == 'Team':
                     rowData[key] = row[key]
@@ -926,7 +975,7 @@ def getAggregateData(Team="", Event="", Mode=""):
         maxData = data.copy()
         data = []
         for i, row in enumerate(maxData):
-            rowData = dict(game.DISPLAY_FIELDS)
+            rowData = dict(columns)
             for key in rowData:
                 if key == 'Team':
                     rowData[key] = row[key]
@@ -947,6 +996,17 @@ def getEvent():
         cherrypy.session['event'] = CURRENT_EVENT
     return cherrypy.session['event']
 
+strSeparator = "__,__";
+def convertArrayToString(array):
+    str = "";
+    for substring in array:
+        str = str+substring+strSeparator
+    str[:-1*(len(strSeparator))]
+    return str;
+
+def convertStringToArray(str):
+    array = str.split(strSeparator);
+    return array;
 
 # Configuration used for local instance of the server
 localConf = {

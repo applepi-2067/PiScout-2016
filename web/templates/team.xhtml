@@ -88,6 +88,14 @@
 
 					function flag(m, f)
 					{
+                  if(f == 0)
+                  {
+                     f == 1;
+                  } else
+                  {
+                     f == 0;
+                  }
+                     
 						$.post(
 							"flag",
 							{num: ${int(averages['Team'])}, match: m, flagval: f},
@@ -155,7 +163,7 @@
 									<td>${entry['Text']['teleop1']}</td>
 									<td>${entry['Text']['teleop2']}</td>
 									<td>${entry['Text']['other']}</td>
-									<td><a class="flag" href="javascript:flag(entry['Match'], entry['Flag']);">X</a></td>
+									<td><a class="flag" href="javascript:flag(${entry['Match']}, ${entry['Flag']});">X</a></td>
 									<td class="hidden-xs"><a class="edit" href="/edit?key=${entry['Key']}">E</a></td>
 								</tr>
 							</py:for>
@@ -166,28 +174,33 @@
 					<br/>
 					<div style="text-align: center">
 						<p style="font-size: 32px;">Image</p>
-						<img src="${image}"></img>
+						<img src="${image}" referrerpolicy="no-referrer"></img>
 					</div>
 					<br />
 				</py:if>
-				<div style="text-align: center; margin: 0 auto;">
-                    <p style="font-size: 32px; font-weight: bold">Comments</p>
-                    <br />
-					<py:if test="comments">
-							<div class="commentbox"><p>${comments[0]}</p></div>
-					</py:if>
-					<div>
-						<form style="width: 100%;" method="post" action="submit">
-							<input name="team" value="${int(averages['Team'])}" type="hidden" />
-							<div>
-								<textarea name="comment" rows="3" style="width: 50%"></textarea>
-							</div>
-							<button class="submit" type="submit">Submit</button>
-						</form>
-					</div>
-					<br />
-					<p style="text-align: center; font-size: 24px"><a href="/matches?n=${int(averages['Team'])}">View this team's match schedule</a></p>
+               <div py:if="auth" style="text-align: center; margin: 0 auto;">
+                       <p style="font-size: 32px; font-weight: bold">Comments</p>
+                       <br />
+              
+                  <py:if test="comments">
+                        <div class="commentbox">
+                           <py:for each="comment in comments">
+                              <p>${comment}</p>
+                           </py:for>
+                        </div>
+                  </py:if>
+                  <div>
+                     <form style="width: 100%;" method="post" action="submit">
+                        <input name="team" value="${int(averages['Team'])}" type="hidden" />
+                        <div>
+                           <textarea name="comment" rows="3" style="width: 50%"></textarea>
+                        </div>
+                        <button class="submit" type="submit">Submit</button>
+                     </form>
+                  </div>
+                  <br />
 				</div>
+            <p style="text-align: center; font-size: 24px"><a href="/matches?n=${int(averages['Team'])}">View this team's match schedule</a></p>
 			</div>
 			<xi:include href="footer.html"/>
 		</div>
