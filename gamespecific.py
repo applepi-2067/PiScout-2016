@@ -20,6 +20,9 @@ PIT_SCOUT_FIELDS = {"TeamNumber": 0, "Weight": 0, "PitOrganization": 0, "WiringQ
                     "BallCapacity": 0, "VisionTarget": 0, "FloorPickup": 0, "ShortBot": 0, "ClimbLevel": 0,
                     "ClimbNarrow": 0}
 
+# Define which pit scout fields to display on alliance page
+PIT_DISPLAY_FIELDS = {"Weight": 0, "SillyWheels": 0, "Swerve": 0, "ClimbLevel": 0}
+
 # Defines the fields displayed on the charts on the team and compare pages
 CHART_FIELDS = {"match": 0, "AutoHigh": 0, "AutoLow": 0, "CargoTotal": 0, "TeleHigh": 0, "TeleLow": 0, "Hangar": 0 }
 

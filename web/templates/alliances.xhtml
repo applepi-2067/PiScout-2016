@@ -23,11 +23,16 @@
                             </div>
                         </div>
                         <div py:for="team_data in blue_data" class="comparebox_container">
-							<p><a href="/team?n=${int(team_data['Team'])}" style="font-size: 32px;">${int(team_data['Team'])}</a></p>
+							<p><a href="/team?n=${int(team_data[1]['Team'])}" style="font-size: 32px;">${int(team_data[1]['Team'])}</a></p>
 							<div class="statbox_container">
 								<div id="stats">
 									<py:for each="key in columns">
-										<p py:if="key!='Team'" class="statbox">${key}: ${team_data[key]}</p>
+										<p py:if="key!='Team'" class="statbox">${key}: ${team_data[1][key]}</p>
+									</py:for>
+								</div>
+                        <div id="stats">
+									<py:for each="key in pitColumns">
+										<p class="statbox">${key}: ${team_data[0][key]}</p>
 									</py:for>
 								</div>
 							</div>
@@ -44,11 +49,16 @@
                             </div>
                         </div>
 						<div py:for="team_data in red_data" class="comparebox_container">
-							<p><a href="/team?n=${int(team_data['Team'])}" style="font-size: 32px;">${int(team_data['Team'])}</a></p>
+							<p><a href="/team?n=${int(team_data[1]['Team'])}" style="font-size: 32px;">${int(team_data[1]['Team'])}</a></p>
 							<div class="statbox_container">
 								<div id="stats">
 									<py:for each="key in columns">
-										<p py:if="key!='Team'" class="statbox">${key}: ${team_data[key]}</p>
+										<p py:if="key!='Team'" class="statbox">${key}: ${team_data[1][key]}</p>
+									</py:for>
+								</div>
+                        <div id="stats">
+									<py:for each="key in pitColumns">
+										<p class="statbox">${key}: ${team_data[0][key]}</p>
 									</py:for>
 								</div>
 							</div>

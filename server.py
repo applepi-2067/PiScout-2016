@@ -494,13 +494,15 @@ class ScoutServer(object):
             entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match DESC',
                                      (n, getEvent())).fetchall()
             prevEvent = 0
+            teamData = []
+            teamData.append(getPitDisplayData(n))
             if len(entries) < 3:
                 seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
                 if (len(seasonEntries) >= 3):
                     oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
-                        blueData.append(oldAverages[0])
+                        teamData.append(oldAverages[0])
                         prevEvent = 1
 
             if prevEvent == 0:
@@ -510,9 +512,10 @@ class ScoutServer(object):
                     average.update(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
                     average['Team'] = n
-                    blueData.append(average)
+                    teamData.append(average)
                 else:
-                    blueData.append(average[0])
+                    teamData.append(average[0])
+            blueData.append(teamData)
 
         for i, n in enumerate(numsRed):
             if not n.isdigit():
@@ -520,13 +523,15 @@ class ScoutServer(object):
             entries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? AND EventCode=? ORDER BY Match DESC',
                                      (n, getEvent())).fetchall()
             prevEvent = 0
+            teamData = []
+            teamData.append(getPitDisplayData(n))
             if len(entries) < 3:
                 seasonEntries = cursor.execute('SELECT * FROM ScoutRecords WHERE Team=? ORDER BY Match DESC', (n,)).fetchall()
                 if (len(seasonEntries) >= 3):
                     oldAverages = getAggregateData(Team=n, Mode="Averages")
                     assert len(oldAverages) < 2  # ensure there aren't two entries for one team
                     if len(oldAverages):
-                        blueData.append(oldAverages[0])
+                        teamData.append(oldAverages[0])
                         prevEvent = 1
 
             if prevEvent == 0:
@@ -536,9 +541,10 @@ class ScoutServer(object):
                     average.update(game.DISPLAY_FIELDS)
                     average.update(game.HIDDEN_DISPLAY_FIELDS)
                     average['Team'] = n
-                    redData.append(average)
+                    teamData.append(average)
                 else:
-                    redData.append(average[0])
+                    teamData.append(average[0])
+            redData.append(teamData)
 
         # Predict scores
         blue_score = game.predictScore(getEvent(), numsBlue, level)['score']
@@ -555,7 +561,7 @@ class ScoutServer(object):
         tmpl = loader.load('alliances.xhtml')
         page = tmpl.generate(session=cherrypy.session, red_win=round(prob_red * 100, 1), red_score=red_score,
                              blue_score=blue_score, red_data=redData, blue_data=blueData, columns=game.DISPLAY_FIELDS,
-                             events=events)
+                             events=events, pitColumns=game.PIT_DISPLAY_FIELDS)
         return page.render('html', doctype='html')
 
     # Lists schedule data from TBA
@@ -984,6 +990,21 @@ def getAggregateData(Team="", Event="", Mode=""):
             data.append(rowData)
     conn.close()
     return data
+
+def getPitDisplayData(team):
+    conn = sql.connect(datapath)
+    conn.row_factory = sql.Row
+    cursor = conn.cursor()
+    sqlCommand = "SELECT "
+    for key in game.PIT_DISPLAY_FIELDS:
+        sqlCommand += key + ", "
+    sqlCommand = sqlCommand[:-2]
+    sqlCommand += " FROM Teams WHERE TeamNumber=?"
+    sql_pit = cursor.execute(sqlCommand, (team,)).fetchall()
+    if(len(sql_pit)):
+        return sql_pit[0]
+    else:
+        return dict(game.PIT_DISPLAY_FIELDS)
 
 def getMode():
     if 'mode' not in cherrypy.session:

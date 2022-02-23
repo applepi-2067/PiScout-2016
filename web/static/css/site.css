@@ -178,6 +178,22 @@
   text-align:center;
 }
 
+.btn, .btn:hover, .btn:focus
+{
+   background-color: var(--team-primary-color);
+   border-color: var(--team-secondary-color);
+   color: #000;
+   margin:5px;
+}
+
+.btn:active
+{
+   background-color: var(--team-secondary-color);
+   border-color: var(--team-primary-color);
+   color: #fff;
+   margin:5px;
+}
+
 .btn-danger, .btn-danger:hover, .btn-danger:focus, .btn-danger:active
 {
   color: var(--team-secondary-color);
