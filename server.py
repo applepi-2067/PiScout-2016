@@ -779,9 +779,9 @@ class ScoutServer(object):
         # Process current rankings into dict
         for item in r["rankings"]:
             rankings[item["team_key"][3:]] = {'rp': round(item["sort_orders"][0] * item["matches_played"], 0),
-                                              'matchScore': item["sort_orders"][1],
+                                              'matchScore': round(item["sort_orders"][1] * item["matches_played"], 0),
                                               'currentRP': round(item["sort_orders"][0] * item["matches_played"], 0),
-                                              'currentMatchScore': item["sort_orders"][1]}
+                                              'currentMatchScore': round(item["sort_orders"][1] * item["matches_played"], 0)}
 
         # Iterate through all matches
         for match in m:
