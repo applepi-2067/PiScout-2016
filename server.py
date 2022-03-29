@@ -42,6 +42,15 @@ class ScoutServer(object):
                 raise cherrypy.HTTPRedirect(cherrypy.request.headers['Referer'])
 
         data = getAggregateData(Event=getEvent())
+        if(cherrypy.session['mode'] == 'Season'):
+            conn = sql.connect(self.datapath())
+            conn.row_factory = sql.Row
+            teams = conn.cursor().execute("SELECT DISTINCT TeamNumber from Participation WHERE EventCode=?",(getEvent(),)).fetchall()
+            data = []
+            for i,team in enumerate(teams):
+                averages = getAggregateData(Team=str(team[0]), Mode="Averages")
+                if(len(averages)):
+                    data.append(averages[0])
 
         # Pass off the normal set of columns or columns with the hidden fields depending on authentication
         if checkAuth(False):
