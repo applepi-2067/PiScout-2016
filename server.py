@@ -704,9 +704,11 @@ class ScoutServer(object):
                 d = literal_eval(pitData)
                 values = ""
                 for i, key in enumerate(game.PIT_SCOUT_FIELDS):
+                    if key == 'TeamNumber':
+                        continue
                     values += key + "=" + str(d[key]) + ", "
                 values = values[:-2]
-                cursor.execute('UPDATE Teams SET ' + values + 'WHERE TeamNumber=?', (d['TeamNumber']))
+                cursor.execute('UPDATE Teams SET ' + values + ' WHERE TeamNumber=?', (d['TeamNumber'],))
                 conn.commit()
                 conn.close()
                 return ''
