@@ -12,3 +12,7 @@ pitQueue.txt
 2018 PiScout Pit Sheet - Sheet1.pdf
 2018 PiScout Match Sheet - Sheet1.pdf
 .idea/workspace.xml
+*.csv
+*.bak
+*.xlsx
+*.zip
