@@ -1319,11 +1319,11 @@ def getAggregateData(Team="", Event="", Mode=""):
                     rowData[key] = round(row[key] - avgData[i][key], 2)
             data.append(rowData)
     conn.close()
-    for team in data:
-        team["FirstP"] = (
-            team["CargoPoints"] * prop.FIRST_CARGO_POINTS
-            + team["Hangar"] * prop.FIRST_HANGAR
-        )
+   # for team in data:
+   #     team["FirstP"] = (
+   #         team["CargoPoints"] * prop.FIRST_CARGO_POINTS
+   #         + team["Hangar"] * prop.FIRST_HANGAR
+   #     )
     return data
 
 
