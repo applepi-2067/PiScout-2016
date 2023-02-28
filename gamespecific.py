@@ -7,19 +7,31 @@ import proprietary as prop
 SCOUT_FIELDS = {
     "Team": 0,
     "Match": 0,
-    "Taxi": 0,
-    "Hangar": 0,
-    "FailedClimb": 0,
+    "Mobility": 0,
+    "AutoFailedBalance": 0,
+    "AutoDock": 0,
+    "AutoBalance": 0,
+    "FailedBalance": 0,
+    "Dock": 0,
+    "Balance": 0,
+    "Park": 0,
     "Disabled": 0,
     "Defense": 0,
     "Defended": 0,
-    "FenderShot": 0,
-    "LaunchPadShot": 0,
-    "HPScore": 0,
-    "AutoHigh": 0,
-    "AutoLow": 0,
-    "TeleHigh": 0,
-    "TeleLow": 0,
+    "LowCube": 0,
+    "MidCube": 0,
+    "HighCube": 0,
+    "AutoLowCube": 0,
+    "AutoMidCube": 0,
+    "AutoHighCube": 0,
+    "LowCone": 0,
+    "MidCone": 0,
+    "HighCone": 0,
+    "AutoLowCone": 0,
+    "AutoMidCone": 0,
+    "AutoHighCone": 0,
+    "MidfieldCone": 0,
+    "MidfieldCube": 0,
     "Replay": 0,
     "Flag": 0,
 }
@@ -29,12 +41,15 @@ SCOUT_FIELDS = {
 # Hidden average fields are only displayed when logged in or on local.
 DISPLAY_FIELDS = {
     "Team": 0,
-    "Cargo": 0,
-    "CargoPoints": 0,
-    "AutoCargoPoints": 0,
-    "Hangar": 0,
+    "Cycles": 0,
+    "GridPoints": 0,
+    "Cones": 0,
+    "Cubes": 0,
+    "Auto": 0,
+    "Balance": 0,
     "Defense": 0,
 }
+
 HIDDEN_DISPLAY_FIELDS = {"FirstP": 0, "SecondP": 0}
 
 # Define the fields collected from Pit Scouting to display on the team page
@@ -47,27 +62,29 @@ PIT_SCOUT_FIELDS = {
     "Batteries": 0,
     "SillyWheels": 0,
     "Swerve": 0,
-    "BallCapacity": 0,
-    "VisionTarget": 0,
-    "FloorPickup": 0,
-    "ShortBot": 0,
-    "ClimbLevel": 0,
-    "ClimbNarrow": 0,
+    "TripleMech": 0,
+    "Cone": 0,
+    "Cube": 0,
+    "Floor": 0,
+    "DoubleSub": 0,
+    "Level1": 0,
+    "Level2": 0,
+    "Level3": 0,
+    "Width": 0,
 }
 
 # Define which pit scout fields to display on alliance page
-PIT_DISPLAY_FIELDS = {"Weight": 0, "SillyWheels": 0, "Swerve": 0, "ClimbLevel": 0}
+PIT_DISPLAY_FIELDS = {"Cone": 0, "Cube": 0, "SillyWheels": 0, "Swerve": 0, "Width": 0}
 
 # Defines the fields displayed on the charts on the team and compare pages
 CHART_FIELDS = {
     "match": 0,
-    "AutoHigh": 0,
-    "AutoLow": 0,
-    "CargoTotal": 0,
-    "CargoPoints": 0,
-    "TeleHigh": 0,
-    "TeleLow": 0,
-    "Hangar": 0,
+    "Auto": 0,
+    "Bridge": 0,
+    "GridPoints": 0,
+    "Cycles": 0,
+    "Cones": 0,
+    "Cubes": 0
 }
 
 
@@ -77,20 +94,23 @@ class SheetType(IntEnum):
 
 
 def getDisplayFieldCreate():
-    retVal = "Cargo AS (AutoHigh+AutoLow+TeleHigh+TeleLow) STORED, "
-    retVal += "CargoPoints AS (4*AutoHigh+2*AutoLow+2*TeleHigh+TeleLow) STORED, "
+    retVal = "Cones AS (AutoHighCone+HighCone+AutoMidCone+MidCone+AutoLowCone+LowCone) STORED, "
+    retVal += "Cubes AS (AutoHighCube+HighCube+AutoMidCube+MidCube+AutoLowCube+LowCube) STORED, "
+    retVal += "Cycles AS (Cones+Cubes) STORED, "
+    retVal += "GridPoints AS (6*AutoHighCube+6*AutoHighCone+4*AutoMidCube+4*AutoMidCone+3*AutoLowCone+3*AutoLowCube+5*HighCone+5*HighCube+3*MidCone+3*MidCube+2*LowCone+2*LowCube) STORED, "
+    retVal += "Auto AS (6*AutoHighCube+6*AutoHighCone+4*AutoMidCube+4*AutoMidCone+3*AutoLowCone+3*AutoLowCube+AutoBalance+AutoDock+Mobility) STORED, "
     retVal += (
-        "FirstP AS (CargoPoints*"
-        + str(prop.FIRST_CARGO_POINTS)
-        + "*(1+Defended)+Hangar*"
-        + str(prop.FIRST_HANGAR)
+        "FirstP AS (GridPoints*"
+        + str(prop.FIRST_GRID_POINTS)
+        + "*(1+Defended)+Balance*"
+        + str(prop.FIRST_BRIDGE)
         + ") STORED, "
     )
     retVal += (
-        "SecondP AS (CargoPoints*"
-        + str(prop.SECOND_CARGO_POINTS)
-        + "*(1+Defended)+Hangar*"
-        + str(prop.SECOND_HANGAR)
+        "SecondP AS (GridPoints*"
+        + str(prop.SECOND_GRID_POINTS)
+        + "*(1+Defended)+Balance*"
+        + str(prop.SECOND_BRIDGE)
         + "+Defense*"
         + str(prop.SECOND_DEFENSE)
         + "+Disabled*"
@@ -126,35 +146,36 @@ def processSheet(scout):
 
             scout.setMatchData("Replay", scout.boolfield("S-6"))
 
-            scout.setMatchData("Taxi", scout.boolfield("G-11"))
-            scout.setMatchData("HPScore", scout.boolfield("Q-11"))
+            scout.setMatchData("AutoHighCube", scout.countfield("H-10", "K-10", 0))
+            scout.setMatchData("AutoHighCone", scout.countfield("H-11", "K-11", 0))
+            scout.setMatchData("AutoMidCube", scout.countfield("H-13", "K-13", 0))
+            scout.setMatchData("AutoMidCone", scout.countfield("H-14", "K-14", 0))
+            scout.setMatchData("AutoLowCube", scout.countfield("H-16", "K-16", 0))
+            scout.setMatchData("AutoLowCone", scout.countfield("H-17", "K-17", 0))
 
-            scout.setMatchData("FenderShot", scout.boolfield("AA-11"))
-            scout.setMatchData("LaunchPadShot", scout.boolfield("AI-11"))
+            scout.setMatchData("Mobility", scout.boolfield("H-18"))
 
-            scout.setMatchData("AutoLow", scout.rangefield("G-12", 0, 9))
-            scout.setMatchData("AutoHigh", scout.rangefield("G-13", 0, 9))
+            scout.setMatchData("AutoFailedBalance", scout.boolfield("P-10"))
+            scout.setMatchData("AutoDock", scout.boolfield("P-11")*8)
+            scout.setMatchData("AutoBalance", scout.boolfield("P-12")*12)
 
-            low1 = scout.rangefield("AA-13", 0, 9)
-            low2 = scout.rangefield("AA-14", 0, 9)
-            scout.setMatchData("TeleLow", 10 * low1 + low2)
+            scout.setMatchData("FailedBalance", scout.boolfield("Q-10"))
+            scout.setMatchData("Dock", scout.boolfield("Q-11")*6)
+            scout.setMatchData("Balance", scout.boolfield("Q-12")*10)
 
-            high1 = scout.rangefield("AA-16", 0, 9)
-            high2 = scout.rangefield("AA-17", 0, 9)
-            scout.setMatchData("TeleHigh", 10 * high1 + high2)
+            scout.setMatchData("MidfieldCone", scout.countfield("Q-16", "T-16", 0))
+            scout.setMatchData("MidfieldCube", scout.countfield("Q-17", "T-17", 0))
 
-            scout.setMatchData("FailedClimb", scout.boolfield("N-16"))
-            scout.setMatchData(
-                "Hangar",
-                4 * scout.boolfield("T-15")
-                + 6 * scout.boolfield("T-16")
-                + 10 * scout.boolfield("T-17")
-                + 15 * scout.boolfield("T-18"),
-            )
+            scout.setMatchData("Defense", scout.boolfield("W-10"))
+            scout.setMatchData("Defended", scout.boolfield("W-11"))
+            scout.setMatchData("Disabled", scout.boolfield("W-12"))
 
-            scout.setMatchData("Defense", scout.boolfield("G-15"))
-            scout.setMatchData("Defended", scout.boolfield("G-16"))
-            scout.setMatchData("Disabled", scout.boolfield("G-17"))
+            scout.setMatchData("HighCube", scout.countfield("AB-10", "AK-10", 0))
+            scout.setMatchData("HighCone", scout.countfield("AB-11", "AK-11", 0))
+            scout.setMatchData("MidCube", scout.countfield("AB-13", "AK-13", 0))
+            scout.setMatchData("MidCone", scout.countfield("AB-14", "AK-14", 0))
+            scout.setMatchData("LowCube", scout.countfield("AB-16", "AK-16", 0))
+            scout.setMatchData("LowCone", scout.countfield("AB-17", "AK-17", 0))
 
             scout.submit()
         elif type == SheetType.PIT:
@@ -170,20 +191,26 @@ def processSheet(scout):
             weight3 = scout.rangefield("AB-7", 0, 9)
             scout.setPitData("Weight", 100 * weight1 + 10 * weight2 + weight3)
 
-            scout.setPitData("BallCapacity", scout.rangefield("M-10", 1, 2))
-            scout.setPitData("VisionTarget", scout.boolfield("Q-12"))
+            scout.setPitData("TripleMech", scout.boolfield("Q-10"))
+            scout.setPitData("Cone", scout.boolfield("Q-11"))
+            scout.setPitData("Cube", scout.boolfield("Q-12"))
             scout.setPitData("FloorPickup", scout.boolfield("Q-13"))
-            scout.setPitData("ShortBot", scout.boolfield("Q-14"))
-            scout.setPitData("ClimbLevel", scout.rangefield("Q-15", 1, 4))
-            scout.setPitData("NarrowClimb", scout.boolfield("Q-16"))
+            scout.setPitData("DoubleSub", scout.boolfield("Q-14"))
+            scout.setPitData("Level1", scout.boolfield("Q-15"))
+            scout.setPitData("Level2", scout.boolfield("Q-16"))
+            scout.setPitData("Level3", scout.boolfield("Q-17"))
 
-            scout.setPitData("SillyWheels", scout.boolfield("X-12"))
-            scout.setPitData("Swerve", scout.boolfield("X-13"))
+            scout.setPitData("SillyWheels", scout.boolfield("X-14"))
+            scout.setPitData("Swerve", scout.boolfield("X-15"))
 
             scout.setPitData("PitOrganization", scout.rangefield("AF-12", 1, 3))
             scout.setPitData("WiringQuality", scout.rangefield("AF-13", 1, 3))
             scout.setPitData("BumperQuality", scout.rangefield("AF-14", 1, 3))
             scout.setPitData("Batteries", scout.rangefield("AC-16", 1, 7))
+
+            width1 = scout.rangefield("AB-9", 0, 5)
+            width2 = scout.rangefield("AB-10", 0, 9)
+            scout.setPitData("Width", width1*10+width2)
 
             scout.submit()
 
@@ -193,22 +220,32 @@ def processSheet(scout):
 
 def generateTeamText(e):
     text = {"auto": "", "teleop1": "", "teleop2": "", "other": ""}
-    text["auto"] += "Low: " + str(e["AutoLow"]) + ", " if e["AutoLow"] else ""
-    text["auto"] += "High: " + str(e["AutoHigh"]) + ", " if e["AutoHigh"] else ""
-    text["auto"] += "Taxi: " + str(e["Taxi"]) + ", " if e["Taxi"] else ""
-    text["auto"] += "HP: " + str(e["HPScore"]) + ", " if e["HPScore"] else ""
+    text["auto"] += "Low △: " + str(e["AutoLowCone"]) + ", " if e["AutoLowCone"] else ""
+    text["auto"] += "Low ⬜: " + str(e["AutoLowCube"]) + ", " if e["AutoLowCube"] else ""
+    text["auto"] += "Mid △: " + str(e["AutoMidCone"]) + ", " if e["AutoMidCone"] else ""
+    text["auto"] += "Mid ⬜: " + str(e["AutoMidCube"]) + ", " if e["AutoMidCube"] else ""
+    text["auto"] += "High △: " + str(e["AutoHighCone"]) + ", " if e["AutoHighCone"] else ""
+    text["auto"] += "High ⬜: " + str(e["AutoHighCube"]) + ", " if e["AutoHighCube"] else ""
+    text["auto"] += "Dock" + ", " if e["AutoDock"] else ""
+    text["auto"] += "Balance" + ", " if e["AutoBalance"] else ""
+    text["auto"] += "FailedBridge" + ", " if e["AutoFailedBalance"] else ""
+    text["auto"] += "Mobility" + ", " if e["Mobility"] else ""
+    text["auto"] = text["auto"][:-2]
 
-    text["teleop1"] += "Low: " + str(e["TeleLow"]) + ", " if e["TeleLow"] else ""
-    text["teleop1"] += "High: " + str(e["TeleHigh"]) + ", " if e["TeleHigh"] else ""
-    text["teleop1"] += "Fender" ", " if e["FenderShot"] else ""
-    text["teleop1"] += "LaunchPad" + ", " if e["LaunchPadShot"] else ""
+    text["teleop1"] += "Low △: " + str(e["LowCone"]) + ", " if e["LowCone"] else ""
+    text["teleop1"] += "Low ⬜: " + str(e["LowCube"]) + ", " if e["LowCube"] else ""
+    text["teleop1"] += "Mid △: " + str(e["MidCone"]) + ", " if e["MidCone"] else ""
+    text["teleop1"] += "Mid ⬜: " + str(e["MidCube"]) + ", " if e["MidCube"] else ""
+    text["teleop1"] += "High △: " + str(e["HighCone"]) + ", " if e["HighCone"] else ""
+    text["teleop1"] += "High ⬜: " + str(e["HighCube"]) + ", " if e["HighCube"] else ""
     text["teleop1"] = text["teleop1"][:-2]
 
-    text["teleop2"] += "Failed Climb  " if e["FailedClimb"] else ""
-    text["teleop2"] += "Low Bar  " if e["Hangar"] == 4 else ""
-    text["teleop2"] += "Mid Bar  " if e["Hangar"] == 6 else ""
-    text["teleop2"] += "High Bar  " if e["Hangar"] == 10 else ""
-    text["teleop2"] += "Traversal Bar  " if e["Hangar"] == 15 else ""
+    shorts = e["MidFieldCone"] + e["MidFieldCube"]
+    text["teleop2"] += "Short △: " + str(e["MidfieldCone"]) + ", " if e["MidfieldCone"] else ""
+    text["teleop2"] += "Short ⬜: " + str(e["MidfieldCube"]) + ", " if e["MidfieldCube"] else ""
+    text["teleop2"] += "Dock" + ", " if e["Dock"] else ""
+    text["teleop2"] += "Balance" + ", " if e["Balance"] else ""
+    text["teleop2"] += "FailedBridge" + ", " if e["FailedBalance"] else ""
     text["teleop2"] = text["teleop2"][:-2]
 
     text["other"] += "Defense, " if e["Defense"] else ""
@@ -225,12 +262,12 @@ def generateChartData(e):
     dp = dict(CHART_FIELDS)
     dp["match"] = e["match"]
 
-    dp["AutoLow"] += e["AutoLow"]
-    dp["AutoHigh"] += e["AutoHigh"]
-    dp["TeleLow"] += e["TeleLow"]
-    dp["TeleHigh"] += e["TeleHigh"]
-    dp["CargoTotal"] += e["AutoLow"] + e["AutoHigh"] + e["TeleLow"] + e["TeleHigh"]
-    dp["Hangar"] += e["Hangar"]
+    dp["Cones"] += e["Cones"]
+    dp["Cubes"] += e["Cubes"]
+    dp["Auto"] += e["Auto"]
+    dp["GridPoints"] += e["GridPoints"]
+    dp["Cycles"] += e["Cycles"]
+    dp["Bridge"] += e["Balance"] + e["Dock"]
 
     return dp
 
@@ -238,16 +275,14 @@ def generateChartData(e):
 # Takes a set of team numbers and a string indicating quals or playoffs
 # and returns a prediction for the alliances score and whether or not they will achieve any additional ranking points
 def predictScore(event, teams, level="quals"):
-    cargoRP = 0
-    climbRP = 0
-    climbTotal = 0
-    cargoTotal = 0
-    autoCargo = 0
-    hpScore = 0
-    traversalBar = 0
-    highBar = 0
-    mediumBar = 0
-    lowBar = 0
+    linkRP = 0
+    bridgeRP = 0
+    highCones = 0
+    highCubes = 0
+    midCones = 0
+    midCubes = 0
+    low = 0
+    autoBridge = 0
 
     pointsTotal = 0
 
@@ -266,48 +301,49 @@ def predictScore(event, teams, level="quals"):
                 entry.update(DISPLAY_FIELDS)
                 entry.update(HIDDEN_DISPLAY_FIELDS)
 
-        pointsTotal += entry["CargoPoints"] + entry["Taxi"]
-        cargoTotal += entry["Cargo"]
-        autoCargo += entry["AutoLow"] + entry["AutoHigh"]
-        if entry["HPScore"] > 0.5:
-            hpScore = 1
-        if entry["Hangar"] > 10:
-            if traversalBar < 2:
-                traversalBar += 1
-            else:
-                highBar += 1
-        elif entry["Hangar"] > 6:
-            if highBar < 2:
-                highBar += 1
-            else:
-                mediumBar += 1
-        elif entry["Hangar"] > 4:
-            if mediumBar < 2:
-                mediumBar += 1
-            else:
-                lowBar += 1
-        elif entry["Hangar"] > 0:
-            if lowBar < 2:
-                lowBar += 1
+        low += entry["LowCone"] + entry["LowCube"] + entry["AutoLowCone"] + entry["AutoLowCube"]
+        highCones += entry["HighCone"] + entry["AutoHighCone"]
+        highCubes += entry["HighCube"] + entry["AutoHighCube"]
+        midCones += entry["MidCone"] + entry["AutoMidCone"]
+        midCubes += entry["MidCube"] + entry["AutoMidCube"]
+        if entry["AutoDock"] > 4 & autoBridge < 8:
+            autoBridge = 8
+        if entry["AutoBalance"] > 6:
+            autoBridge = 12
+        pointsTotal += ["AutoHighCone"] + ["AutoHighCube"] + ["AutoMidCone"] + ["AutoMidCube"] + ["AutoLowCone"] + ["AutoLowCube"]
 
-    autoCargo += hpScore
-    if autoCargo > 4:
-        if cargoTotal > 18:
-            cargoRP = 1
-    else:
-        if cargoTotal > 20:
-            cargoRP = 1
-
-    climbTotal = traversalBar * 15 + highBar * 10 + mediumBar * 6 + lowBar * 4
-    if climbTotal > 15:
-        climbRP = 1
-    pointsTotal += climbTotal
+    if highCones > 6:
+        midCones += highCones - 6
+        highCones = 6
+    if highCubes > 3:
+        midCubes += highCubes - 3
+        highCubes = 6
+    if midCones > 6:
+        low += midCones - 6
+        midCones = 6
+    if midCubes > 6:
+        low += midCubes - 6
+        midCubes = 6
+    if low > 9:
+        low = 9
+    pointsTotal += highCones*5 + highCubes*5
+    pointsTotal += midCones*5 + midCubes*5
+    pointsTotal += low*2
+    links = min(highCones/2, highCubes)
+    links += min(midCones/2, midCubes)
+    links += low/3
+    pointsTotal += links*5
+    pointsTotal += autoBridge
+    if links > 3.75:
+        linkRP = 1
+    if autoBridge:
+        bridgeRP = 1
 
     retVal = {"score": 0, "RP1": 0, "RP2": 0}
 
     retVal["score"] = pointsTotal
-    retVal["RP1"] = cargoRP
-    retVal["RP2"] = climbRP
+    retVal["RP1"] = bridgeRP
+    retVal["RP2"] = linkRP
 
     return retVal
 
@@ -316,13 +352,6 @@ def predictScore(event, teams, level="quals"):
 # whether or not the entry should be flagged based on contradictory data.
 def autoFlag(entry):
     # Failed climb + hangar entry is invalid
-    if entry["FailedClimb"] and entry["Hangar"]:
+    if entry["FailedBalance"] and entry["Balance"]:
         return 1
-    # Multiple hangar entries is invalid. Unfortunately Low + Medium is not caught
-    if not (
-        entry["Hangar"] == 4
-        or entry["Hangar"] == 6
-        or entry["Hangar"] == 10
-        or entry["Hangar"] == 15
-    ):
-        return 1
+
