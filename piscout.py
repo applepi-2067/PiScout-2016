@@ -248,9 +248,9 @@ class PiScout:
 
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
         retval = 0
-        for el, box in enumerate(values[::-1]):
+        for el, box in enumerate(values):
             if box < SHADED_VAL:
-                retval = startval + len(values) - el - 1
+                retval = startval + el
         if retval:
             cv2.rectangle(
                 self.display,
@@ -341,21 +341,21 @@ class PiScout:
             plt.subplot(111)
             plt.imshow(self.display)
             plt.title("Scanned Sheet")
-            plt.text(600, 784, output, fontsize=12)
-            upload = Button(plt.axes([0.68, 0.31, 0.15, 0.07]), "Upload Data")
+            plt.text(600, 900, output, fontsize=12)
+            upload = Button(plt.axes([0.78, 0.31, 0.2, 0.07]), "Upload Data")
             upload.on_clicked(self.upload)
-            save = Button(plt.axes([0.68, 0.24, 0.15, 0.07]), "Save Data Offline")
+            save = Button(plt.axes([0.78, 0.24, 0.2, 0.07]), "Save Data Offline")
             save.on_clicked(self.save)
-            edit = Button(plt.axes([0.68, 0.17, 0.15, 0.07]), "Edit Data")
+            edit = Button(plt.axes([0.78, 0.17, 0.2, 0.07]), "Edit Data")
             edit.on_clicked(self.edit)
-            cancel = Button(plt.axes([0.68, 0.1, 0.15, 0.07]), "Cancel")
+            cancel = Button(plt.axes([0.78, 0.1, 0.2, 0.07]), "Cancel")
             cancel.on_clicked(self.cancel)
             mng = plt.get_current_fig_manager()
             try:
                 mng.window.state("zoomed")
             except AttributeError:
                 print("Window resizing exploded, oh well.")
-            plt.show()
+            plt.imshow(aspect='auto')
             self.matchData = dict(game.SCOUT_FIELDS)
             self.pitData = dict(game.PIT_SCOUT_FIELDS)
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
