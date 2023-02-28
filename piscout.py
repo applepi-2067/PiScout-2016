@@ -19,7 +19,7 @@ import sys
 # The configuration for the sheets is done in a separate file (gamespecific.py)
 # Cory Lynch 2015
 
-SHADED_VAL = 55000
+SHADED_VAL = 50000
 fastMode = False
 
 
