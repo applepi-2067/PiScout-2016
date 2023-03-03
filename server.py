@@ -726,14 +726,15 @@ class ScoutServer(object):
 
         # Calculate win probability. Currently uses regression from 2016 data, this should be updated
         prob_red = 1 / (1 + math.e ** (-0.08099 * (red_score - blue_score)))
-
+        red_win=round(prob_red * 100, 1)
         events = conn.cursor().execute("SELECT * from Events").fetchall()
         conn.close()
 
         tmpl = loader.load("alliances.xhtml")
         page = tmpl.generate(
             session=cherrypy.session,
-            red_win=round(prob_red * 100, 1),
+            red_win=red_win,
+            blue_win=round(100-red_win,1),
             red_score=red_score,
             blue_score=blue_score,
             red_data=redData,
@@ -921,6 +922,9 @@ class ScoutServer(object):
                         continue
                     values += key + "=" + str(d[key]) + ", "
                 values = values[:-2]
+                cursor.execute(
+                    "INSERT OR IGNORE INTO Teams(TeamNumber) VALUES(?)", (d["TeamNumber"],)
+                )
                 cursor.execute(
                     "UPDATE Teams SET " + values + " WHERE TeamNumber=?",
                     (d["TeamNumber"],),

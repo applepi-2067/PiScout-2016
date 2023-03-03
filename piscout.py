@@ -19,7 +19,7 @@ import sys
 # The configuration for the sheets is done in a separate file (gamespecific.py)
 # Cory Lynch 2015
 
-SHADED_VAL = 50000
+SHADED_VAL = 47500
 fastMode = False
 
 
@@ -223,7 +223,7 @@ class PiScout:
         )  # grid coordinate where the rangefield ends
 
         values = [self.getvalue((val, loc[1])) for val in range(loc[0], end)]
-        min = np.asscalar(np.argmin(values))
+        min = (np.argmin(values).item(0))
         retval = 0
         rect = 0
         if values[min] < SHADED_VAL:
@@ -308,7 +308,7 @@ class PiScout:
                 self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
                 return
         elif self.type == game.SheetType.PIT:
-            if self.pitData["Team"] == 0:
+            if self.pitData["TeamNumber"] == 0:
                 print("Found an empty pit sheet, skipping")
                 self.pitData = dict(game.PIT_SCOUT_FIELDS)
                 self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)
@@ -341,21 +341,21 @@ class PiScout:
             plt.subplot(111)
             plt.imshow(self.display)
             plt.title("Scanned Sheet")
-            plt.text(600, 900, output, fontsize=12)
-            upload = Button(plt.axes([0.78, 0.31, 0.2, 0.07]), "Upload Data")
+            plt.text(600, 784, output, fontsize=12)
+            upload = Button(plt.axes([0.78, 0.31, 0.15, 0.07]), "Upload Data")
             upload.on_clicked(self.upload)
-            save = Button(plt.axes([0.78, 0.24, 0.2, 0.07]), "Save Data Offline")
+            save = Button(plt.axes([0.78, 0.24, 0.15, 0.07]), "Save Data Offline")
             save.on_clicked(self.save)
-            edit = Button(plt.axes([0.78, 0.17, 0.2, 0.07]), "Edit Data")
+            edit = Button(plt.axes([0.78, 0.17, 0.15, 0.07]), "Edit Data")
             edit.on_clicked(self.edit)
-            cancel = Button(plt.axes([0.78, 0.1, 0.2, 0.07]), "Cancel")
+            cancel = Button(plt.axes([0.78, 0.1, 0.15, 0.07]), "Cancel")
             cancel.on_clicked(self.cancel)
             mng = plt.get_current_fig_manager()
             try:
                 mng.window.state("zoomed")
             except AttributeError:
                 print("Window resizing exploded, oh well.")
-            plt.imshow(aspect='auto')
+            plt.show()
             self.matchData = dict(game.SCOUT_FIELDS)
             self.pitData = dict(game.PIT_SCOUT_FIELDS)
             self.display = cv2.cvtColor(self.sheet, cv2.COLOR_GRAY2BGR)

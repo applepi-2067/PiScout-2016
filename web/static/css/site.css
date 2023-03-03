@@ -357,6 +357,7 @@
   background-position:center right;
   background-repeat:no-repeat;
   cursor:pointer;
+  padding-right:20px!important;
 }
 
 body

@@ -65,7 +65,7 @@ PIT_SCOUT_FIELDS = {
     "TripleMech": 0,
     "Cone": 0,
     "Cube": 0,
-    "Floor": 0,
+    "FloorPickup": 0,
     "DoubleSub": 0,
     "Level1": 0,
     "Level2": 0,
@@ -162,6 +162,7 @@ def processSheet(scout):
             scout.setMatchData("FailedBalance", scout.boolfield("Q-10"))
             scout.setMatchData("Dock", scout.boolfield("Q-11")*6)
             scout.setMatchData("Balance", scout.boolfield("Q-12")*10)
+            scout.setMatchData("Park", scout.boolfield("Q-13"))
 
             scout.setMatchData("MidfieldCone", scout.countfield("Q-16", "T-16", 0))
             scout.setMatchData("MidfieldCube", scout.countfield("Q-17", "T-17", 0))
@@ -184,7 +185,7 @@ def processSheet(scout):
             num2 = scout.rangefield("M-6", 0, 9)
             num3 = scout.rangefield("M-7", 0, 9)
             num4 = scout.rangefield("M-8", 0, 9)
-            scout.setPitData("Team", 1000 * num1 + 100 * num2 + 10 * num3 + num4)
+            scout.setPitData("TeamNumber", 1000 * num1 + 100 * num2 + 10 * num3 + num4)
 
             weight1 = scout.rangefield("AB-5", 0, 1)
             weight2 = scout.rangefield("AB-6", 0, 9)
@@ -203,10 +204,10 @@ def processSheet(scout):
             scout.setPitData("SillyWheels", scout.boolfield("X-14"))
             scout.setPitData("Swerve", scout.boolfield("X-15"))
 
-            scout.setPitData("PitOrganization", scout.rangefield("AF-12", 1, 3))
-            scout.setPitData("WiringQuality", scout.rangefield("AF-13", 1, 3))
-            scout.setPitData("BumperQuality", scout.rangefield("AF-14", 1, 3))
-            scout.setPitData("Batteries", scout.rangefield("AC-16", 1, 7))
+            scout.setPitData("PitOrganization", scout.rangefield("AF-13", 1, 3))
+            scout.setPitData("WiringQuality", scout.rangefield("AF-14", 1, 3))
+            scout.setPitData("BumperQuality", scout.rangefield("AF-15", 1, 3))
+            scout.setPitData("Batteries", scout.rangefield("AC-17", 1, 7))
 
             width1 = scout.rangefield("AB-9", 0, 5)
             width2 = scout.rangefield("AB-10", 0, 9)
@@ -310,7 +311,7 @@ def predictScore(event, teams, level="quals"):
             autoBridge = 8
         if entry["AutoBalance"] > 6:
             autoBridge = 12
-        pointsTotal += ["AutoHighCone"] + ["AutoHighCube"] + ["AutoMidCone"] + ["AutoMidCube"] + ["AutoLowCone"] + ["AutoLowCube"]
+        pointsTotal += entry["AutoHighCone"] + entry["AutoHighCube"] + entry["AutoMidCone"] + entry["AutoMidCube"] + entry["AutoLowCone"] + entry["AutoLowCube"]
 
     if highCones > 6:
         midCones += highCones - 6
