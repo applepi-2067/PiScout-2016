@@ -935,6 +935,21 @@ class ScoutServer(object):
         else:
             raise cherrypy.HTTPError(401, "Error: Not authorized to submit match data")
 
+    #page fo deleting match data
+    @cherrypy.expose()
+    def delete(self, key="", **params):
+        sessionCheck()
+        if not checkAuth(False):
+            raise cherrypy.HTTPError(
+                401, "Not authorized to delete match data. Please log in and try again"
+            )
+        conn = sql.connect(self.datapath())
+        conn.row_factory = sql.Row
+        cursor = conn.cursor()
+        cursor.execute("DELETE from ScoutRecords WHERE rowid=?",(key,))
+        conn.commit()
+        conn.close()
+
     # Page for editing match data
     @cherrypy.expose()
     def edit(self, key="", **params):

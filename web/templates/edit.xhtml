@@ -6,6 +6,18 @@
   
 	<xi:include href="head.xhtml" />
 	<body>
+      <script type = "text/javascript">
+            function ConfirmDelete() {
+               var retVal = confirm("Are you sure you want to delete?");
+               if( retVal == true ) {
+                  $.post(
+                  "delete",
+                  {key: ${entry['rowid']}},
+                  function(data) {window.location.reload(true);}
+                  );
+               }
+            }
+      </script>     
 		<xi:include href="header.xhtml" /> 
         <div id="body_bg">
             <div class="container clearfix" align="center">
@@ -46,6 +58,7 @@
                         </div>
                     </div>
                     <button class="submit" type="submit">Submit</button>
+                    <button class="submit" type="button" onclick="ConfirmDelete();">Delete</button>
                 </form>    
             </div>
 			<xi:include href="footer.html"/>
