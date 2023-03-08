@@ -11,11 +11,10 @@
             <div class="container clearfix" align="center">
                 <div id="page_title" align="center">Edit</div>
                 <div>
-                    <form method="post" action="edit">
-                        <select class="fieldsm" name="key">
+                    <form method="post" action="edit" style="margin-top: 14px;">
+                        <select class="fieldsm" name="key" onchange='this.form.submit()'>
 							<option py:for="match in entries" id="${match['rowid']}" value="${match['rowid']}"><p py:if="match['Flag']">*</p>Team ${match['Team']}: Match ${match['Match']}</option>
                         </select>
-                        <button class="submit" type="submit">Submit</button>
                     </form>
                 </div>
                 <div>
