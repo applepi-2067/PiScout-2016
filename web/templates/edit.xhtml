@@ -13,7 +13,7 @@
                   $.post(
                   "delete",
                   {key: ${entry['rowid']}},
-                  function(data) {window.location.reload(true);}
+                  function(data) {window.location.href = window.location.href;}
                   );
                }
             }
@@ -32,7 +32,7 @@
                 <div>
 					<p style="font-size: 36pt; font-weight: bold;">Editing Team ${entry['Team']}: Match ${entry['Match']}</p>
                 </div>
-                <form method="post" action="edit">
+                <form method="post" action="edit" id="editForm">
                     <div id="alliance_compare_container">
                         <br/><br/>
 							<div class="edit_compare_cell">
