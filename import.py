@@ -25,7 +25,7 @@ try:  # post it to piscout's ip address
                     if row[num]:
                         matchData[key] = row[num]
                 requests.post(
-                    serverinfo.SERVER + "/submit",
+                    "http://127.0.0.1:8000/submit",
                     data={
                         "event": CURRENT_EVENT,
                         "data": str(matchData),

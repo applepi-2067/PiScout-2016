@@ -8,12 +8,12 @@ SCOUT_FIELDS = {
     "Team": 0,
     "Match": 0,
     "Mobility": 0,
-    "AutoFailedBalance": 0,
-    "AutoDock": 0,
-    "AutoBalance": 0,
-    "FailedBalance": 0,
-    "Dock": 0,
-    "Balance": 0,
+    "AutoChargeAttempt": 0,
+    "AutoDocked": 0,
+    "AutoEngaged": 0,
+    "ChargeAttempt": 0,
+    "Docked": 0,
+    "Engaged": 0,
     "Park": 0,
     "Disabled": 0,
     "Defense": 0,
@@ -46,7 +46,7 @@ DISPLAY_FIELDS = {
     "Cones": 0,
     "Cubes": 0,
     "Auto": 0,
-    "Balance": 0,
+    "ChargeStation": 0,
     "Defense": 0,
 }
 
@@ -80,7 +80,7 @@ PIT_DISPLAY_FIELDS = {"Cone": 0, "Cube": 0, "SillyWheels": 0, "Swerve": 0, "Widt
 CHART_FIELDS = {
     "match": 0,
     "Auto": 0,
-    "Bridge": 0,
+    "ChargeStation": 0,
     "GridPoints": 0,
     "Cycles": 0,
     "Cones": 0,
@@ -98,18 +98,19 @@ def getDisplayFieldCreate():
     retVal += "Cubes AS (AutoHighCube+HighCube+AutoMidCube+MidCube+AutoLowCube+LowCube) STORED, "
     retVal += "Cycles AS (Cones+Cubes) STORED, "
     retVal += "GridPoints AS (6*AutoHighCube+6*AutoHighCone+4*AutoMidCube+4*AutoMidCone+3*AutoLowCone+3*AutoLowCube+5*HighCone+5*HighCube+3*MidCone+3*MidCube+2*LowCone+2*LowCube) STORED, "
-    retVal += "Auto AS (6*AutoHighCube+6*AutoHighCone+4*AutoMidCube+4*AutoMidCone+3*AutoLowCone+3*AutoLowCube+AutoBalance+AutoDock+Mobility) STORED, "
+    retVal += "Auto AS (6*AutoHighCube+6*AutoHighCone+4*AutoMidCube+4*AutoMidCone+3*AutoLowCone+3*AutoLowCube+AutoEngaged+AutoDocked+Mobility) STORED, "
+    retVal += "ChargeStation AS (Docked+Engaged) STORED, "
     retVal += (
         "FirstP AS (GridPoints*"
         + str(prop.FIRST_GRID_POINTS)
-        + "*(1+Defended)+Balance*"
+        + "*(1+Defended)+ChargeStation*"
         + str(prop.FIRST_BRIDGE)
         + ") STORED, "
     )
     retVal += (
         "SecondP AS (GridPoints*"
         + str(prop.SECOND_GRID_POINTS)
-        + "*(1+Defended)+Balance*"
+        + "*(1+Defended)+ChargeStation*"
         + str(prop.SECOND_BRIDGE)
         + "+Defense*"
         + str(prop.SECOND_DEFENSE)
@@ -155,17 +156,22 @@ def processSheet(scout):
 
             scout.setMatchData("Mobility", scout.boolfield("H-18"))
 
-            scout.setMatchData("AutoFailedBalance", scout.boolfield("P-10"))
-            scout.setMatchData("AutoDock", scout.boolfield("P-11")*8)
-            scout.setMatchData("AutoBalance", scout.boolfield("P-12")*12)
+            scout.setMatchData("AutoEngaged", scout.boolfield("P-12")*12)
+            if(not scout.boolfield("P-12")):
+                scout.setMatchData("AutoDocked", scout.boolfield("P-11")*8)
+                if(not scout.boolfield("P-11")):
+                    scout.setMatchData("AutoChargeAttempt", scout.boolfield("P-10"))            
 
-            scout.setMatchData("FailedBalance", scout.boolfield("Q-10"))
-            scout.setMatchData("Dock", scout.boolfield("Q-11")*6)
-            scout.setMatchData("Balance", scout.boolfield("Q-12")*10)
-            scout.setMatchData("Park", scout.boolfield("Q-13"))
+            scout.setMatchData("Engaged", scout.boolfield("Q-12")*10)
+            if(not scout.boolfield("Q-12")):
+                scout.setMatchData("Docked", scout.boolfield("Q-11")*6)
+                if(not scout.boolfield("Q-11")):
+                    scout.setMatchData("ChargeAttempt", scout.boolfield("Q-10"))
+                    if(not scout.boolfield("Q-10")):
+                        scout.setMatchData("Park", scout.boolfield("Q-13"))
 
-            scout.setMatchData("MidfieldCone", scout.countfield("Q-16", "T-16", 0))
-            scout.setMatchData("MidfieldCube", scout.countfield("Q-17", "T-17", 0))
+            scout.setMatchData("MidfieldCone", scout.countfield("Q-17", "T-17", 0))
+            scout.setMatchData("MidfieldCube", scout.countfield("Q-16", "T-16", 0))
 
             scout.setMatchData("Defense", scout.boolfield("W-10"))
             scout.setMatchData("Defended", scout.boolfield("W-11"))
@@ -227,9 +233,9 @@ def generateTeamText(e):
     text["auto"] += "Mid ⬜: " + str(e["AutoMidCube"]) + ", " if e["AutoMidCube"] else ""
     text["auto"] += "High △: " + str(e["AutoHighCone"]) + ", " if e["AutoHighCone"] else ""
     text["auto"] += "High ⬜: " + str(e["AutoHighCube"]) + ", " if e["AutoHighCube"] else ""
-    text["auto"] += "Dock" + ", " if e["AutoDock"] else ""
-    text["auto"] += "Balance" + ", " if e["AutoBalance"] else ""
-    text["auto"] += "FailedBridge" + ", " if e["AutoFailedBalance"] else ""
+    text["auto"] += "Docked" + ", " if e["AutoDocked"] else ""
+    text["auto"] += "Engaged" + ", " if e["AutoEngaged"] else ""
+    text["auto"] += "ChargeAttempt" + ", " if e["AutoChargeAttempt"] else ""
     text["auto"] += "Mobility" + ", " if e["Mobility"] else ""
     text["auto"] = text["auto"][:-2]
 
@@ -244,9 +250,9 @@ def generateTeamText(e):
     shorts = e["MidFieldCone"] + e["MidFieldCube"]
     text["teleop2"] += "Short △: " + str(e["MidfieldCone"]) + ", " if e["MidfieldCone"] else ""
     text["teleop2"] += "Short ⬜: " + str(e["MidfieldCube"]) + ", " if e["MidfieldCube"] else ""
-    text["teleop2"] += "Dock" + ", " if e["Dock"] else ""
-    text["teleop2"] += "Balance" + ", " if e["Balance"] else ""
-    text["teleop2"] += "FailedBridge" + ", " if e["FailedBalance"] else ""
+    text["teleop2"] += "Docked" + ", " if e["Docked"] else ""
+    text["teleop2"] += "Engaged" + ", " if e["Engaged"] else ""
+    text["teleop2"] += "ChargeAttempt" + ", " if e["ChargeAttempt"] else ""
     text["teleop2"] = text["teleop2"][:-2]
 
     text["other"] += "Defense, " if e["Defense"] else ""
@@ -268,7 +274,7 @@ def generateChartData(e):
     dp["Auto"] += e["Auto"]
     dp["GridPoints"] += e["GridPoints"]
     dp["Cycles"] += e["Cycles"]
-    dp["Bridge"] += e["Balance"] + e["Dock"]
+    dp["ChargeStation"] += e["ChargeStation"]
 
     return dp
 
@@ -307,9 +313,9 @@ def predictScore(event, teams, level="quals"):
         highCubes += entry["HighCube"] + entry["AutoHighCube"]
         midCones += entry["MidCone"] + entry["AutoMidCone"]
         midCubes += entry["MidCube"] + entry["AutoMidCube"]
-        if entry["AutoDock"] > 4 & autoBridge < 8:
+        if entry["AutoDocked"] > 4 & autoBridge < 8:
             autoBridge = 8
-        if entry["AutoBalance"] > 6:
+        if entry["AutoEngaged"] > 6:
             autoBridge = 12
         pointsTotal += entry["AutoHighCone"] + entry["AutoHighCube"] + entry["AutoMidCone"] + entry["AutoMidCube"] + entry["AutoLowCone"] + entry["AutoLowCube"]
 
@@ -352,7 +358,5 @@ def predictScore(event, teams, level="quals"):
 # Takes an entry from the Scout table and returns
 # whether or not the entry should be flagged based on contradictory data.
 def autoFlag(entry):
-    # Failed climb + hangar entry is invalid
-    if entry["FailedBalance"] and entry["Balance"]:
-        return 1
+    return 0
 

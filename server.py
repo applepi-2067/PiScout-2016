@@ -888,7 +888,7 @@ class ScoutServer(object):
                 # If replay is marked, replace previous data
                 if d["Replay"]:  # replay
                     cursor.execute(
-                        "DELETE from ScoutRecords WHERE Team=? AND Match=? AND Event=?",
+                        "DELETE from ScoutRecords WHERE Team=? AND Match=? AND EventCode=?",
                         (str(d["Team"]), str(d["Match"]), event),
                     )
 
