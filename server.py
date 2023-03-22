@@ -63,8 +63,8 @@ class ScoutServer(object):
         # Pass off the normal set of columns or columns with the hidden fields depending on authentication
         # if checkAuth(False):
         #    columns = game.DISPLAY_FIELDS
-        else:
-            columns = {**game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
+        #else:
+        columns = {**game.DISPLAY_FIELDS, **game.HIDDEN_DISPLAY_FIELDS}
 
         conn = sql.connect(self.datapath())
         conn.row_factory = sql.Row
